@@ -34,7 +34,12 @@ builder.Services.AddControllers()
     });
 
 // SignalR
-builder.Services.AddSignalR();
+builder.Services.AddSignalR()
+    .AddJsonProtocol(options =>
+    {
+        options.PayloadSerializerOptions.PropertyNamingPolicy =
+            System.Text.Json.JsonNamingPolicy.SnakeCaseLower;
+    });
 
 // Health checks
 builder.Services.AddHealthChecks();
