@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="../build/AltusIQ.Api.props" />
+</Project>

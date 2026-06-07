@@ -1,0 +1,74 @@
+{
+  "format": 1,
+  "restore": {
+    "/Users/tanesiadis/Library/CloudStorage/OneDrive-Deloitte(O365D)/Desktop/AltusIQ/altusiq/backend/AltusIQ.Api.csproj": {}
+  },
+  "projects": {
+    "/Users/tanesiadis/Library/CloudStorage/OneDrive-Deloitte(O365D)/Desktop/AltusIQ/altusiq/backend/AltusIQ.Api.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/Users/tanesiadis/Library/CloudStorage/OneDrive-Deloitte(O365D)/Desktop/AltusIQ/altusiq/backend/AltusIQ.Api.csproj",
+        "projectName": "AltusIQ.Api",
+        "projectPath": "/Users/tanesiadis/Library/CloudStorage/OneDrive-Deloitte(O365D)/Desktop/AltusIQ/altusiq/backend/AltusIQ.Api.csproj",
+        "packagesPath": "/Users/tanesiadis/.nuget/packages/",
+        "outputPath": "/Users/tanesiadis/Library/CloudStorage/OneDrive-Deloitte(O365D)/Desktop/AltusIQ/altusiq/backend/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/Users/tanesiadis/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "dependencies": {
+            "Serilog.AspNetCore": {
+              "target": "Package",
+              "version": "[10.0.0, )"
+            },
+            "Swashbuckle.AspNetCore": {
+              "target": "Package",
+              "version": "[6.6.2, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.AspNetCore.App": {
+              "privateAssets": "none"
+            },
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/opt/homebrew/Cellar/dotnet@8/8.0.127/libexec/sdk/8.0.127/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}
