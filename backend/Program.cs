@@ -1,6 +1,7 @@
 using Serilog;
 using AltusIQ.Api.Background;
 using AltusIQ.Api.Services;
+using AltusIQ.Api.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,8 +26,6 @@ builder.Services.AddCors(options =>
 });
 
 // Controllers
-builder.Services.AddControllers();
-
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -45,8 +44,10 @@ builder.WebHost.ConfigureKestrel(options =>
 {
     var port = int.Parse(
         Environment.GetEnvironmentVariable("PORT") ?? "8080");
+        
     options.ListenAnyIP(port);
 });
+
 
 // Typed HttpClient for OpenSky auth token requests
 builder.Services.AddHttpClient<IOpenSkyAuthService, OpenSkyAuthService>();
@@ -69,5 +70,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapHealthChecks("/health");
+app.MapHub<FlightHub>("/hubs/flights");
 
 app.Run();
