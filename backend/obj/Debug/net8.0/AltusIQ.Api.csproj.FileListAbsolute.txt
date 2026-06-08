@@ -57,3 +57,4 @@
 /Users/tanesiadis/Library/CloudStorage/OneDrive-Deloitte(O365D)/Desktop/AltusIQ/altusiq/backend/bin/Debug/net8.0/System.Text.Encodings.Web.dll
 /Users/tanesiadis/Library/CloudStorage/OneDrive-Deloitte(O365D)/Desktop/AltusIQ/altusiq/backend/bin/Debug/net8.0/System.Text.Json.dll
 /Users/tanesiadis/Library/CloudStorage/OneDrive-Deloitte(O365D)/Desktop/AltusIQ/altusiq/backend/bin/Debug/net8.0/runtimes/browser/lib/net8.0/System.Text.Encodings.Web.dll
+/Users/tanesiadis/Library/CloudStorage/OneDrive-Deloitte(O365D)/Desktop/AltusIQ/altusiq/backend/obj/Debug/net8.0/AltusIQ.Api.sourcelink.json
