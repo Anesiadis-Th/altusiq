@@ -55,13 +55,19 @@ builder.WebHost.ConfigureKestrel(options =>
 
 
 // Typed HttpClient for OpenSky auth token requests
-builder.Services.AddHttpClient<IOpenSkyAuthService, OpenSkyAuthService>();
+builder.Services.AddHttpClient<IOpenSkyAuthService, OpenSkyAuthService>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(15);
+});
 
 // Singleton so the token cache persists for the app lifetime
 builder.Services.AddSingleton<IOpenSkyAuthService, OpenSkyAuthService>();
 
 // Typed HttpClient for OpenSky API calls from the polling service
-builder.Services.AddHttpClient<FlightPollingService>();
+builder.Services.AddHttpClient<FlightPollingService>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(15);
+});
 
 // Register the background polling service
 builder.Services.AddHostedService<FlightPollingService>();
