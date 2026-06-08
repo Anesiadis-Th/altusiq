@@ -44,7 +44,7 @@ public class FlightPollingService : BackgroundService
             {
                 await PollAsync(stoppingToken);
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
                 break;
             }
