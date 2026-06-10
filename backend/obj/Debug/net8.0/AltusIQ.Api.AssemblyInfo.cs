@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("AltusIQ.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3a4b4e74cb536a256457e9bbd849e739d0c57878")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+98f8bf50580ce30b2fc26d8952c13ccbaa76f98e")]
 [assembly: System.Reflection.AssemblyProductAttribute("AltusIQ.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AltusIQ.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
