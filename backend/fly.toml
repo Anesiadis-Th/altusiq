@@ -1,19 +1,10 @@
-# fly.toml app configuration file generated for altusiq-backend on 2026-06-10T21:14:50+02:00
-#
-# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
-#
-
-app = 'altusiq-backend'
-primary_region = 'fra'
-
-[build]
-
 [http_service]
   internal_port = 8080
   force_https = true
   auto_stop_machines = 'stop'
   auto_start_machines = true
   min_machines_running = 0
+  max_machines_running = 1
   processes = ['app']
 
 [[vm]]
