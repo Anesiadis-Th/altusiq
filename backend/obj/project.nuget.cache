@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "I/njD/SKHgY=",
+  "dgSpecHash": "w8aKCfNwvHRyo/zHJQRuqhYLARLa9gVcBV+cJSrJQz0dF7X6bpasV0qEritRQ/cAXOaiXmXv5WJtsv1/jnuCgQ==",
   "success": true,
   "projectFilePath": "/Users/tanesiadis/Library/CloudStorage/OneDrive-Deloitte(O365D)/Desktop/AltusIQ/altusiq/backend/AltusIQ.Api.csproj",
   "expectedPackageFiles": [
@@ -25,10 +25,7 @@
     "/Users/tanesiadis/.nuget/packages/serilog.sinks.console/5.0.0/serilog.sinks.console.5.0.0.nupkg.sha512",
     "/Users/tanesiadis/.nuget/packages/serilog.sinks.debug/2.0.0/serilog.sinks.debug.2.0.0.nupkg.sha512",
     "/Users/tanesiadis/.nuget/packages/serilog.sinks.file/5.0.0/serilog.sinks.file.5.0.0.nupkg.sha512",
-    "/Users/tanesiadis/.nuget/packages/system.diagnostics.diagnosticsource/8.0.0/system.diagnostics.diagnosticsource.8.0.0.nupkg.sha512",
-    "/Users/tanesiadis/.nuget/packages/microsoft.netcore.app.ref/8.0.20/microsoft.netcore.app.ref.8.0.20.nupkg.sha512",
-    "/Users/tanesiadis/.nuget/packages/microsoft.aspnetcore.app.ref/8.0.20/microsoft.aspnetcore.app.ref.8.0.20.nupkg.sha512",
-    "/Users/tanesiadis/.nuget/packages/microsoft.netcore.app.host.osx-arm64/8.0.20/microsoft.netcore.app.host.osx-arm64.8.0.20.nupkg.sha512"
+    "/Users/tanesiadis/.nuget/packages/system.diagnostics.diagnosticsource/8.0.0/system.diagnostics.diagnosticsource.8.0.0.nupkg.sha512"
   ],
   "logs": []
 }

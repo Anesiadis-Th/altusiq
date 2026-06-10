@@ -2,17 +2,14 @@ using System.Net.Http.Headers;
 
 namespace AltusIQ.Api.Services;
 
-
 public class OpenSkyAuthService : IOpenSkyAuthService
 {
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _config;
     private readonly ILogger<OpenSkyAuthService> _logger;
 
-
     private string? _cachedToken;
     private DateTime _tokenExpiry = DateTime.MinValue;
-
     private readonly SemaphoreSlim _tokenLock = new(1, 1);
 
     public OpenSkyAuthService(
@@ -28,15 +25,12 @@ public class OpenSkyAuthService : IOpenSkyAuthService
     public async Task<string> GetTokenAsync(
         CancellationToken cancellationToken = default)
     {
-
         if (_cachedToken is not null && DateTime.UtcNow < _tokenExpiry)
             return _cachedToken;
-
 
         await _tokenLock.WaitAsync(cancellationToken);
         try
         {
-
             if (_cachedToken is not null && DateTime.UtcNow < _tokenExpiry)
                 return _cachedToken;
 
@@ -53,7 +47,6 @@ public class OpenSkyAuthService : IOpenSkyAuthService
             var tokenUrl = _config["OpenSky:TokenUrl"]
                 ?? throw new InvalidOperationException(
                     "OpenSky:TokenUrl is not configured");
-
 
             var formData = new FormUrlEncodedContent(new[]
             {
@@ -73,10 +66,10 @@ public class OpenSkyAuthService : IOpenSkyAuthService
                     "OpenSky token response was empty");
 
             _cachedToken = json.AccessToken
-            ?? throw new InvalidOperationException(
-             "OpenSky token response did not contain an access_token field");
-            _tokenExpiry = DateTime.UtcNow
-                .AddSeconds(json.ExpiresIn - 60);
+                ?? throw new InvalidOperationException(
+                    "OpenSky token response did not contain an access_token field");
+
+            _tokenExpiry = DateTime.UtcNow.AddSeconds(json.ExpiresIn - 60);
 
             _logger.LogInformation(
                 "OpenSky token acquired, expires in {Seconds}s",
@@ -90,9 +83,9 @@ public class OpenSkyAuthService : IOpenSkyAuthService
         }
     }
 
-  private sealed record TokenResponse(
-    [property: System.Text.Json.Serialization.JsonPropertyName("access_token")]
-    string AccessToken,
-    [property: System.Text.Json.Serialization.JsonPropertyName("expires_in")]
-    int ExpiresIn);
+    private sealed record TokenResponse(
+        [property: System.Text.Json.Serialization.JsonPropertyName("access_token")]
+        string? AccessToken,
+        [property: System.Text.Json.Serialization.JsonPropertyName("expires_in")]
+        int ExpiresIn);
 }

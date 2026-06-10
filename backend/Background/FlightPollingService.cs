@@ -87,9 +87,6 @@ public class FlightPollingService : BackgroundService
         _logger.LogInformation(
             "Received {Count} aircraft from OpenSky", aircraft.Count);
 
-        // Broadcast to ALL connected clients.
-        // "ReceiveFlightData" is the event name the frontend
-        // will subscribe to. The name must match exactly on both sides.
         await _hubContext.Clients.All.SendAsync(
             "ReceiveFlightData", aircraft, cancellationToken);
     }
