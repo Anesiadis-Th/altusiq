@@ -1,0 +1,9 @@
+# .NET build artifacts
+backend/bin/
+backend/obj/
+
+# Local config with secrets - never commit
+backend/appsettings.Development.json
+
+# macOS
+.DS_Store

@@ -2,6 +2,10 @@ using Serilog;
 using AltusIQ.Api.Background;
 using AltusIQ.Api.Services;
 using AltusIQ.Api.Hubs;
+using AltusIQ.Api.Data;
+using AltusIQ.Api.Models;
+using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,6 +34,8 @@ builder.Services.AddControllers()
             System.Text.Json.JsonNamingPolicy.SnakeCaseLower;
     });
 
+
+
 builder.Services.AddSignalR()
     .AddJsonProtocol(options =>
     {
@@ -38,6 +44,8 @@ builder.Services.AddSignalR()
     });
 
 builder.Services.AddHealthChecks();
+
+builder.Services.AddScoped<FlightQueryService>();
 
 builder.WebHost.ConfigureKestrel(options =>
 {
@@ -53,12 +61,25 @@ builder.Services.AddHttpClient<IOpenSkyAuthService, OpenSkyAuthService>(client =
 
 builder.Services.AddSingleton<IOpenSkyAuthService, OpenSkyAuthService>();
 
+builder.Services.Configure<IngestionSettings>(
+    builder.Configuration.GetSection("Ingestion"));
+builder.Services.AddSingleton<FlightIngestionService>();
+
 builder.Services.AddHttpClient<FlightPollingService>(client =>
 {
     client.Timeout = TimeSpan.FromSeconds(30);
 });
 
 builder.Services.AddHostedService<FlightPollingService>();
+
+var dataSourceBuilder = new NpgsqlDataSourceBuilder(
+    builder.Configuration.GetConnectionString("DefaultConnection"));
+dataSourceBuilder.EnableDynamicJson();
+dataSourceBuilder.UseNetTopologySuite();
+var dataSource = dataSourceBuilder.Build();
+
+builder.Services.AddDbContext<AltusIqDbContext>(options =>
+    options.UseNpgsql(dataSource, o => o.UseNetTopologySuite()));
 
 var app = builder.Build();
 

@@ -14,19 +14,22 @@ public class FlightPollingService : BackgroundService
     private readonly IConfiguration _config;
     private readonly ILogger<FlightPollingService> _logger;
     private readonly IHubContext<FlightHub> _hubContext;
+    private readonly FlightIngestionService _ingestionService;
 
     public FlightPollingService(
         IOpenSkyAuthService authService,
         HttpClient httpClient,
         IConfiguration config,
         ILogger<FlightPollingService> logger,
-        IHubContext<FlightHub> hubContext)
+        IHubContext<FlightHub> hubContext,
+        FlightIngestionService ingestionService)
     {
         _authService = authService;
         _httpClient = httpClient;
         _config = config;
         _logger = logger;
         _hubContext = hubContext;
+        _ingestionService = ingestionService;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -89,6 +92,15 @@ public class FlightPollingService : BackgroundService
 
         await _hubContext.Clients.All.SendAsync(
             "ReceiveFlightData", aircraft, cancellationToken);
+
+        try
+        {
+            await _ingestionService.ProcessAsync(aircraft, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Flight ingestion failed");
+        }
     }
 
     private static List<Aircraft> ParseStates(string json)
