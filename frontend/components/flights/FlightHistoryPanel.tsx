@@ -79,6 +79,12 @@ export default function FlightHistoryPanel({
                 {formatTime(flight.opened_at)}
                 {flight.closed_at ? ` → ${formatTime(flight.closed_at)}` : ""}
               </div>
+              {(flight.departure_airport || flight.arrival_airport) && (
+                <div className="text-gray-400 text-xs mt-0.5 font-mono">
+                  {flight.departure_airport ?? "—"} →{" "}
+                  {flight.arrival_airport ?? "—"}
+                </div>
+              )}
             </button>
           ))}
         </div>

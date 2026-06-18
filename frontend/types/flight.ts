@@ -7,6 +7,8 @@ export interface FlightSummary {
   closed_at: string | null;
   last_latitude: number | null;
   last_longitude: number | null;
+  departure_airport: string | null;
+  arrival_airport: string | null;
 }
 
 export interface TrackPoint {
