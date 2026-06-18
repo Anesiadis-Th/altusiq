@@ -1,0 +1,83 @@
+using System.Net;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Text.Json.Serialization;
+
+namespace AltusIQ.Api.Services;
+
+public class OpenSkyFlightsClient : IOpenSkyFlightsClient
+{
+    private readonly HttpClient _httpClient;
+    private readonly IOpenSkyAuthService _authService;
+    private readonly IConfiguration _config;
+    private readonly ILogger<OpenSkyFlightsClient> _logger;
+
+    public OpenSkyFlightsClient(
+        HttpClient httpClient,
+        IOpenSkyAuthService authService,
+        IConfiguration config,
+        ILogger<OpenSkyFlightsClient> logger)
+    {
+        _httpClient = httpClient;
+        _authService = authService;
+        _config = config;
+        _logger = logger;
+    }
+
+    public async Task<IReadOnlyList<OpenSkyFlightInfo>> GetFlightsByAircraftAsync(
+        string icao24,
+        long beginUnix,
+        long endUnix,
+        CancellationToken cancellationToken = default)
+    {
+        var token = await _authService.GetTokenAsync(cancellationToken);
+
+        var baseUrl = _config["OpenSky:ApiBaseUrl"]
+            ?? "https://opensky-network.org";
+
+        var request = new HttpRequestMessage(
+            HttpMethod.Get,
+            $"{baseUrl}/api/flights/aircraft?icao24={icao24}&begin={beginUnix}&end={endUnix}");
+
+        request.Headers.Authorization =
+            new AuthenticationHeaderValue("Bearer", token);
+
+        var response = await _httpClient.SendAsync(request, cancellationToken);
+
+        if (response.Headers.TryGetValues(
+                "X-Rate-Limit-Remaining", out var rateLimitValues))
+        {
+            _logger.LogInformation(
+                "OpenSky rate limit remaining: {Remaining}",
+                string.Join(", ", rateLimitValues));
+        }
+        else
+        {
+            _logger.LogInformation(
+                "OpenSky response did not include X-Rate-Limit-Remaining header");
+        }
+
+        if (response.StatusCode == HttpStatusCode.NotFound)
+            return [];
+
+        response.EnsureSuccessStatusCode();
+
+        var flights = await response.Content
+            .ReadFromJsonAsync<List<OpenSkyFlight>>(cancellationToken)
+            ?? [];
+
+        return flights
+            .Select(f => new OpenSkyFlightInfo(
+                f.FirstSeen,
+                f.LastSeen,
+                f.EstDepartureAirport,
+                f.EstArrivalAirport))
+            .ToList();
+    }
+
+    private sealed record OpenSkyFlight(
+        [property: JsonPropertyName("firstSeen")] long FirstSeen,
+        [property: JsonPropertyName("lastSeen")] long LastSeen,
+        [property: JsonPropertyName("estDepartureAirport")] string? EstDepartureAirport,
+        [property: JsonPropertyName("estArrivalAirport")] string? EstArrivalAirport);
+}

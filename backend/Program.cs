@@ -72,6 +72,16 @@ builder.Services.AddHttpClient<FlightPollingService>(client =>
 
 builder.Services.AddHostedService<FlightPollingService>();
 
+builder.Services.Configure<EnrichmentSettings>(
+    builder.Configuration.GetSection("Enrichment"));
+
+builder.Services.AddHttpClient<IOpenSkyFlightsClient, OpenSkyFlightsClient>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+
+builder.Services.AddHostedService<FlightEnrichmentService>();
+
 var dataSourceBuilder = new NpgsqlDataSourceBuilder(
     builder.Configuration.GetConnectionString("DefaultConnection"));
 dataSourceBuilder.EnableDynamicJson();
