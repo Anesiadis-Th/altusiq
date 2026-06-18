@@ -7,3 +7,5 @@ backend/appsettings.Development.json
 
 # macOS
 .DS_Store
+
+CLAUDE.md

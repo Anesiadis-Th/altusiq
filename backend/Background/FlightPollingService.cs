@@ -4,6 +4,7 @@ using AltusIQ.Api.Hubs;
 using AltusIQ.Api.Models;
 using AltusIQ.Api.Services;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Options;
 
 namespace AltusIQ.Api.Background;
 
@@ -15,6 +16,7 @@ public class FlightPollingService : BackgroundService
     private readonly ILogger<FlightPollingService> _logger;
     private readonly IHubContext<FlightHub> _hubContext;
     private readonly FlightIngestionService _ingestionService;
+    private readonly IngestionSettings _settings;
 
     public FlightPollingService(
         IOpenSkyAuthService authService,
@@ -22,7 +24,8 @@ public class FlightPollingService : BackgroundService
         IConfiguration config,
         ILogger<FlightPollingService> logger,
         IHubContext<FlightHub> hubContext,
-        FlightIngestionService ingestionService)
+        FlightIngestionService ingestionService,
+        IOptions<IngestionSettings> settings)
     {
         _authService = authService;
         _httpClient = httpClient;
@@ -30,12 +33,12 @@ public class FlightPollingService : BackgroundService
         _logger = logger;
         _hubContext = hubContext;
         _ingestionService = ingestionService;
+        _settings = settings.Value;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var intervalSeconds = _config.GetValue<int>(
-            "OpenSky:PollingIntervalSeconds", 10);
+        var intervalSeconds = _settings.PollIntervalSeconds;
 
         _logger.LogInformation(
             "Flight polling service started. Interval: {Interval}s",
@@ -81,6 +84,19 @@ public class FlightPollingService : BackgroundService
 
         var response = await _httpClient.SendAsync(
             request, cancellationToken);
+
+        if (response.Headers.TryGetValues(
+                "X-Rate-Limit-Remaining", out var rateLimitValues))
+        {
+            _logger.LogInformation(
+                "OpenSky rate limit remaining: {Remaining}",
+                string.Join(", ", rateLimitValues));
+        }
+        else
+        {
+            _logger.LogInformation(
+                "OpenSky response did not include X-Rate-Limit-Remaining header");
+        }
 
         response.EnsureSuccessStatusCode();
 
