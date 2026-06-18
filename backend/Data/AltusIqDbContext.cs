@@ -40,9 +40,22 @@ public class AltusIqDbContext(DbContextOptions<AltusIqDbContext> options) : DbCo
             builder.Property(f => f.TrackPoints)
                 .HasColumnType("jsonb");
 
+            builder.Property(f => f.DepartureAirport)
+                .HasMaxLength(4);
+
+            builder.Property(f => f.ArrivalAirport)
+                .HasMaxLength(4);
+
+            builder.Property(f => f.EnrichedAt)
+                .HasColumnType("timestamp with time zone");
+
+            builder.Property(f => f.EnrichmentAttempts)
+                .HasDefaultValue(0);
+
             builder.HasIndex(f => f.Icao24);
             builder.HasIndex(f => f.OpenedAt);
             builder.HasIndex(f => f.ClosedAt);
+            builder.HasIndex(f => f.EnrichedAt);
 
             builder.HasIndex(f => f.LastPosition)
                 .HasMethod("gist");

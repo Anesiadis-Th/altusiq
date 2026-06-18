@@ -13,4 +13,8 @@ public class Flight
     public Point? LastPosition { get; set; }
     public double? LastAltitude { get; set; }
     public List<TrackPoint> TrackPoints { get; set; } = [];
+    public string? DepartureAirport { get; set; }
+    public string? ArrivalAirport { get; set; }
+    public DateTime? EnrichedAt { get; set; }
+    public int EnrichmentAttempts { get; set; }
 }

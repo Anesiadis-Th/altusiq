@@ -25,7 +25,9 @@ public class FlightQueryService(AltusIqDbContext db)
                 f.OpenedAt,
                 f.ClosedAt,
                 f.LastPosition != null ? f.LastPosition.Y : null,
-                f.LastPosition != null ? f.LastPosition.X : null
+                f.LastPosition != null ? f.LastPosition.X : null,
+                f.DepartureAirport,
+                f.ArrivalAirport
             ))
             .ToListAsync(ct);
     }

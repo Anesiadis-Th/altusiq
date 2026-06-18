@@ -5,6 +5,7 @@ using AltusIQ.Api.Data;
 using AltusIQ.Api.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -14,9 +15,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AltusIQ.Api.Migrations
 {
     [DbContext(typeof(AltusIqDbContext))]
-    partial class AltusIqDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260618200109_AddFlightEnrichmentFields")]
+    partial class AddFlightEnrichmentFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

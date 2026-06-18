@@ -8,5 +8,7 @@ public record FlightSummaryDto(
     DateTime OpenedAt,
     DateTime? ClosedAt,
     double? LastLatitude,
-    double? LastLongitude
+    double? LastLongitude,
+    string? DepartureAirport,
+    string? ArrivalAirport
 );
