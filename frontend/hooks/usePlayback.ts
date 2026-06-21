@@ -80,7 +80,6 @@ export function usePlayback(track: FlightTrack | null): PlaybackState {
     prevTrackIdRef.current = currentTrackId;
     setProgress(0);
     setPlaying(false);
-    reachedEndRef.current = false;
   }
 
   const duration = useMemo(() => {
