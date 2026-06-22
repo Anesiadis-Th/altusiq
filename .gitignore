@@ -9,3 +9,4 @@ backend/appsettings.Development.json
 .DS_Store
 
 CLAUDE.md
+.claude/

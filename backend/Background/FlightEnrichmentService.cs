@@ -25,82 +25,133 @@ public class FlightEnrichmentService : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation(
-            "Flight enrichment service started. Interval: {Interval}s, batch: {Batch}",
-            _settings.IntervalSeconds, _settings.BatchSize);
+            "Flight enrichment service started. Daily run hour (UTC): {Hour}, " +
+            "min age: {MinAge}m, max attempts: {MaxAttempts}, lookback: {Lookback}d",
+            _settings.RunAtHourUtc, _settings.MinAgeMinutes,
+            _settings.MaxAttempts, _settings.MaxLookbackDays);
+
+        await SafeRunAsync(stoppingToken);
 
         while (!stoppingToken.IsCancellationRequested)
         {
+            var delay = TimeUntilNextRun(DateTime.UtcNow);
+            _logger.LogInformation(
+                "Next enrichment run in {Hours:F1}h", delay.TotalHours);
+
             try
             {
-                await EnrichBatchAsync(stoppingToken);
+                await Task.Delay(delay, stoppingToken);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
                 break;
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error during flight enrichment batch");
-            }
 
-            await Task.Delay(
-                TimeSpan.FromSeconds(_settings.IntervalSeconds), stoppingToken);
+            await SafeRunAsync(stoppingToken);
         }
 
         _logger.LogInformation("Flight enrichment service stopped");
     }
 
-    private async Task EnrichBatchAsync(CancellationToken ct)
+    private async Task SafeRunAsync(CancellationToken ct)
+    {
+        try
+        {
+            await RunNightlyAsync(ct);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during nightly enrichment run");
+        }
+    }
+
+    private TimeSpan TimeUntilNextRun(DateTime nowUtc)
+    {
+        var next = new DateTime(
+            nowUtc.Year, nowUtc.Month, nowUtc.Day,
+            _settings.RunAtHourUtc, 0, 0, DateTimeKind.Utc);
+
+        if (next <= nowUtc)
+            next = next.AddDays(1);
+
+        return next - nowUtc;
+    }
+
+    private async Task RunNightlyAsync(CancellationToken ct)
     {
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AltusIqDbContext>();
         var flightsClient = scope.ServiceProvider.GetRequiredService<IOpenSkyFlightsClient>();
 
         var cutoff = DateTime.UtcNow.AddMinutes(-_settings.MinAgeMinutes);
+        var earliest = DateTime.UtcNow.Date.AddDays(-_settings.MaxLookbackDays);
+
+        var dates = await db.Flights
+            .Where(f => f.ClosedAt != null
+                && f.EnrichedAt == null
+                && f.ClosedAt < cutoff
+                && f.ClosedAt >= earliest
+                && f.EnrichmentAttempts < _settings.MaxAttempts)
+            .Select(f => f.ClosedAt!.Value.Date)
+            .Distinct()
+            .OrderBy(d => d)
+            .ToListAsync(ct);
+
+        if (dates.Count == 0)
+        {
+            _logger.LogInformation(
+                "Enrichment run: no pending flights, skipping (0 credits spent)");
+            return;
+        }
+
+        _logger.LogInformation(
+            "Enrichment run: {Count} date(s) with pending flights: {Dates}",
+            dates.Count, string.Join(", ", dates.Select(d => d.ToString("yyyy-MM-dd"))));
+
+        foreach (var date in dates)
+            await EnrichDateAsync(db, flightsClient, date, cutoff, ct);
+    }
+
+    private async Task EnrichDateAsync(
+        AltusIqDbContext db,
+        IOpenSkyFlightsClient flightsClient,
+        DateTime date,
+        DateTime cutoff,
+        CancellationToken ct)
+    {
+        var legsByAircraft = await FetchDayAsync(flightsClient, date, ct);
 
         var pending = await db.Flights
             .Where(f => f.ClosedAt != null
                 && f.EnrichedAt == null
                 && f.ClosedAt < cutoff
-                && f.EnrichmentAttempts < _settings.MaxAttempts)
-            .OrderBy(f => f.ClosedAt)
-            .Take(_settings.BatchSize)
+                && f.EnrichmentAttempts < _settings.MaxAttempts
+                && f.ClosedAt!.Value.Date == date)
             .ToListAsync(ct);
 
-        if (pending.Count == 0)
-            return;
+        var enriched = 0;
+        var noMatch = 0;
 
         foreach (var flight in pending)
-            await EnrichFlightAsync(flightsClient, flight, ct);
-
-        await db.SaveChangesAsync(ct);
-    }
-
-    private async Task EnrichFlightAsync(
-        IOpenSkyFlightsClient flightsClient, Flight flight, CancellationToken ct)
-    {
-        flight.EnrichmentAttempts++;
-
-        var transitBegin = new DateTimeOffset(flight.OpenedAt).ToUnixTimeSeconds();
-        var transitEnd = new DateTimeOffset(flight.ClosedAt!.Value).ToUnixTimeSeconds();
-
-        var queryBegin = new DateTimeOffset(
-            flight.OpenedAt.AddHours(-_settings.WindowBufferHours)).ToUnixTimeSeconds();
-        var queryEnd = new DateTimeOffset(
-            flight.ClosedAt.Value.AddHours(_settings.WindowBufferHours)).ToUnixTimeSeconds();
-
-        try
         {
-            var candidates = await flightsClient.GetFlightsByAircraftAsync(
-                flight.Icao24, queryBegin, queryEnd, ct);
+            flight.EnrichmentAttempts++;
 
-            var match = BestMatch(candidates, transitBegin, transitEnd);
+            var transitBegin = new DateTimeOffset(flight.OpenedAt).ToUnixTimeSeconds();
+            var transitEnd = new DateTimeOffset(flight.ClosedAt!.Value).ToUnixTimeSeconds();
+
+            var match = legsByAircraft.TryGetValue(flight.Icao24, out var legs)
+                ? BestMatch(legs, transitBegin, transitEnd)
+                : null;
 
             if (match is not null)
             {
                 flight.DepartureAirport = match.DepartureAirport;
                 flight.ArrivalAirport = match.ArrivalAirport;
                 flight.EnrichedAt = DateTime.UtcNow;
+                enriched++;
 
                 _logger.LogInformation(
                     "Enriched flight {Id} ({Icao24}): {Departure} -> {Arrival}",
@@ -110,18 +161,49 @@ public class FlightEnrichmentService : BackgroundService
             }
             else
             {
-                _logger.LogInformation(
-                    "No OpenSky flight match for {Id} ({Icao24}), attempt {Attempt}/{Max}",
-                    flight.Id, flight.Icao24,
-                    flight.EnrichmentAttempts, _settings.MaxAttempts);
+                noMatch++;
             }
         }
-        catch (Exception ex)
+
+        await db.SaveChangesAsync(ct);
+
+        _logger.LogInformation(
+            "Enriched date {Date}: {Enriched} matched, {NoMatch} no-match of {Total} pending",
+            date.ToString("yyyy-MM-dd"), enriched, noMatch, pending.Count);
+    }
+
+    private async Task<Dictionary<string, List<OpenSkyFlightInfo>>> FetchDayAsync(
+        IOpenSkyFlightsClient flightsClient, DateTime date, CancellationToken ct)
+    {
+        var legsByAircraft = new Dictionary<string, List<OpenSkyFlightInfo>>();
+        var dayStart = DateTime.SpecifyKind(date.Date, DateTimeKind.Utc);
+
+        for (var hour = 0; hour < 24; hour += _settings.WindowHours)
         {
-            _logger.LogWarning(ex,
-                "Enrichment attempt {Attempt}/{Max} failed for flight {Id} ({Icao24})",
-                flight.EnrichmentAttempts, _settings.MaxAttempts, flight.Id, flight.Icao24);
+            var windowStart = dayStart.AddHours(hour);
+            var windowEnd = windowStart.AddHours(_settings.WindowHours);
+
+            if (windowEnd > dayStart.AddDays(1))
+                windowEnd = dayStart.AddDays(1).AddSeconds(-1);
+
+            var beginUnix = new DateTimeOffset(windowStart).ToUnixTimeSeconds();
+            var endUnix = new DateTimeOffset(windowEnd).ToUnixTimeSeconds();
+
+            var legs = await flightsClient.GetAllFlightsAsync(beginUnix, endUnix, ct);
+
+            foreach (var leg in legs)
+            {
+                if (!legsByAircraft.TryGetValue(leg.Icao24, out var list))
+                {
+                    list = [];
+                    legsByAircraft[leg.Icao24] = list;
+                }
+
+                list.Add(leg);
+            }
         }
+
+        return legsByAircraft;
     }
 
     private static OpenSkyFlightInfo? BestMatch(

@@ -24,8 +24,7 @@ public class OpenSkyFlightsClient : IOpenSkyFlightsClient
         _logger = logger;
     }
 
-    public async Task<IReadOnlyList<OpenSkyFlightInfo>> GetFlightsByAircraftAsync(
-        string icao24,
+    public async Task<IReadOnlyList<OpenSkyFlightInfo>> GetAllFlightsAsync(
         long beginUnix,
         long endUnix,
         CancellationToken cancellationToken = default)
@@ -37,7 +36,7 @@ public class OpenSkyFlightsClient : IOpenSkyFlightsClient
 
         var request = new HttpRequestMessage(
             HttpMethod.Get,
-            $"{baseUrl}/api/flights/aircraft?icao24={icao24}&begin={beginUnix}&end={endUnix}");
+            $"{baseUrl}/api/flights/all?begin={beginUnix}&end={endUnix}");
 
         request.Headers.Authorization =
             new AuthenticationHeaderValue("Bearer", token);
@@ -67,7 +66,9 @@ public class OpenSkyFlightsClient : IOpenSkyFlightsClient
             ?? [];
 
         return flights
+            .Where(f => f.Icao24 is not null)
             .Select(f => new OpenSkyFlightInfo(
+                f.Icao24!,
                 f.FirstSeen,
                 f.LastSeen,
                 f.EstDepartureAirport,
@@ -76,6 +77,7 @@ public class OpenSkyFlightsClient : IOpenSkyFlightsClient
     }
 
     private sealed record OpenSkyFlight(
+        [property: JsonPropertyName("icao24")] string? Icao24,
         [property: JsonPropertyName("firstSeen")] long FirstSeen,
         [property: JsonPropertyName("lastSeen")] long LastSeen,
         [property: JsonPropertyName("estDepartureAirport")] string? EstDepartureAirport,
