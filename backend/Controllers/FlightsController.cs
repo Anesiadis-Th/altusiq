@@ -5,7 +5,9 @@ namespace AltusIQ.Api.Controllers;
 
 [ApiController]
 [Route("api/flights")]
-public class FlightsController(FlightQueryService queryService) : ControllerBase
+public class FlightsController(
+    FlightQueryService queryService,
+    FlightIngestionService ingestionService) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> GetFlights(
@@ -24,6 +26,16 @@ public class FlightsController(FlightQueryService queryService) : ControllerBase
     public async Task<IActionResult> GetTrack(Guid id, CancellationToken ct)
     {
         var track = await queryService.GetTrackAsync(id, ct);
+        if (track is null)
+            return NotFound();
+
+        return Ok(track);
+    }
+
+    [HttpGet("active/{icao24}/track")]
+    public async Task<IActionResult> GetActiveTrack(string icao24, CancellationToken ct)
+    {
+        var track = await ingestionService.GetActiveTrackAsync(icao24, ct);
         if (track is null)
             return NotFound();
 

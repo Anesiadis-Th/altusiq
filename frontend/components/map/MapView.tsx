@@ -12,6 +12,7 @@ import {
   startAircraftRenderLoop,
 } from "@/lib/aircraftLayer";
 import FlightPanel from "./FlightPanel";
+import { useActiveTrack } from "@/hooks/useFlights";
 import airports from "@/data/airports.json";
 
 interface MapViewProps {
@@ -101,6 +102,7 @@ export default function MapView({
   const engine = useRef(new DeadReckoningEngine());
   const [ready, setReady] = useState(false);
   const [selectedIcao, setSelectedIcao] = useState<string | null>(null);
+  const { data: liveTrack } = useActiveTrack(selectedIcao);
 
   useEffect(() => {
     if (map.current || !mapContainer.current) return;
@@ -134,6 +136,11 @@ export default function MapView({
         data: { type: "FeatureCollection", features: [] },
       });
 
+      instance.addSource("live-track", {
+        type: "geojson",
+        data: { type: "FeatureCollection", features: [] },
+      });
+
       instance.addSource("playback-marker", {
         type: "geojson",
         data: { type: "FeatureCollection", features: [] },
@@ -149,6 +156,18 @@ export default function MapView({
           "line-width": 2,
           "line-opacity": 0.7,
           "line-dasharray": [3, 2],
+        },
+      });
+
+      instance.addLayer({
+        id: "live-track-line",
+        type: "line",
+        source: "live-track",
+        layout: { "line-join": "round", "line-cap": "round" },
+        paint: {
+          "line-color": "#63b3ed",
+          "line-width": 2.5,
+          "line-opacity": 0.85,
         },
       });
 
@@ -310,6 +329,14 @@ export default function MapView({
       | undefined;
     source?.setData(toMarkerCollection(playbackPosition));
   }, [playbackPosition, ready]);
+
+  useEffect(() => {
+    if (!map.current || !ready) return;
+    const source = map.current.getSource("live-track") as
+      | mapboxgl.GeoJSONSource
+      | undefined;
+    source?.setData(toTrackLineCollection(liveTrack ?? null));
+  }, [liveTrack, ready]);
 
   const selected = selectedIcao
     ? (aircraft.find((a) => a.icao24 === selectedIcao) ?? null)

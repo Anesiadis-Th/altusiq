@@ -28,3 +28,18 @@ export function useFlightTrack(id: string | null) {
     staleTime: Infinity,
   });
 }
+
+export function useActiveTrack(icao24: string | null) {
+  return useQuery<FlightTrack | null>({
+    queryKey: ["active-track", icao24],
+    queryFn: async () => {
+      const res = await fetch(`${API_URL}/api/flights/active/${icao24}/track`);
+      if (res.status === 404) return null;
+      if (!res.ok) throw new Error("Failed to fetch active track");
+      return res.json();
+    },
+    enabled: icao24 !== null,
+    refetchInterval: 30_000,
+    staleTime: 15_000,
+  });
+}

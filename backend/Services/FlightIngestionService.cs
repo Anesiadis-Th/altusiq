@@ -1,5 +1,6 @@
 using AltusIQ.Api.Data;
 using AltusIQ.Api.Models;
+using AltusIQ.Api.Models.Dtos;
 using Microsoft.Extensions.Options;
 using NetTopologySuite.Geometries;
 
@@ -98,6 +99,39 @@ public class FlightIngestionService
 
                 _activeFlights[icao] = active;
             }
+        }
+        finally
+        {
+            _lock.Release();
+        }
+    }
+
+    public async Task<FlightTrackDto?> GetActiveTrackAsync(string icao24, CancellationToken ct)
+    {
+        var key = icao24.ToLowerInvariant();
+        await _lock.WaitAsync(ct);
+        try
+        {
+            if (!_activeFlights.TryGetValue(key, out var active))
+                return null;
+
+            return new FlightTrackDto(
+                active.Id,
+                key,
+                active.Callsign,
+                active.OriginCountry,
+                active.OpenedAt,
+                null,
+                active.TrackPoints
+                    .Select(p => new TrackPointDto(
+                        p.Timestamp,
+                        p.Longitude,
+                        p.Latitude,
+                        p.Altitude,
+                        p.Heading,
+                        p.Velocity))
+                    .ToList()
+            );
         }
         finally
         {
