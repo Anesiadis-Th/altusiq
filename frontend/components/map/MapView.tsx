@@ -289,11 +289,15 @@ export default function MapView({
       | mapboxgl.GeoJSONSource
       | undefined;
     source?.setData(toTrackLineCollection(playbackTrack));
-    if (playbackTrack && playbackTrack.track_points?.length > 0) {
-      const first = playbackTrack.track_points[0];
-      map.current.flyTo({
-        center: [first.longitude, first.latitude],
-        zoom: 6,
+    const points = playbackTrack?.track_points;
+    if (points && points.length > 0) {
+      const bounds = points.reduce(
+        (b, p) => b.extend([p.longitude, p.latitude]),
+        new mapboxgl.LngLatBounds(),
+      );
+      map.current.fitBounds(bounds, {
+        padding: { top: 80, bottom: 180, left: 60, right: 60 },
+        maxZoom: 9,
         duration: 1200,
       });
     }

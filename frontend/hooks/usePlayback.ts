@@ -1,6 +1,11 @@
 import { useMemo, useRef, useState, useEffect } from "react";
 import { FlightTrack, PlaybackPosition, TrackPoint } from "@/types/flight";
 
+// Replay every flight within the same wall-clock window regardless of its real
+// length, so playback is never frozen. speed is a multiplier of this baseline
+// (1x = ~30s, 2x = ~15s, 0.5x = ~60s).
+const BASE_PLAYBACK_SECONDS = 30;
+
 export interface PlaybackState {
   playing: boolean;
   progress: number;
@@ -79,7 +84,7 @@ export function usePlayback(track: FlightTrack | null): PlaybackState {
   if (currentTrackId !== prevTrackIdRef.current) {
     prevTrackIdRef.current = currentTrackId;
     setProgress(0);
-    setPlaying(false);
+    setPlaying((track?.track_points?.length ?? 0) >= 2);
   }
 
   const duration = useMemo(() => {
@@ -104,7 +109,7 @@ export function usePlayback(track: FlightTrack | null): PlaybackState {
       if (lastTimeRef.current !== null) {
         const delta = (now - lastTimeRef.current) / 1000;
         setProgress((p) => {
-          const next = p + (delta * speed) / duration;
+          const next = p + (delta * speed) / BASE_PLAYBACK_SECONDS;
           if (next >= 1) {
             reachedEndRef.current = true;
             return 1;

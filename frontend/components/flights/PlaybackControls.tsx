@@ -32,7 +32,7 @@ function formatHeading(deg: number | null): string {
   return `${Math.round(deg)}°`;
 }
 
-const SPEEDS = [1, 2, 5, 10, 30];
+const SPEEDS = [0.5, 1, 2, 4];
 
 export default function PlaybackControls({
   track,
@@ -56,15 +56,9 @@ export default function PlaybackControls({
     ? formatTimestamp(currentTimestamp)
     : "--:--:--";
   const isCompleted = progress >= 1;
-  const displayAltitude = isCompleted
-    ? null
-    : (currentPosition?.altitude ?? null);
-  const displayVelocity = isCompleted
-    ? null
-    : (currentPosition?.velocity ?? null);
-  const displayHeading = isCompleted
-    ? null
-    : (currentPosition?.heading ?? null);
+  const displayAltitude = currentPosition?.altitude ?? null;
+  const displayVelocity = currentPosition?.velocity ?? null;
+  const displayHeading = currentPosition?.heading ?? null;
 
   return (
     <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 w-[520px] bg-gray-900 bg-opacity-95 rounded-xl px-5 py-4 shadow-xl">
@@ -96,6 +90,7 @@ export default function PlaybackControls({
         max={1}
         step={0.001}
         value={progress}
+        onPointerDown={() => pause()}
         onChange={(e) => seek(parseFloat(e.target.value))}
         className="w-full h-1 accent-blue-400 mb-3 cursor-pointer"
       />
