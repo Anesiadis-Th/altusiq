@@ -278,6 +278,9 @@ export default function MapView({
       ["get", "icao24"],
       selectedIcao ?? "",
     ]);
+    // A filter change alone may not repaint an idle map, so the selection ring
+    // can lag until the next camera move. Force one render to apply it now.
+    instance.triggerRepaint();
   }, [selectedIcao, ready]);
 
   useEffect(() => {

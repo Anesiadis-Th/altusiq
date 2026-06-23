@@ -70,11 +70,8 @@ export class DeadReckoningEngine {
   private tracks = new Map<string, Track>();
 
   ingest(aircraft: Aircraft[], nowMs: number): void {
-    const seen = new Set<string>();
-
     for (const a of aircraft) {
       if (a.longitude == null || a.latitude == null) continue;
-      seen.add(a.icao24);
 
       const existing = this.tracks.get(a.icao24);
       if (existing) {
@@ -103,15 +100,19 @@ export class DeadReckoningEngine {
         });
       }
     }
-
-    for (const icao24 of this.tracks.keys()) {
-      if (!seen.has(icao24)) this.tracks.delete(icao24);
-    }
   }
 
   sample(nowMs: number): SampledAircraft[] {
     const result: SampledAircraft[] = [];
+    const expired: string[] = [];
     for (const track of this.tracks.values()) {
+      // Tolerate a missed poll: keep a track until it has been unseen longer
+      // than the extrapolation window, then evict it. A single skipped poll
+      // (120s) stays inside the window, so the plane never flickers out.
+      if ((nowMs - track.baseTimeMs) / 1000 > MAX_EXTRAPOLATE_S) {
+        expired.push(track.icao24);
+        continue;
+      }
       if (track.onGround) continue;
       const position = this.renderPosition(track, nowMs);
       result.push({
@@ -121,6 +122,7 @@ export class DeadReckoningEngine {
         heading: track.heading,
       });
     }
+    for (const icao24 of expired) this.tracks.delete(icao24);
     return result;
   }
 

@@ -27,15 +27,26 @@ export function toFeatureCollection(
   };
 }
 
+// Dead-reckoned aircraft move well under a pixel per frame, so rebuilding the
+// whole GeoJSON source at 60fps is wasted work that saturates the main thread.
+// Redraw at ~10fps instead — visually identical, far cheaper.
+const RENDER_INTERVAL_MS = 100;
+
 export function startAircraftRenderLoop(
   getSource: () => AircraftSource | undefined,
   engine: DeadReckoningEngine,
   raf: (cb: FrameRequestCallback) => number = requestAnimationFrame,
   caf: (handle: number) => void = cancelAnimationFrame,
   now: () => number = () => performance.now(),
+  intervalMs: number = RENDER_INTERVAL_MS,
 ): () => void {
+  let lastDraw = Number.NEGATIVE_INFINITY;
   let handle = raf(function loop(): void {
-    getSource()?.setData(toFeatureCollection(engine.sample(now())));
+    const t = now();
+    if (t - lastDraw >= intervalMs) {
+      lastDraw = t;
+      getSource()?.setData(toFeatureCollection(engine.sample(t)));
+    }
     handle = raf(loop);
   });
   return () => caf(handle);
