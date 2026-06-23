@@ -60,6 +60,32 @@ function toTrackLineCollection(
   };
 }
 
+function toLiveTrailCollection(
+  track: FlightTrack | null,
+  selectedIcao: string,
+  head: { longitude: number; latitude: number } | null,
+): GeoJSON.FeatureCollection {
+  if (!track || track.icao24.toLowerCase() !== selectedIcao.toLowerCase()) {
+    return { type: "FeatureCollection", features: [] };
+  }
+  const coords: [number, number][] = track.track_points.map((p) => [
+    p.longitude,
+    p.latitude,
+  ]);
+  if (head) coords.push([head.longitude, head.latitude]);
+  if (coords.length < 2) return { type: "FeatureCollection", features: [] };
+  return {
+    type: "FeatureCollection",
+    features: [
+      {
+        type: "Feature",
+        geometry: { type: "LineString", coordinates: coords },
+        properties: {},
+      },
+    ],
+  };
+}
+
 function toMarkerCollection(
   position: PlaybackPosition | null | undefined,
 ): GeoJSON.FeatureCollection {
@@ -332,11 +358,32 @@ export default function MapView({
 
   useEffect(() => {
     if (!map.current || !ready) return;
-    const source = map.current.getSource("live-track") as
-      | mapboxgl.GeoJSONSource
-      | undefined;
-    source?.setData(toTrackLineCollection(liveTrack ?? null));
-  }, [liveTrack, ready]);
+    const getSource = () =>
+      map.current?.getSource("live-track") as
+        | mapboxgl.GeoJSONSource
+        | undefined;
+
+    if (!selectedIcao) {
+      getSource()?.setData({ type: "FeatureCollection", features: [] });
+      return;
+    }
+
+    let frame = 0;
+    let last = Number.NEGATIVE_INFINITY;
+    const render = () => {
+      const now = performance.now();
+      if (now - last >= 100) {
+        last = now;
+        const head = engine.current.position(selectedIcao, now);
+        getSource()?.setData(
+          toLiveTrailCollection(liveTrack ?? null, selectedIcao, head),
+        );
+      }
+      frame = requestAnimationFrame(render);
+    };
+    frame = requestAnimationFrame(render);
+    return () => cancelAnimationFrame(frame);
+  }, [ready, selectedIcao, liveTrack]);
 
   const selected = selectedIcao
     ? (aircraft.find((a) => a.icao24 === selectedIcao) ?? null)

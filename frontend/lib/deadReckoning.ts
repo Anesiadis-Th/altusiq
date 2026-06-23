@@ -126,6 +126,18 @@ export class DeadReckoningEngine {
     return result;
   }
 
+  position(
+    icao24: string,
+    nowMs: number,
+  ): { longitude: number; latitude: number } | null {
+    const track = this.tracks.get(icao24);
+    if (!track || (nowMs - track.baseTimeMs) / 1000 > MAX_EXTRAPOLATE_S) {
+      return null;
+    }
+    const p = this.renderPosition(track, nowMs);
+    return { longitude: p.lon, latitude: p.lat };
+  }
+
   private renderPosition(
     track: Track,
     nowMs: number,
