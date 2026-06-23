@@ -5,6 +5,12 @@ import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { Aircraft } from "@/types/aircraft";
 import { FlightTrack, PlaybackPosition } from "@/types/flight";
+import { DeadReckoningEngine } from "@/lib/deadReckoning";
+import {
+  AircraftFeatureProps,
+  AircraftSource,
+  startAircraftRenderLoop,
+} from "@/lib/aircraftLayer";
 import FlightPanel from "./FlightPanel";
 import airports from "@/data/airports.json";
 
@@ -13,11 +19,6 @@ interface MapViewProps {
   connected: boolean;
   playbackTrack?: FlightTrack | null;
   playbackPosition?: PlaybackPosition | null;
-}
-
-interface AircraftFeatureProps {
-  icao24: string;
-  heading: number | null;
 }
 
 const AIRCRAFT_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24"><path d="M21 16V14L13 9V3.5C13 2.67 12.33 2 11.5 2C10.67 2 10 2.67 10 3.5V9L2 14V16L10 13.5V19L8 20.5V22L11.5 21L15 22V20.5L13 19V13.5L21 16Z" fill="#63b3ed"/></svg>`;
@@ -36,21 +37,6 @@ const airportGeoJSON: GeoJSON.FeatureCollection = {
     properties: { iata: a.iata, name: a.name },
   })),
 };
-
-function toFeatureCollection(
-  aircraft: Aircraft[],
-): GeoJSON.FeatureCollection<GeoJSON.Point, AircraftFeatureProps> {
-  return {
-    type: "FeatureCollection",
-    features: aircraft
-      .filter((a) => !a.on_ground && a.longitude != null && a.latitude != null)
-      .map((a) => ({
-        type: "Feature",
-        geometry: { type: "Point", coordinates: [a.longitude, a.latitude] },
-        properties: { icao24: a.icao24, heading: a.heading },
-      })),
-  };
-}
 
 function toTrackLineCollection(
   track: FlightTrack | null | undefined,
@@ -112,6 +98,7 @@ export default function MapView({
 }: MapViewProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
+  const engine = useRef(new DeadReckoningEngine());
   const [ready, setReady] = useState(false);
   const [selectedIcao, setSelectedIcao] = useState<string | null>(null);
 
@@ -271,12 +258,17 @@ export default function MapView({
   }, []);
 
   useEffect(() => {
+    engine.current.ingest(aircraft, performance.now());
+  }, [aircraft]);
+
+  useEffect(() => {
     if (!map.current || !ready) return;
-    const source = map.current.getSource("aircraft") as
-      | mapboxgl.GeoJSONSource
-      | undefined;
-    source?.setData(toFeatureCollection(aircraft));
-  }, [aircraft, ready]);
+    return startAircraftRenderLoop(
+      () =>
+        map.current?.getSource("aircraft") as AircraftSource | undefined,
+      engine.current,
+    );
+  }, [ready]);
 
   useEffect(() => {
     const instance = map.current;
