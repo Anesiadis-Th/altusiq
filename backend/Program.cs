@@ -82,6 +82,11 @@ builder.Services.AddHttpClient<IOpenSkyFlightsClient, OpenSkyFlightsClient>(clie
 
 builder.Services.AddHostedService<FlightEnrichmentService>();
 
+builder.Services.Configure<RetentionSettings>(
+    builder.Configuration.GetSection("Retention"));
+
+builder.Services.AddHostedService<RetentionService>();
+
 var dataSourceBuilder = new NpgsqlDataSourceBuilder(
     builder.Configuration.GetConnectionString("DefaultConnection"));
 dataSourceBuilder.EnableDynamicJson();
