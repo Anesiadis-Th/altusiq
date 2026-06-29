@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useFlightData } from "@/hooks/useFlightData";
 import { useFlightTrack } from "@/hooks/useFlights";
 import { usePlayback } from "@/hooks/usePlayback";
@@ -141,6 +142,13 @@ function TopBar({
       >
         History
       </button>
+
+      <Link
+        href="/analytics"
+        className="backdrop-blur-sm border rounded-lg px-3 py-2 text-sm transition-colors bg-gray-900/90 border-gray-700/50 text-gray-300 hover:text-white hover:border-gray-500/50"
+      >
+        Analytics
+      </Link>
     </div>
   );
 }
