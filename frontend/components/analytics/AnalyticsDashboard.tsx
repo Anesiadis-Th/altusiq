@@ -317,8 +317,8 @@ function FlightsPerHourChart({ data }: { data: Analytics }) {
         <Tooltip
           contentStyle={TOOLTIP_STYLE}
           cursor={{ fill: "#ffffff10" }}
-          labelFormatter={(value: number) =>
-            `${String(value).padStart(2, "0")}:00 UTC`
+          labelFormatter={(label: unknown) =>
+            `${String(label).padStart(2, "0")}:00 UTC`
           }
         />
         <Bar dataKey="count" fill={COLOR_ACCENT} name="Flights" radius={[3, 3, 0, 0]} />
