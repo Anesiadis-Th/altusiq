@@ -46,6 +46,7 @@ builder.Services.AddSignalR()
 builder.Services.AddHealthChecks();
 
 builder.Services.AddScoped<FlightQueryService>();
+builder.Services.AddScoped<AnalyticsService>();
 
 builder.WebHost.ConfigureKestrel(options =>
 {
