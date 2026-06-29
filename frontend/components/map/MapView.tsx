@@ -142,7 +142,7 @@ export default function MapView({
       zoom: 4,
     });
 
-    instance.addControl(new mapboxgl.NavigationControl(), "top-right");
+    instance.addControl(new mapboxgl.NavigationControl(), "bottom-right");
 
     instance.on("load", async () => {
       await loadAircraftIcon(instance);
