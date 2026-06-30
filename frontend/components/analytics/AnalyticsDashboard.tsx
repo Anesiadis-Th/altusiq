@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import {
   ResponsiveContainer,
   BarChart,
@@ -32,31 +31,42 @@ const TOOLTIP_STYLE = {
 
 const TICK = { fill: AXIS, fontSize: 12 } as const;
 
-export default function AnalyticsDashboard() {
+export default function AnalyticsDashboard({
+  onClose,
+}: {
+  onClose: () => void;
+}) {
   const { data, isLoading, error } = useAnalytics();
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-gray-400">
-        Loading analytics…
-      </div>
+      <Overlay>
+        <div className="min-h-screen flex items-center justify-center text-gray-400">
+          Loading analytics…
+        </div>
+      </Overlay>
     );
   }
 
   if (error || !data) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-3">
-        <p className="text-red-400">Failed to load analytics.</p>
-        <Link href="/" className="text-blue-400 hover:text-blue-300 text-sm">
-          ← Back to map
-        </Link>
-      </div>
+      <Overlay>
+        <div className="min-h-screen flex flex-col items-center justify-center gap-3">
+          <p className="text-red-400">Failed to load analytics.</p>
+          <button
+            onClick={onClose}
+            className="text-blue-400 hover:text-blue-300 text-sm"
+          >
+            ← Back to map
+          </button>
+        </div>
+      </Overlay>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 px-6 py-6 max-w-7xl mx-auto">
-      <Header data={data} />
+    <Overlay>
+      <Header data={data} onClose={onClose} />
       <StatCards data={data} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-5">
@@ -83,11 +93,25 @@ export default function AnalyticsDashboard() {
           <AltitudeBandsChart data={data} />
         </ChartCard>
       </div>
+    </Overlay>
+  );
+}
+
+function Overlay({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="absolute inset-0 z-40 overflow-y-auto bg-gray-950">
+      <div className="px-6 py-6 max-w-7xl mx-auto">{children}</div>
     </div>
   );
 }
 
-function Header({ data }: { data: Analytics }) {
+function Header({
+  data,
+  onClose,
+}: {
+  data: Analytics;
+  onClose: () => void;
+}) {
   return (
     <div className="flex items-center justify-between mb-6">
       <div>
@@ -97,12 +121,12 @@ function Header({ data }: { data: Analytics }) {
           flights
         </p>
       </div>
-      <Link
-        href="/"
+      <button
+        onClick={onClose}
         className="bg-gray-900/90 border border-gray-700/50 rounded-lg px-3 py-2 text-sm text-gray-300 hover:text-white hover:border-gray-500/50 transition-colors"
       >
         ← Live map
-      </Link>
+      </button>
     </div>
   );
 }

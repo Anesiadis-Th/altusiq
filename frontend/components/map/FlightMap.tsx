@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useFlightData } from "@/hooks/useFlightData";
 import { useFlightTrack } from "@/hooks/useFlights";
 import { usePlayback } from "@/hooks/usePlayback";
@@ -9,6 +9,13 @@ import { Aircraft } from "@/types/aircraft";
 import MapView from "./MapView";
 import FlightHistoryPanel from "@/components/flights/FlightHistoryPanel";
 import PlaybackControls from "@/components/flights/PlaybackControls";
+
+// Lazily loaded so Recharts is fetched only when the overlay is first opened,
+// keeping it out of the initial map bundle.
+const AnalyticsDashboard = dynamic(
+  () => import("@/components/analytics/AnalyticsDashboard"),
+  { ssr: false },
+);
 
 const SCANDINAVIA_BBOX = {
   minLon: 4.0,
@@ -32,6 +39,7 @@ function computeRegionalCount(aircraft: Aircraft[]): number {
 export default function FlightMap() {
   const { aircraft, connected, error } = useFlightData();
   const [showHistory, setShowHistory] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
   const [selectedFlightId, setSelectedFlightId] = useState<string | null>(null);
 
   const { data: track, isLoading: isTrackLoading } =
@@ -75,6 +83,8 @@ export default function FlightMap() {
         regionalCount={regionalCount}
         showHistory={showHistory}
         onHistoryClick={() => setShowHistory((v) => !v)}
+        showAnalytics={showAnalytics}
+        onAnalyticsClick={() => setShowAnalytics((v) => !v)}
       />
 
       {showHistory && (
@@ -94,6 +104,10 @@ export default function FlightMap() {
           onClose={handleClosePlayback}
         />
       )}
+
+      {showAnalytics && (
+        <AnalyticsDashboard onClose={() => setShowAnalytics(false)} />
+      )}
     </div>
   );
 }
@@ -104,6 +118,8 @@ interface TopBarProps {
   regionalCount: number;
   showHistory: boolean;
   onHistoryClick: () => void;
+  showAnalytics: boolean;
+  onAnalyticsClick: () => void;
 }
 
 function TopBar({
@@ -112,6 +128,8 @@ function TopBar({
   regionalCount,
   showHistory,
   onHistoryClick,
+  showAnalytics,
+  onAnalyticsClick,
 }: TopBarProps) {
   return (
     <div className="absolute top-4 left-4 z-10 flex items-center gap-2">
@@ -143,12 +161,16 @@ function TopBar({
         History
       </button>
 
-      <Link
-        href="/analytics"
-        className="backdrop-blur-sm border rounded-lg px-3 py-2 text-sm transition-colors bg-gray-900/90 border-gray-700/50 text-gray-300 hover:text-white hover:border-gray-500/50"
+      <button
+        onClick={onAnalyticsClick}
+        className={`backdrop-blur-sm border rounded-lg px-3 py-2 text-sm transition-colors ${
+          showAnalytics
+            ? "bg-blue-500/20 border-blue-500/50 text-blue-400"
+            : "bg-gray-900/90 border-gray-700/50 text-gray-300 hover:text-white hover:border-gray-500/50"
+        }`}
       >
         Analytics
-      </Link>
+      </button>
     </div>
   );
 }
