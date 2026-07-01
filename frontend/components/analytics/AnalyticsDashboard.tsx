@@ -99,7 +99,7 @@ export default function AnalyticsDashboard({
 
 function Overlay({ children }: { children: React.ReactNode }) {
   return (
-    <div className="absolute inset-0 z-40 overflow-y-auto bg-gray-950">
+    <div className="absolute inset-0 z-40 overflow-y-auto bg-gray-950/75 backdrop-blur-md">
       <div className="px-6 py-6 max-w-7xl mx-auto">{children}</div>
     </div>
   );
@@ -179,7 +179,7 @@ function StatCard({
   hint?: string;
 }) {
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl px-4 py-3">
+    <div className="bg-gray-900/70 border border-gray-800 rounded-xl px-4 py-3">
       <p className="text-gray-500 text-xs uppercase tracking-wide">{label}</p>
       <p className="text-white text-2xl font-semibold mt-1">{value}</p>
       {hint && <p className="text-gray-600 text-xs mt-1">{hint}</p>}
@@ -197,7 +197,7 @@ function ChartCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+    <div className="bg-gray-900/70 border border-gray-800 rounded-xl p-4">
       <div className="mb-3">
         <h2 className="text-white font-medium">{title}</h2>
         <p className="text-gray-500 text-xs">{subtitle}</p>
