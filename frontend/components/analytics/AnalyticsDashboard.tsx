@@ -14,6 +14,7 @@ import {
   Legend,
 } from "recharts";
 import { useAnalytics } from "@/hooks/useAnalytics";
+import { airportLabel, airportName } from "@/lib/airports";
 import { Analytics, Route } from "@/types/analytics";
 
 const COLOR_DEPARTURES = "#3b82f6"; // blue-500
@@ -157,8 +158,14 @@ function StatCards({ data }: { data: Analytics }) {
       />
       <StatCard
         label="Busiest airport"
-        value={busiest?.icao ?? "—"}
-        hint={busiest ? `${busiest.total.toLocaleString()} movements` : undefined}
+        value={busiest ? airportLabel(busiest.icao) : "—"}
+        hint={
+          busiest
+            ? [airportName(busiest.icao), `${busiest.total.toLocaleString()} movements`]
+                .filter(Boolean)
+                .join(" · ")
+            : undefined
+        }
       />
       <StatCard
         label="Peak hour"
@@ -225,8 +232,15 @@ function BusiestAirportsChart({ data }: { data: Analytics }) {
           tick={TICK}
           stroke={GRID}
           width={48}
+          tickFormatter={(icao: string) => airportLabel(icao)}
         />
-        <Tooltip contentStyle={TOOLTIP_STYLE} cursor={{ fill: "#ffffff10" }} />
+        <Tooltip
+          contentStyle={TOOLTIP_STYLE}
+          cursor={{ fill: "#ffffff10" }}
+          labelFormatter={(icao: unknown) =>
+            airportName(String(icao)) ?? airportLabel(String(icao))
+          }
+        />
         <Legend wrapperStyle={{ color: AXIS, fontSize: 12 }} />
         <Bar
           dataKey="departures"
@@ -250,7 +264,7 @@ function TopRoutesChart({ data }: { data: Analytics }) {
   if (data.top_routes.length === 0) return <EmptyChart />;
 
   const rows = data.top_routes.map((r: Route) => ({
-    label: `${r.departure} → ${r.arrival}`,
+    label: `${airportLabel(r.departure)} → ${airportLabel(r.arrival)}`,
     count: r.count,
   }));
 
