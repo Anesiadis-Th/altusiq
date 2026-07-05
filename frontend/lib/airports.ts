@@ -1,18 +1,18 @@
-import airports from "@/data/airports.json";
+import codes from "@/data/airportCodes.json";
 
-const byIcao = new Map<string, { iata: string; name: string }>(
-  airports.map((a) => [a.icao, { iata: a.iata, name: a.name }]),
-);
+// Comprehensive ICAO → [IATA, name] table (OurAirports, public domain), covering
+// every airport that has both an ICAO and an IATA code. Lives in the lazily
+// loaded analytics chunk, so it never touches the initial map bundle.
+const table = codes as Record<string, string[]>;
 
 /**
- * Analytics data is keyed by ICAO (4-letter, from OpenSky). The map labels
- * airports by IATA. These helpers translate ICAO → IATA/name for display,
- * falling back to the raw ICAO for airports outside our static set.
+ * Analytics data is keyed by ICAO (4-letter, from OpenSky). The UI prefers IATA
+ * (3-letter). Falls back to the raw ICAO for airfields that have no IATA code.
  */
 export function airportLabel(icao: string): string {
-  return byIcao.get(icao)?.iata ?? icao;
+  return table[icao]?.[0] ?? icao;
 }
 
 export function airportName(icao: string): string | null {
-  return byIcao.get(icao)?.name ?? null;
+  return table[icao]?.[1] ?? null;
 }
