@@ -65,6 +65,7 @@ builder.Services.AddSingleton<IOpenSkyAuthService, OpenSkyAuthService>();
 builder.Services.Configure<IngestionSettings>(
     builder.Configuration.GetSection("Ingestion"));
 builder.Services.AddSingleton<FlightIngestionService>();
+builder.Services.AddSingleton<LiveSnapshotStore>();
 
 builder.Services.AddHttpClient<FlightPollingService>(client =>
 {

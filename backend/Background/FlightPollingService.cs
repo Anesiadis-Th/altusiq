@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using AltusIQ.Api.Hubs;
@@ -16,6 +17,7 @@ public class FlightPollingService : BackgroundService
     private readonly ILogger<FlightPollingService> _logger;
     private readonly IHubContext<FlightHub> _hubContext;
     private readonly FlightIngestionService _ingestionService;
+    private readonly LiveSnapshotStore _snapshotStore;
     private readonly IngestionSettings _settings;
 
     public FlightPollingService(
@@ -25,6 +27,7 @@ public class FlightPollingService : BackgroundService
         ILogger<FlightPollingService> logger,
         IHubContext<FlightHub> hubContext,
         FlightIngestionService ingestionService,
+        LiveSnapshotStore snapshotStore,
         IOptions<IngestionSettings> settings)
     {
         _authService = authService;
@@ -33,6 +36,7 @@ public class FlightPollingService : BackgroundService
         _logger = logger;
         _hubContext = hubContext;
         _ingestionService = ingestionService;
+        _snapshotStore = snapshotStore;
         _settings = settings.Value;
     }
 
@@ -75,9 +79,13 @@ public class FlightPollingService : BackgroundService
         var baseUrl = _config["OpenSky:ApiBaseUrl"]
             ?? "https://opensky-network.org";
 
-        var request = new HttpRequestMessage(
-            HttpMethod.Get,
-            $"{baseUrl}/api/states/all");
+        var url = string.Create(
+            CultureInfo.InvariantCulture,
+            $"{baseUrl}/api/states/all" +
+            $"?lamin={_settings.MinLat}&lomin={_settings.MinLon}" +
+            $"&lamax={_settings.MaxLat}&lomax={_settings.MaxLon}");
+
+        var request = new HttpRequestMessage(HttpMethod.Get, url);
 
         request.Headers.Authorization =
             new AuthenticationHeaderValue("Bearer", token);
@@ -105,6 +113,8 @@ public class FlightPollingService : BackgroundService
 
         _logger.LogInformation(
             "Received {Count} aircraft from OpenSky", aircraft.Count);
+
+        _snapshotStore.Update(aircraft);
 
         await _hubContext.Clients.All.SendAsync(
             "ReceiveFlightData", aircraft, cancellationToken);
