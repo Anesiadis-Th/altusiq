@@ -97,7 +97,10 @@ public class AnalyticsService(AltusIqDbContext db)
         // Project to an anonymous type before ordering: EF can translate an
         // OrderBy over an anonymous projection but not over a record constructor.
         var rows = await window
-            .Where(f => f.DepartureAirport != null && f.ArrivalAirport != null)
+            // Exclude same-airport pairs (departure == arrival): these are local
+            // training/skydiving/GA circuits, not origin→destination routes.
+            .Where(f => f.DepartureAirport != null && f.ArrivalAirport != null
+                && f.DepartureAirport != f.ArrivalAirport)
             .GroupBy(f => new { f.DepartureAirport, f.ArrivalAirport })
             .Select(g => new
             {
