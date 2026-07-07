@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using AltusIQ.Api.Hubs;
@@ -79,13 +78,9 @@ public class FlightPollingService : BackgroundService
         var baseUrl = _config["OpenSky:ApiBaseUrl"]
             ?? "https://opensky-network.org";
 
-        var url = string.Create(
-            CultureInfo.InvariantCulture,
-            $"{baseUrl}/api/states/all" +
-            $"?lamin={_settings.MinLat}&lomin={_settings.MinLon}" +
-            $"&lamax={_settings.MaxLat}&lomax={_settings.MaxLon}");
-
-        var request = new HttpRequestMessage(HttpMethod.Get, url);
+        var request = new HttpRequestMessage(
+            HttpMethod.Get,
+            $"{baseUrl}/api/states/all");
 
         request.Headers.Authorization =
             new AuthenticationHeaderValue("Bearer", token);
