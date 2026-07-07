@@ -91,7 +91,9 @@ public partial class RouteLookupService : IRouteLookupService
             airport.IataCode,
             airport.Name,
             airport.Municipality,
-            airport.CountryName);
+            airport.CountryName,
+            airport.Latitude,
+            airport.Longitude);
 
     [GeneratedRegex("^[A-Z0-9]{2,8}$")]
     private static partial Regex CallsignPattern();
@@ -115,5 +117,7 @@ public partial class RouteLookupService : IRouteLookupService
         [property: JsonPropertyName("iata_code")] string? IataCode,
         [property: JsonPropertyName("name")] string? Name,
         [property: JsonPropertyName("municipality")] string? Municipality,
-        [property: JsonPropertyName("country_name")] string? CountryName);
+        [property: JsonPropertyName("country_name")] string? CountryName,
+        [property: JsonPropertyName("latitude")] double? Latitude,
+        [property: JsonPropertyName("longitude")] double? Longitude);
 }

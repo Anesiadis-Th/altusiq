@@ -5,7 +5,9 @@ public record RouteAirportDto(
     string? IataCode,
     string? Name,
     string? Municipality,
-    string? CountryName);
+    string? CountryName,
+    double? Latitude,
+    double? Longitude);
 
 public record FlightRouteDto(
     string Callsign,

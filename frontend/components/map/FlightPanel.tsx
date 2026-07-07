@@ -3,6 +3,9 @@
 import { Aircraft } from "@/types/aircraft";
 import { RouteAirport } from "@/types/route";
 import { useRoute } from "@/hooks/useRoute";
+import { haversineKm } from "@/lib/geo";
+
+const MIN_ETA_SPEED_MS = 30;
 
 interface FlightPanelProps {
   aircraft: Aircraft | null;
@@ -31,6 +34,34 @@ export default function FlightPanel({ aircraft, onClose }: FlightPanelProps) {
   const heading = aircraft.heading
     ? `${Math.round(aircraft.heading)}°`
     : "Unknown";
+
+  const destLat = route?.destination.latitude;
+  const destLon = route?.destination.longitude;
+  let eta: { distance: string; time: string } | null = null;
+  if (
+    destLat != null &&
+    destLon != null &&
+    !aircraft.on_ground &&
+    aircraft.velocity != null &&
+    aircraft.velocity > MIN_ETA_SPEED_MS
+  ) {
+    const km = haversineKm(
+      aircraft.latitude,
+      aircraft.longitude,
+      destLat,
+      destLon,
+    );
+    const etaDate = new Date(
+      Date.now() + (km / (aircraft.velocity * 3.6)) * 3_600_000,
+    );
+    eta = {
+      distance: `${Math.round(km).toLocaleString()} km`,
+      time: etaDate.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    };
+  }
 
   return (
     <div className="absolute top-4 right-4 z-10 w-72 bg-gray-900 bg-opacity-95 rounded-xl border border-gray-700 shadow-2xl overflow-hidden">
@@ -66,6 +97,14 @@ export default function FlightPanel({ aircraft, onClose }: FlightPanelProps) {
             {route.airline_name && (
               <p className="text-gray-500 text-xs mt-2">
                 {route.airline_name}
+              </p>
+            )}
+            {eta && (
+              <p
+                className="text-gray-400 text-xs mt-2"
+                title="Great-circle distance at current ground speed"
+              >
+                {eta.distance} to go · ETA ≈ {eta.time}
               </p>
             )}
           </>

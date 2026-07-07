@@ -4,6 +4,8 @@ export interface RouteAirport {
   name: string | null;
   municipality: string | null;
   country_name: string | null;
+  latitude: number | null;
+  longitude: number | null;
 }
 
 export interface FlightRoute {
