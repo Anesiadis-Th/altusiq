@@ -44,9 +44,15 @@ builder.Services.AddSignalR()
     });
 
 builder.Services.AddHealthChecks();
+builder.Services.AddMemoryCache();
 
 builder.Services.AddScoped<FlightQueryService>();
 builder.Services.AddScoped<AnalyticsService>();
+
+builder.Services.AddHttpClient<IRouteLookupService, RouteLookupService>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(10);
+});
 
 builder.WebHost.ConfigureKestrel(options =>
 {

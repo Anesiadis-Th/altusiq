@@ -1,6 +1,8 @@
 "use client";
 
 import { Aircraft } from "@/types/aircraft";
+import { RouteAirport } from "@/types/route";
+import { useRoute } from "@/hooks/useRoute";
 
 interface FlightPanelProps {
   aircraft: Aircraft | null;
@@ -8,6 +10,10 @@ interface FlightPanelProps {
 }
 
 export default function FlightPanel({ aircraft, onClose }: FlightPanelProps) {
+  const { data: route, isLoading: routeLoading } = useRoute(
+    aircraft?.callsign ?? null,
+  );
+
   if (!aircraft) return null;
 
   const altitude = aircraft.barometric_altitude
@@ -46,9 +52,33 @@ export default function FlightPanel({ aircraft, onClose }: FlightPanelProps) {
         </button>
       </div>
 
+      {/* Route */}
+      <div className="px-4 py-3 border-b border-gray-700">
+        {routeLoading ? (
+          <p className="text-gray-500 text-xs">Looking up route…</p>
+        ) : route ? (
+          <>
+            <div className="flex items-center justify-between gap-2">
+              <RouteEndpoint airport={route.origin} />
+              <span className="text-gray-500 text-lg shrink-0">→</span>
+              <RouteEndpoint airport={route.destination} alignRight />
+            </div>
+            {route.airline_name && (
+              <p className="text-gray-500 text-xs mt-2">
+                {route.airline_name}
+              </p>
+            )}
+          </>
+        ) : (
+          <p className="text-gray-500 text-xs">
+            Route unknown — no public route data for this callsign
+          </p>
+        )}
+      </div>
+
       {/* Body */}
       <div className="px-4 py-3 space-y-3">
-        <Row label="Country" value={aircraft.origin_country ?? "Unknown"} />
+        <Row label="Registered in" value={aircraft.origin_country ?? "Unknown"} />
         <Row label="Altitude" value={altitude} />
         <Row label="Speed" value={speed} />
         <Row label="Vertical Rate" value={verticalRate} />
@@ -67,6 +97,25 @@ export default function FlightPanel({ aircraft, onClose }: FlightPanelProps) {
           {new Date(aircraft.last_contact * 1000).toLocaleTimeString()}
         </p>
       </div>
+    </div>
+  );
+}
+
+function RouteEndpoint({
+  airport,
+  alignRight = false,
+}: {
+  airport: RouteAirport;
+  alignRight?: boolean;
+}) {
+  return (
+    <div className={`min-w-0 ${alignRight ? "text-right" : ""}`}>
+      <p className="text-white text-lg font-semibold">
+        {airport.iata_code ?? airport.icao_code ?? "?"}
+      </p>
+      <p className="text-gray-400 text-xs truncate">
+        {airport.municipality ?? airport.name ?? ""}
+      </p>
     </div>
   );
 }
