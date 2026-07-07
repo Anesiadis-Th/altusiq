@@ -42,7 +42,7 @@ export default function AnalyticsDashboard({
   if (isLoading) {
     return (
       <Overlay>
-        <div className="min-h-screen flex items-center justify-center text-gray-400">
+        <div className="min-h-dvh flex items-center justify-center text-gray-400">
           Loading analytics…
         </div>
       </Overlay>
@@ -52,7 +52,7 @@ export default function AnalyticsDashboard({
   if (error || !data) {
     return (
       <Overlay>
-        <div className="min-h-screen flex flex-col items-center justify-center gap-3">
+        <div className="min-h-dvh flex flex-col items-center justify-center gap-3">
           <p className="text-red-400">Failed to load analytics.</p>
           <button
             onClick={onClose}
@@ -101,7 +101,7 @@ export default function AnalyticsDashboard({
 function Overlay({ children }: { children: React.ReactNode }) {
   return (
     <div className="absolute inset-0 z-40 overflow-y-auto bg-gray-950/75 backdrop-blur-md">
-      <div className="px-6 py-6 max-w-7xl mx-auto">{children}</div>
+      <div className="px-4 py-4 sm:px-6 sm:py-6 max-w-7xl mx-auto">{children}</div>
     </div>
   );
 }

@@ -32,7 +32,7 @@ export default function FlightHistoryPanel({
   const { data: flights, isLoading, isError } = useFlights();
 
   return (
-    <div className="absolute left-4 top-16 z-10 w-72 bg-gray-900 bg-opacity-95 rounded-lg overflow-hidden shadow-xl">
+    <div className="absolute left-4 right-4 top-16 z-10 sm:right-auto sm:w-72 bg-gray-900 bg-opacity-95 rounded-lg overflow-hidden shadow-xl">
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700">
         <h2 className="text-white text-sm font-semibold">Recent Flights</h2>
         <button
@@ -55,7 +55,7 @@ export default function FlightHistoryPanel({
       )}
 
       {flights && flights.length > 0 && (
-        <div className="overflow-y-auto max-h-[480px]">
+        <div className="overflow-y-auto max-h-[calc(100dvh-16rem)] sm:max-h-[480px]">
           {flights.map((flight: FlightSummary) => (
             <button
               key={flight.id}

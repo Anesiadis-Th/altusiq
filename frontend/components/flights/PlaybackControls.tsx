@@ -61,7 +61,7 @@ export default function PlaybackControls({
   const displayHeading = currentPosition?.heading ?? null;
 
   return (
-    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 w-[520px] bg-gray-900 bg-opacity-95 rounded-xl px-5 py-4 shadow-xl">
+    <div className="absolute bottom-4 sm:bottom-8 left-1/2 -translate-x-1/2 z-30 w-[calc(100%-2rem)] max-w-[520px] bg-gray-900 bg-opacity-95 rounded-xl px-4 sm:px-5 py-4 shadow-xl">
       <div className="flex items-center justify-between mb-3">
         <span className="text-white text-sm font-semibold font-mono">
           {label}

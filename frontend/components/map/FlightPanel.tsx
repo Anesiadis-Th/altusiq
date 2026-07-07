@@ -64,7 +64,8 @@ export default function FlightPanel({ aircraft, onClose }: FlightPanelProps) {
   }
 
   return (
-    <div className="absolute top-4 right-4 z-10 w-72 bg-gray-900 bg-opacity-95 rounded-xl border border-gray-700 shadow-2xl overflow-hidden">
+    <div className="absolute inset-x-0 bottom-0 z-20 max-h-[70dvh] overflow-y-auto rounded-t-2xl border-t border-gray-700 bg-gray-900/95 pb-[env(safe-area-inset-bottom)] shadow-2xl sm:inset-x-auto sm:bottom-auto sm:top-4 sm:right-4 sm:z-10 sm:w-72 sm:max-h-none sm:overflow-hidden sm:rounded-xl sm:border sm:pb-0">
+      <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-gray-700 sm:hidden" />
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700">
         <div>
