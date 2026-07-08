@@ -37,7 +37,7 @@ function computeRegionalCount(aircraft: Aircraft[]): number {
 }
 
 export default function FlightMap() {
-  const { aircraft, connected, error } = useFlightData();
+  const { aircraft, connected } = useFlightData();
   const [showHistory, setShowHistory] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [selectedFlightId, setSelectedFlightId] = useState<string | null>(null);
@@ -49,14 +49,6 @@ export default function FlightMap() {
     () => computeRegionalCount(aircraft),
     [aircraft],
   );
-
-  if (error) {
-    return (
-      <div className="w-full h-dvh bg-gray-950 flex items-center justify-center">
-        <p className="text-red-400">Connection error: {error}</p>
-      </div>
-    );
-  }
 
   function handleSelectFlight(id: string) {
     setSelectedFlightId(id);

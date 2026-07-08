@@ -86,8 +86,11 @@ public class FlightEnrichmentService : BackgroundService
         var db = scope.ServiceProvider.GetRequiredService<AltusIqDbContext>();
         var flightsClient = scope.ServiceProvider.GetRequiredService<IOpenSkyFlightsClient>();
 
-        var cutoff = DateTime.UtcNow.AddMinutes(-_settings.MinAgeMinutes);
-        var earliest = DateTime.UtcNow.Date.AddDays(-_settings.MaxLookbackDays);
+        var nowUtc = DateTime.UtcNow;
+        var todayStartUtc = nowUtc.Date;
+        var minAgeCutoff = nowUtc.AddMinutes(-_settings.MinAgeMinutes);
+        var cutoff = minAgeCutoff < todayStartUtc ? minAgeCutoff : todayStartUtc;
+        var earliest = todayStartUtc.AddDays(-_settings.MaxLookbackDays);
 
         var dates = await db.Flights
             .Where(f => f.ClosedAt != null
@@ -123,6 +126,15 @@ public class FlightEnrichmentService : BackgroundService
         CancellationToken ct)
     {
         var legsByAircraft = await FetchDayAsync(flightsClient, date, ct);
+
+        if (legsByAircraft.Count == 0)
+        {
+            _logger.LogWarning(
+                "OpenSky returned no flights at all for {Date} (batch likely not processed yet), " +
+                "skipping this date without incrementing attempts",
+                date.ToString("yyyy-MM-dd"));
+            return;
+        }
 
         var pending = await db.Flights
             .Where(f => f.ClosedAt != null
