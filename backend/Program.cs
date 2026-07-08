@@ -61,12 +61,13 @@ builder.WebHost.ConfigureKestrel(options =>
     options.ListenAnyIP(port);
 });
 
-builder.Services.AddHttpClient<IOpenSkyAuthService, OpenSkyAuthService>(client =>
+builder.Services.AddHttpClient<OpenSkyAuthService>(client =>
 {
     client.Timeout = TimeSpan.FromSeconds(15);
 });
 
-builder.Services.AddSingleton<IOpenSkyAuthService, OpenSkyAuthService>();
+builder.Services.AddSingleton<IOpenSkyAuthService>(sp =>
+    sp.GetRequiredService<OpenSkyAuthService>());
 
 builder.Services.Configure<IngestionSettings>(
     builder.Configuration.GetSection("Ingestion"));
@@ -78,7 +79,8 @@ builder.Services.AddHttpClient<FlightPollingService>(client =>
     client.Timeout = TimeSpan.FromSeconds(30);
 });
 
-builder.Services.AddHostedService<FlightPollingService>();
+builder.Services.AddHostedService(sp =>
+    sp.GetRequiredService<FlightPollingService>());
 
 builder.Services.Configure<EnrichmentSettings>(
     builder.Configuration.GetSection("Enrichment"));

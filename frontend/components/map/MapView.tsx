@@ -126,6 +126,7 @@ export default function MapView({
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const engine = useRef(new DeadReckoningEngine());
+  const lastSelected = useRef<Aircraft | null>(null);
   const [ready, setReady] = useState(false);
   const [selectedIcao, setSelectedIcao] = useState<string | null>(null);
   const { data: liveTrack } = useActiveTrack(selectedIcao);
@@ -385,9 +386,27 @@ export default function MapView({
     return () => cancelAnimationFrame(frame);
   }, [ready, selectedIcao, liveTrack]);
 
-  const selected = selectedIcao
+  useEffect(() => {
+    if (!selectedIcao) return;
+    const id = window.setInterval(() => {
+      if (!engine.current.position(selectedIcao, performance.now())) {
+        setSelectedIcao(null);
+      }
+    }, 5000);
+    return () => window.clearInterval(id);
+  }, [selectedIcao]);
+
+  // The selected plane can be absent from a single broadcast while its icon
+  // keeps dead-reckoning, so fall back to the last-known aircraft rather than
+  // flickering the panel closed until the next poll.
+  const live = selectedIcao
     ? (aircraft.find((a) => a.icao24 === selectedIcao) ?? null)
     : null;
+  if (lastSelected.current && lastSelected.current.icao24 !== selectedIcao) {
+    lastSelected.current = null;
+  }
+  if (live) lastSelected.current = live;
+  const selected = live ?? lastSelected.current;
 
   return (
     <div className="relative w-full h-full">
