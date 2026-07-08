@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using AltusIQ.Api.Models.Dtos;
@@ -77,7 +78,7 @@ public partial class RouteLookupService : IRouteLookupService
             return dto;
         }
         catch (Exception ex) when (
-            ex is HttpRequestException or TaskCanceledException
+            ex is HttpRequestException or TaskCanceledException or JsonException
             && !cancellationToken.IsCancellationRequested)
         {
             _logger.LogWarning(ex,

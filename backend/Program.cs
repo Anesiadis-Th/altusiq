@@ -109,7 +109,6 @@ builder.Services.AddDbContext<AltusIqDbContext>(options =>
 var app = builder.Build();
 
 app.UseCors("Frontend");
-app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();

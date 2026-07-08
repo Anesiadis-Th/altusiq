@@ -1,13 +1,16 @@
 using AltusIQ.Api.Data;
 using AltusIQ.Api.Models.Dtos;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace AltusIQ.Api.Services;
 
-public class AnalyticsService(AltusIqDbContext db)
+public class AnalyticsService(AltusIqDbContext db, IMemoryCache cache)
 {
     private const int WindowDays = 15;
     private const int TopN = 10;
+    private const string CacheKey = "analytics";
+    private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(5);
 
     // Altitude band labels in display order. Must match the CASE expression below.
     private static readonly string[] BandOrder =
@@ -16,6 +19,16 @@ public class AnalyticsService(AltusIqDbContext db)
     ];
 
     public async Task<AnalyticsResponseDto> GetAnalyticsAsync(CancellationToken ct)
+    {
+        var result = await cache.GetOrCreateAsync(CacheKey, entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = CacheTtl;
+            return ComputeAnalyticsAsync(ct);
+        });
+        return result!;
+    }
+
+    private async Task<AnalyticsResponseDto> ComputeAnalyticsAsync(CancellationToken ct)
     {
         var to = DateTime.UtcNow;
         var from = to.AddDays(-WindowDays);

@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using AltusIQ.Api.Hubs;
@@ -78,27 +79,18 @@ public class FlightPollingService : BackgroundService
         var baseUrl = _config["OpenSky:ApiBaseUrl"]
             ?? "https://opensky-network.org";
 
-        var request = new HttpRequestMessage(
-            HttpMethod.Get,
-            $"{baseUrl}/api/states/all");
+        var response = await SendStatesRequestAsync(
+            baseUrl, token, cancellationToken);
 
-        request.Headers.Authorization =
-            new AuthenticationHeaderValue("Bearer", token);
-
-        var response = await _httpClient.SendAsync(
-            request, cancellationToken);
-
-        if (response.Headers.TryGetValues(
-                "X-Rate-Limit-Remaining", out var rateLimitValues))
+        if (response.StatusCode == HttpStatusCode.Unauthorized)
         {
-            _logger.LogInformation(
-                "OpenSky rate limit remaining: {Remaining}",
-                string.Join(", ", rateLimitValues));
-        }
-        else
-        {
-            _logger.LogInformation(
-                "OpenSky response did not include X-Rate-Limit-Remaining header");
+            _logger.LogWarning(
+                "OpenSky returned 401, refreshing token and retrying once");
+            response.Dispose();
+            _authService.InvalidateToken();
+            token = await _authService.GetTokenAsync(cancellationToken);
+            response = await SendStatesRequestAsync(
+                baseUrl, token, cancellationToken);
         }
 
         response.EnsureSuccessStatusCode();
@@ -122,6 +114,35 @@ public class FlightPollingService : BackgroundService
         {
             _logger.LogError(ex, "Flight ingestion failed");
         }
+    }
+
+    private async Task<HttpResponseMessage> SendStatesRequestAsync(
+        string baseUrl, string token, CancellationToken cancellationToken)
+    {
+        var request = new HttpRequestMessage(
+            HttpMethod.Get,
+            $"{baseUrl}/api/states/all");
+
+        request.Headers.Authorization =
+            new AuthenticationHeaderValue("Bearer", token);
+
+        var response = await _httpClient.SendAsync(
+            request, cancellationToken);
+
+        if (response.Headers.TryGetValues(
+                "X-Rate-Limit-Remaining", out var rateLimitValues))
+        {
+            _logger.LogInformation(
+                "OpenSky rate limit remaining: {Remaining}",
+                string.Join(", ", rateLimitValues));
+        }
+        else
+        {
+            _logger.LogInformation(
+                "OpenSky response did not include X-Rate-Limit-Remaining header");
+        }
+
+        return response;
     }
 
     private static List<Aircraft> ParseStates(string json)

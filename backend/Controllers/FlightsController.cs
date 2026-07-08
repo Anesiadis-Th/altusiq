@@ -15,11 +15,21 @@ public class FlightsController(
         [FromQuery] DateTime? to,
         CancellationToken ct)
     {
-        var toDate = (to ?? DateTime.UtcNow).ToUniversalTime();
-        var fromDate = (from ?? toDate.AddHours(-24)).ToUniversalTime();
+        var toDate = AsUtc(to) ?? DateTime.UtcNow;
+        var fromDate = AsUtc(from) ?? toDate.AddHours(-24);
 
         var flights = await queryService.GetFlightsAsync(fromDate, toDate, ct);
         return Ok(flights);
+    }
+
+    private static DateTime? AsUtc(DateTime? value)
+    {
+        if (value is null)
+            return null;
+
+        return value.Value.Kind == DateTimeKind.Unspecified
+            ? DateTime.SpecifyKind(value.Value, DateTimeKind.Utc)
+            : value.Value.ToUniversalTime();
     }
 
     [HttpGet("{id:guid}/track")]

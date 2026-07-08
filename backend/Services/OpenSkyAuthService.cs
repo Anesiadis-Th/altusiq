@@ -83,6 +83,12 @@ public class OpenSkyAuthService : IOpenSkyAuthService
         }
     }
 
+    public void InvalidateToken()
+    {
+        _tokenExpiry = DateTime.MinValue;
+        _cachedToken = null;
+    }
+
     private sealed record TokenResponse(
         [property: System.Text.Json.Serialization.JsonPropertyName("access_token")]
         string? AccessToken,

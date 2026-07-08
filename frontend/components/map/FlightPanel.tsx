@@ -101,21 +101,22 @@ export default function FlightPanel({ aircraft, onClose }: FlightPanelProps) {
 
   if (!aircraft) return null;
 
-  const altitude = aircraft.barometric_altitude
-    ? `${Math.round(aircraft.barometric_altitude).toLocaleString()} m`
-    : "Not reporting";
+  const altitude =
+    aircraft.barometric_altitude != null
+      ? `${Math.round(aircraft.barometric_altitude).toLocaleString()} m`
+      : "Not reporting";
 
-  const speed = aircraft.velocity
-    ? `${Math.round(aircraft.velocity * 3.6).toLocaleString()} km/h`
-    : "Not reporting";
+  const speed =
+    aircraft.velocity != null
+      ? `${Math.round(aircraft.velocity * 3.6).toLocaleString()} km/h`
+      : "Not reporting";
 
   const verticalRate = aircraft.vertical_rate
     ? `${aircraft.vertical_rate > 0 ? "↑" : "↓"} ${Math.abs(Math.round(aircraft.vertical_rate))} m/s`
     : "Level";
 
-  const heading = aircraft.heading
-    ? `${Math.round(aircraft.heading)}°`
-    : "Unknown";
+  const heading =
+    aircraft.heading != null ? `${Math.round(aircraft.heading)}°` : "Unknown";
 
   const destLat = route?.destination.latitude;
   const destLon = route?.destination.longitude;
