@@ -38,7 +38,18 @@ public class FlightIngestionService
                 .ToList();
 
             if (timedOut.Count > 0)
-                await CloseFlightsAsync(timedOut, now, ct);
+            {
+                try
+                {
+                    await CloseFlightsAsync(timedOut, now, ct);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    _logger.LogError(ex,
+                        "Failed to persist {Count} closed flights, keeping them in memory to retry next poll",
+                        timedOut.Count);
+                }
+            }
 
             var inRegion = aircraft
                 .Where(a => !a.OnGround
@@ -168,10 +179,13 @@ public class FlightIngestionService
                 });
             }
 
-            _activeFlights.Remove(icao);
         }
 
         var saved = await db.SaveChangesAsync(ct);
+
+        foreach (var icao in icaos)
+            _activeFlights.Remove(icao);
+
         if (saved > 0)
             _logger.LogInformation("Persisted {Count} completed flights", saved);
     }
