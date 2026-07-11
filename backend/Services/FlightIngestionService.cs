@@ -13,6 +13,7 @@ public class FlightIngestionService
     private readonly ILogger<FlightIngestionService> _logger;
     private readonly GeometryFactory _geometryFactory = new(new PrecisionModel(), 4326);
     private readonly Dictionary<string, ActiveFlight> _activeFlights = new();
+    private readonly Dictionary<string, ActiveFlight> _liveTrails = new();
     private readonly SemaphoreSlim _lock = new(1, 1);
 
     public FlightIngestionService(
@@ -51,70 +52,76 @@ public class FlightIngestionService
                 }
             }
 
-            var inRegion = aircraft
+            var staleTrails = _liveTrails
+                .Where(kvp => (now - kvp.Value.LastSeen).TotalSeconds > _settings.GapThresholdSeconds)
+                .Select(kvp => kvp.Key)
+                .ToList();
+
+            foreach (var icao in staleTrails)
+                _liveTrails.Remove(icao);
+
+            var airborne = aircraft
                 .Where(a => !a.OnGround
                     && a.Longitude.HasValue
-                    && a.Latitude.HasValue
-                    && a.Longitude >= _settings.MinLon && a.Longitude <= _settings.MaxLon
-                    && a.Latitude >= _settings.MinLat && a.Latitude <= _settings.MaxLat)
+                    && a.Latitude.HasValue)
                 .GroupBy(a => a.Icao24)
                 .ToDictionary(g => g.Key, g => g.First());
 
+            foreach (var (icao, plane) in airborne)
+                _liveTrails[icao] = AppendPosition(_liveTrails.GetValueOrDefault(icao), plane, now);
+
+            var inRegion = airborne
+                .Where(kvp => kvp.Value.Longitude >= _settings.MinLon && kvp.Value.Longitude <= _settings.MaxLon
+                    && kvp.Value.Latitude >= _settings.MinLat && kvp.Value.Latitude <= _settings.MaxLat);
+
             foreach (var (icao, plane) in inRegion)
-            {
-                if (!_activeFlights.TryGetValue(icao, out var active))
-                {
-                    active = new ActiveFlight(
-                        Id: Guid.NewGuid(),
-                        OpenedAt: now,
-                        LastSeen: now,
-                        Callsign: plane.Callsign?.Trim(),
-                        OriginCountry: plane.OriginCountry,
-                        TrackPoints: [],
-                        LastRecordedAt: DateTime.MinValue,
-                        LastLon: plane.Longitude,
-                        LastLat: plane.Latitude
-                    );
-                }
-
-                if ((now - active.LastRecordedAt).TotalSeconds >= _settings.MinPointIntervalSeconds)
-                {
-                    var point = new TrackPoint(
-                        Timestamp: new DateTimeOffset(now).ToUnixTimeSeconds(),
-                        Longitude: plane.Longitude!.Value,
-                        Latitude: plane.Latitude!.Value,
-                        Altitude: plane.BarometricAltitude,
-                        Heading: plane.Heading,
-                        Velocity: plane.Velocity
-                    );
-
-                    var updatedPoints = new List<TrackPoint>(active.TrackPoints);
-                    updatedPoints.Add(point);
-
-                    if (updatedPoints.Count > _settings.MaxTrackPoints)
-                        updatedPoints.RemoveRange(0, updatedPoints.Count - _settings.MaxTrackPoints);
-
-                    active = active with
-                    {
-                        LastSeen = now,
-                        LastRecordedAt = now,
-                        LastLon = plane.Longitude,
-                        LastLat = plane.Latitude,
-                        TrackPoints = updatedPoints
-                    };
-                }
-                else
-                {
-                    active = active with { LastSeen = now };
-                }
-
-                _activeFlights[icao] = active;
-            }
+                _activeFlights[icao] = AppendPosition(_activeFlights.GetValueOrDefault(icao), plane, now);
         }
         finally
         {
             _lock.Release();
         }
+    }
+
+    private ActiveFlight AppendPosition(ActiveFlight? active, Aircraft plane, DateTime now)
+    {
+        active ??= new ActiveFlight(
+            Id: Guid.NewGuid(),
+            OpenedAt: now,
+            LastSeen: now,
+            Callsign: plane.Callsign?.Trim(),
+            OriginCountry: plane.OriginCountry,
+            TrackPoints: [],
+            LastRecordedAt: DateTime.MinValue,
+            LastLon: plane.Longitude,
+            LastLat: plane.Latitude
+        );
+
+        if ((now - active.LastRecordedAt).TotalSeconds < _settings.MinPointIntervalSeconds)
+            return active with { LastSeen = now };
+
+        var point = new TrackPoint(
+            Timestamp: new DateTimeOffset(now).ToUnixTimeSeconds(),
+            Longitude: plane.Longitude!.Value,
+            Latitude: plane.Latitude!.Value,
+            Altitude: plane.BarometricAltitude,
+            Heading: plane.Heading,
+            Velocity: plane.Velocity
+        );
+
+        var updatedPoints = new List<TrackPoint>(active.TrackPoints) { point };
+
+        if (updatedPoints.Count > _settings.MaxTrackPoints)
+            updatedPoints.RemoveRange(0, updatedPoints.Count - _settings.MaxTrackPoints);
+
+        return active with
+        {
+            LastSeen = now,
+            LastRecordedAt = now,
+            LastLon = plane.Longitude,
+            LastLat = plane.Latitude,
+            TrackPoints = updatedPoints
+        };
     }
 
     public async Task<FlightTrackDto?> GetActiveTrackAsync(string icao24, CancellationToken ct)
@@ -123,7 +130,8 @@ public class FlightIngestionService
         await _lock.WaitAsync(ct);
         try
         {
-            if (!_activeFlights.TryGetValue(key, out var active))
+            var active = _liveTrails.GetValueOrDefault(key) ?? _activeFlights.GetValueOrDefault(key);
+            if (active is null)
                 return null;
 
             return new FlightTrackDto(
