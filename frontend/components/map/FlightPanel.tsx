@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { Aircraft } from "@/types/aircraft";
 import { RouteAirport } from "@/types/route";
 import { useRoute } from "@/hooks/useRoute";
-import { haversineKm } from "@/lib/geo";
+import { haversineKm, isRoutePlausible } from "@/lib/geo";
 
 const MIN_ETA_SPEED_MS = 30;
 const DISMISS_DISTANCE_PX = 120;
@@ -118,8 +118,13 @@ export default function FlightPanel({ aircraft, onClose }: FlightPanelProps) {
   const heading =
     aircraft.heading != null ? `${Math.round(aircraft.heading)}°` : "Unknown";
 
-  const destLat = route?.destination.latitude;
-  const destLon = route?.destination.longitude;
+  const plausibleRoute =
+    route && isRoutePlausible(route, aircraft.latitude, aircraft.longitude)
+      ? route
+      : null;
+
+  const destLat = plausibleRoute?.destination.latitude;
+  const destLon = plausibleRoute?.destination.longitude;
   let eta: { distance: string; time: string } | null = null;
   if (
     destLat != null &&
@@ -190,16 +195,16 @@ export default function FlightPanel({ aircraft, onClose }: FlightPanelProps) {
       <div className="px-4 py-3 border-b border-gray-700">
         {routeLoading ? (
           <p className="text-gray-500 text-xs">Looking up route…</p>
-        ) : route ? (
+        ) : plausibleRoute ? (
           <>
             <div className="flex items-center justify-between gap-2">
-              <RouteEndpoint airport={route.origin} />
+              <RouteEndpoint airport={plausibleRoute.origin} />
               <span className="text-gray-500 text-lg shrink-0">→</span>
-              <RouteEndpoint airport={route.destination} alignRight />
+              <RouteEndpoint airport={plausibleRoute.destination} alignRight />
             </div>
-            {route.airline_name && (
+            {plausibleRoute.airline_name && (
               <p className="text-gray-500 text-xs mt-2">
-                {route.airline_name}
+                {plausibleRoute.airline_name}
               </p>
             )}
             {eta && (
@@ -213,7 +218,9 @@ export default function FlightPanel({ aircraft, onClose }: FlightPanelProps) {
           </>
         ) : (
           <p className="text-gray-500 text-xs">
-            Route unknown — no public route data for this callsign
+            {route
+              ? "Route unknown — the published route for this callsign doesn't match this aircraft's position"
+              : "Route unknown — no public route data for this callsign"}
           </p>
         )}
       </div>
