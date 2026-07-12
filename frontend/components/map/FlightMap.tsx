@@ -64,7 +64,6 @@ export default function FlightMap() {
     <div className="relative w-full h-dvh">
       <MapView
         aircraft={aircraft}
-        connected={connected}
         playbackTrack={track ?? null}
         playbackPosition={playback.currentPosition}
       />

@@ -1,5 +1,3 @@
-using System.Net.Http.Headers;
-
 namespace AltusIQ.Api.Services;
 
 public class OpenSkyAuthService : IOpenSkyAuthService

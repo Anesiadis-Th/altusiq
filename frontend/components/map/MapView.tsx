@@ -17,7 +17,6 @@ import airports from "@/data/airports.json";
 
 interface MapViewProps {
   aircraft: Aircraft[];
-  connected: boolean;
   playbackTrack?: FlightTrack | null;
   playbackPosition?: PlaybackPosition | null;
 }
@@ -119,7 +118,6 @@ async function loadAircraftIcon(map: mapboxgl.Map): Promise<void> {
 
 export default function MapView({
   aircraft,
-  connected: _connected,
   playbackTrack,
   playbackPosition,
 }: MapViewProps) {

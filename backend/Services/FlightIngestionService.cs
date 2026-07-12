@@ -92,9 +92,7 @@ public class FlightIngestionService
             Callsign: plane.Callsign?.Trim(),
             OriginCountry: plane.OriginCountry,
             TrackPoints: [],
-            LastRecordedAt: DateTime.MinValue,
-            LastLon: plane.Longitude,
-            LastLat: plane.Latitude
+            LastRecordedAt: DateTime.MinValue
         );
 
         if ((now - active.LastRecordedAt).TotalSeconds < _settings.MinPointIntervalSeconds)
@@ -118,8 +116,6 @@ public class FlightIngestionService
         {
             LastSeen = now,
             LastRecordedAt = now,
-            LastLon = plane.Longitude,
-            LastLat = plane.Latitude,
             TrackPoints = updatedPoints
         };
     }
@@ -206,7 +202,5 @@ internal record ActiveFlight(
     string? Callsign,
     string? OriginCountry,
     List<TrackPoint> TrackPoints,
-    DateTime LastRecordedAt,
-    double? LastLon,
-    double? LastLat
+    DateTime LastRecordedAt
 );
