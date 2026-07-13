@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useFlightData } from "@/hooks/useFlightData";
 import { useFlightTrack } from "@/hooks/useFlights";
 import { usePlayback } from "@/hooks/usePlayback";
 import { Aircraft } from "@/types/aircraft";
-import MapView from "./MapView";
+import MapView, { FocusTarget } from "./MapView";
+import FlightSearch from "./FlightSearch";
 import FlightHistoryPanel from "@/components/flights/FlightHistoryPanel";
 import PlaybackControls from "@/components/flights/PlaybackControls";
 
@@ -38,9 +39,13 @@ function computeRegionalCount(aircraft: Aircraft[]): number {
 
 export default function FlightMap() {
   const { aircraft, connected } = useFlightData();
+  const [showSearch, setShowSearch] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [selectedFlightId, setSelectedFlightId] = useState<string | null>(null);
+  const [selectedIcao, setSelectedIcao] = useState<string | null>(null);
+  const [focusTarget, setFocusTarget] = useState<FocusTarget | null>(null);
+  const focusSeq = useRef(0);
 
   const { data: track, isLoading: isTrackLoading } =
     useFlightTrack(selectedFlightId);
@@ -55,6 +60,18 @@ export default function FlightMap() {
     setShowHistory(false);
   }
 
+  function handleSearchSelect(plane: Aircraft) {
+    focusSeq.current += 1;
+    setSelectedIcao(plane.icao24);
+    setFocusTarget({
+      icao24: plane.icao24,
+      longitude: plane.longitude,
+      latitude: plane.latitude,
+      seq: focusSeq.current,
+    });
+    setShowSearch(false);
+  }
+
   function handleClosePlayback() {
     playback.pause();
     setSelectedFlightId(null);
@@ -64,6 +81,9 @@ export default function FlightMap() {
     <div className="relative w-full h-dvh">
       <MapView
         aircraft={aircraft}
+        selectedIcao={selectedIcao}
+        onSelectIcao={setSelectedIcao}
+        focusTarget={focusTarget}
         playbackTrack={track ?? null}
         playbackPosition={playback.currentPosition}
       />
@@ -72,11 +92,21 @@ export default function FlightMap() {
         connected={connected}
         totalCount={aircraft.length}
         regionalCount={regionalCount}
+        showSearch={showSearch}
+        onSearchClick={() => setShowSearch((v) => !v)}
         showHistory={showHistory}
         onHistoryClick={() => setShowHistory((v) => !v)}
         showAnalytics={showAnalytics}
         onAnalyticsClick={() => setShowAnalytics((v) => !v)}
       />
+
+      {showSearch && (
+        <FlightSearch
+          aircraft={aircraft}
+          onSelect={handleSearchSelect}
+          onClose={() => setShowSearch(false)}
+        />
+      )}
 
       {showHistory && (
         <FlightHistoryPanel
@@ -107,6 +137,8 @@ interface TopBarProps {
   connected: boolean;
   totalCount: number;
   regionalCount: number;
+  showSearch: boolean;
+  onSearchClick: () => void;
   showHistory: boolean;
   onHistoryClick: () => void;
   showAnalytics: boolean;
@@ -117,6 +149,8 @@ function TopBar({
   connected,
   totalCount,
   regionalCount,
+  showSearch,
+  onSearchClick,
   showHistory,
   onHistoryClick,
   showAnalytics,
@@ -146,6 +180,19 @@ function TopBar({
           <span className="text-gray-400">Connecting...</span>
         )}
       </div>
+
+      <button
+        onClick={onSearchClick}
+        aria-label="Search flights"
+        className={`backdrop-blur-sm border rounded-lg px-2.5 sm:px-3 py-2 text-xs sm:text-sm whitespace-nowrap transition-colors ${
+          showSearch
+            ? "bg-blue-500/20 border-blue-500/50 text-blue-400"
+            : "bg-gray-900/90 border-gray-700/50 text-gray-300 hover:text-white hover:border-gray-500/50"
+        }`}
+      >
+        <span className="hidden sm:inline">Search</span>
+        <span className="sm:hidden">🔍</span>
+      </button>
 
       <button
         onClick={onHistoryClick}

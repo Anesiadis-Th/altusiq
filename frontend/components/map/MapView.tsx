@@ -15,8 +15,18 @@ import FlightPanel from "./FlightPanel";
 import { useActiveTrack } from "@/hooks/useFlights";
 import airports from "@/data/airports.json";
 
+export interface FocusTarget {
+  icao24: string;
+  longitude: number;
+  latitude: number;
+  seq: number;
+}
+
 interface MapViewProps {
   aircraft: Aircraft[];
+  selectedIcao: string | null;
+  onSelectIcao: (icao24: string | null) => void;
+  focusTarget?: FocusTarget | null;
   playbackTrack?: FlightTrack | null;
   playbackPosition?: PlaybackPosition | null;
 }
@@ -118,16 +128,36 @@ async function loadAircraftIcon(map: mapboxgl.Map): Promise<void> {
 
 export default function MapView({
   aircraft,
+  selectedIcao,
+  onSelectIcao,
+  focusTarget,
   playbackTrack,
   playbackPosition,
 }: MapViewProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const engine = useRef(new DeadReckoningEngine());
-  const lastSelected = useRef<Aircraft | null>(null);
+  const onSelectIcaoRef = useRef(onSelectIcao);
   const [ready, setReady] = useState(false);
-  const [selectedIcao, setSelectedIcao] = useState<string | null>(null);
+  const [lastSelected, setLastSelected] = useState<Aircraft | null>(null);
   const { data: liveTrack } = useActiveTrack(selectedIcao);
+
+  // The selected plane can be absent from a single broadcast while its icon
+  // keeps dead-reckoning, so remember the last-known aircraft rather than
+  // flickering the panel closed until the next poll.
+  const live = selectedIcao
+    ? (aircraft.find((a) => a.icao24 === selectedIcao) ?? null)
+    : null;
+  if (live && live !== lastSelected) setLastSelected(live);
+  const selected =
+    live ??
+    (lastSelected && lastSelected.icao24 === selectedIcao
+      ? lastSelected
+      : null);
+
+  useEffect(() => {
+    onSelectIcaoRef.current = onSelectIcao;
+  }, [onSelectIcao]);
 
   useEffect(() => {
     if (map.current || !mapContainer.current) return;
@@ -278,7 +308,7 @@ export default function MapView({
         if (!feature) return;
         const properties = feature.properties as AircraftFeatureProps | null;
         if (!properties) return;
-        setSelectedIcao(properties.icao24);
+        onSelectIcaoRef.current(properties.icao24);
       });
 
       instance.on("mouseenter", "aircraft-layer", () => {
@@ -388,28 +418,32 @@ export default function MapView({
     if (!selectedIcao) return;
     const id = window.setInterval(() => {
       if (!engine.current.position(selectedIcao, performance.now())) {
-        setSelectedIcao(null);
+        onSelectIcaoRef.current(null);
       }
     }, 5000);
     return () => window.clearInterval(id);
   }, [selectedIcao]);
 
-  // The selected plane can be absent from a single broadcast while its icon
-  // keeps dead-reckoning, so fall back to the last-known aircraft rather than
-  // flickering the panel closed until the next poll.
-  const live = selectedIcao
-    ? (aircraft.find((a) => a.icao24 === selectedIcao) ?? null)
-    : null;
-  if (lastSelected.current && lastSelected.current.icao24 !== selectedIcao) {
-    lastSelected.current = null;
-  }
-  if (live) lastSelected.current = live;
-  const selected = live ?? lastSelected.current;
+  // Fly to a search-selected aircraft. The dead-reckoned position is fresher
+  // than the broadcast fix (which can be up to a poll interval stale), so
+  // prefer it and fall back to the coordinates captured at selection time.
+  useEffect(() => {
+    if (!map.current || !ready || !focusTarget) return;
+    const position = engine.current.position(
+      focusTarget.icao24,
+      performance.now(),
+    ) ?? { longitude: focusTarget.longitude, latitude: focusTarget.latitude };
+    map.current.flyTo({
+      center: [position.longitude, position.latitude],
+      zoom: 8,
+      duration: 2500,
+    });
+  }, [focusTarget, ready]);
 
   return (
     <div className="relative w-full h-full">
       <div ref={mapContainer} className="w-full h-full" />
-      <FlightPanel aircraft={selected} onClose={() => setSelectedIcao(null)} />
+      <FlightPanel aircraft={selected} onClose={() => onSelectIcao(null)} />
     </div>
   );
 }
