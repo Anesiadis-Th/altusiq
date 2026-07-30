@@ -140,7 +140,8 @@ export default function FlightPanel({ aircraft, onClose }: FlightPanelProps) {
       destLon,
     );
     const etaDate = new Date(
-      Date.now() + (km / (aircraft.velocity * 3.6)) * 3_600_000,
+      aircraft.last_contact * 1000 +
+        (km / (aircraft.velocity * 3.6)) * 3_600_000,
     );
     eta = {
       distance: `${Math.round(km).toLocaleString()} km`,
