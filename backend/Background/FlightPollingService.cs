@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using AltusIQ.Api.Health;
 using AltusIQ.Api.Hubs;
 using AltusIQ.Api.Models;
 using AltusIQ.Api.Services;
@@ -18,6 +19,7 @@ public class FlightPollingService : BackgroundService
     private readonly IHubContext<FlightHub> _hubContext;
     private readonly FlightIngestionService _ingestionService;
     private readonly LiveSnapshotStore _snapshotStore;
+    private readonly PollHeartbeat _heartbeat;
     private readonly IngestionSettings _settings;
 
     public FlightPollingService(
@@ -28,6 +30,7 @@ public class FlightPollingService : BackgroundService
         IHubContext<FlightHub> hubContext,
         FlightIngestionService ingestionService,
         LiveSnapshotStore snapshotStore,
+        PollHeartbeat heartbeat,
         IOptions<IngestionSettings> settings)
     {
         _authService = authService;
@@ -37,6 +40,7 @@ public class FlightPollingService : BackgroundService
         _hubContext = hubContext;
         _ingestionService = ingestionService;
         _snapshotStore = snapshotStore;
+        _heartbeat = heartbeat;
         _settings = settings.Value;
     }
 
@@ -102,6 +106,7 @@ public class FlightPollingService : BackgroundService
             "Received {Count} aircraft from OpenSky", aircraft.Count);
 
         _snapshotStore.Update(aircraft);
+        _heartbeat.RecordSuccess();
 
         await _hubContext.Clients.All.SendAsync(
             "ReceiveFlightData", aircraft, cancellationToken);

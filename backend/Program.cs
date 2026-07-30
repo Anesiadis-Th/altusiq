@@ -1,9 +1,11 @@
 using Serilog;
 using AltusIQ.Api.Background;
 using AltusIQ.Api.Services;
+using AltusIQ.Api.Health;
 using AltusIQ.Api.Hubs;
 using AltusIQ.Api.Data;
 using AltusIQ.Api.Models;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 
@@ -43,7 +45,11 @@ builder.Services.AddSignalR()
             System.Text.Json.JsonNamingPolicy.SnakeCaseLower;
     });
 
-builder.Services.AddHealthChecks();
+builder.Services.AddSingleton<PollHeartbeat>();
+
+builder.Services.AddHealthChecks()
+    .AddCheck<PollerHealthCheck>("opensky_poller");
+
 builder.Services.AddMemoryCache();
 
 builder.Services.AddScoped<FlightQueryService>();
@@ -108,11 +114,16 @@ builder.Services.AddDbContext<AltusIqDbContext>(options =>
 
 var app = builder.Build();
 
+app.UseSerilogRequestLogging();
+
 app.UseCors("Frontend");
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapHealthChecks("/health");
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    ResponseWriter = HealthResponseWriter.WriteAsync
+});
 app.MapHub<FlightHub>("/hubs/flights");
 
 app.Run();
