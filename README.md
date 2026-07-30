@@ -197,7 +197,20 @@ dotnet ef database update
 dotnet run
 ```
 
-The API starts at `http://localhost:8080`. Verify with `http://localhost:8080/health`.
+The API starts at `http://localhost:8080`. Verify with `http://localhost:8080/health`, which reports poller liveness as JSON and returns 503 if no OpenSky poll has succeeded in three intervals:
+
+```json
+{
+  "status": "Healthy",
+  "checks": [
+    {
+      "name": "opensky_poller",
+      "status": "Healthy",
+      "description": "Last successful OpenSky poll 1s ago"
+    }
+  ]
+}
+```
 
 Use the Supabase **Session pooler** connection string (port 5432) — not the direct connection, which is IPv6-only on the free tier.
 
@@ -217,7 +230,7 @@ Opens at `http://localhost:3000`.
 
 ## Deployment
 
-The backend deploys to **Fly.io** via GitHub Actions on every push to `master`. The frontend deploys to **Vercel** automatically on push.
+Every push runs CI — `dotnet build` for the backend, `npm run lint` and `npm run build` for the frontend. The backend deploys to **Fly.io** via GitHub Actions on every push to `master`, gated on CI passing, so a commit that doesn't compile fails a check instead of a mid-deploy Docker build. The frontend deploys to **Vercel** automatically on push.
 
 The backend machine runs **always-on** (`min_machines_running = 1`) — a deliberate few-dollars-a-month cost so ingestion is continuous and the demo is always warm. Backend secrets are set via `fly secrets set` and never touch the repository. See [ADR-002](docs/adr/002-backend-hosting-provider.md) for why Fly.io was chosen.
 

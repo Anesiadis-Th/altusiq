@@ -12,6 +12,8 @@ namespace AltusIQ.Api.Background;
 
 public class FlightPollingService : BackgroundService
 {
+    private const int RequiredStateFields = 12;
+
     private readonly IOpenSkyAuthService _authService;
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _config;
@@ -150,7 +152,7 @@ public class FlightPollingService : BackgroundService
         return response;
     }
 
-    private static List<Aircraft> ParseStates(string json)
+    private List<Aircraft> ParseStates(string json)
     {
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
@@ -160,33 +162,61 @@ public class FlightPollingService : BackgroundService
             return [];
 
         var result = new List<Aircraft>();
+        var skipped = 0;
 
         foreach (var state in states.EnumerateArray())
         {
-            if (state[5].ValueKind == JsonValueKind.Null ||
-                state[6].ValueKind == JsonValueKind.Null)
-                continue;
+            var aircraft = TryParseState(state);
 
-            result.Add(new Aircraft
-            {
-                Icao24             = state[0].GetString() ?? string.Empty,
-                Callsign           = state[1].GetString()?.Trim(),
-                OriginCountry      = state[2].GetString(),
-                Longitude          = state[5].GetDouble(),
-                Latitude           = state[6].GetDouble(),
-                BarometricAltitude = state[7].ValueKind != JsonValueKind.Null
-                    ? state[7].GetDouble() : null,
-                OnGround           = state[8].GetBoolean(),
-                Velocity           = state[9].ValueKind != JsonValueKind.Null
-                    ? state[9].GetDouble() : null,
-                Heading            = state[10].ValueKind != JsonValueKind.Null
-                    ? state[10].GetDouble() : null,
-                VerticalRate       = state[11].ValueKind != JsonValueKind.Null
-                    ? state[11].GetDouble() : null,
-                LastContact        = state[4].GetInt64()
-            });
+            if (aircraft is null)
+                skipped++;
+            else
+                result.Add(aircraft);
         }
+
+        if (skipped > 0)
+            _logger.LogWarning(
+                "Skipped {Skipped} unusable state rows, kept {Kept}",
+                skipped, result.Count);
 
         return result;
     }
+
+    private static Aircraft? TryParseState(JsonElement state)
+    {
+        if (state.ValueKind != JsonValueKind.Array
+            || state.GetArrayLength() < RequiredStateFields)
+            return null;
+
+        var icao24 = ReadString(state[0]);
+
+        if (string.IsNullOrWhiteSpace(icao24))
+            return null;
+
+        if (state[4].ValueKind != JsonValueKind.Number
+            || state[5].ValueKind != JsonValueKind.Number
+            || state[6].ValueKind != JsonValueKind.Number)
+            return null;
+
+        return new Aircraft
+        {
+            Icao24             = icao24,
+            Callsign           = ReadString(state[1])?.Trim(),
+            OriginCountry      = ReadString(state[2]),
+            Longitude          = state[5].GetDouble(),
+            Latitude           = state[6].GetDouble(),
+            BarometricAltitude = ReadDouble(state[7]),
+            OnGround           = state[8].ValueKind == JsonValueKind.True,
+            Velocity           = ReadDouble(state[9]),
+            Heading            = ReadDouble(state[10]),
+            VerticalRate       = ReadDouble(state[11]),
+            LastContact        = state[4].GetInt64()
+        };
+    }
+
+    private static string? ReadString(JsonElement element) =>
+        element.ValueKind == JsonValueKind.String ? element.GetString() : null;
+
+    private static double? ReadDouble(JsonElement element) =>
+        element.ValueKind == JsonValueKind.Number ? element.GetDouble() : null;
 }
