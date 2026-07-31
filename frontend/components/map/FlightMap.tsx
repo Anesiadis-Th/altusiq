@@ -18,6 +18,8 @@ const AnalyticsDashboard = dynamic(
   { ssr: false },
 );
 
+type Panel = "search" | "history" | "analytics";
+
 const SCANDINAVIA_BBOX = {
   minLon: 4.0,
   maxLon: 32.0,
@@ -39,9 +41,7 @@ function computeRegionalCount(aircraft: Aircraft[]): number {
 
 export default function FlightMap() {
   const { aircraft, connected } = useFlightData();
-  const [showSearch, setShowSearch] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
-  const [showAnalytics, setShowAnalytics] = useState(false);
+  const [activePanel, setActivePanel] = useState<Panel | null>(null);
   const [selectedFlightId, setSelectedFlightId] = useState<string | null>(null);
   const [selectedIcao, setSelectedIcao] = useState<string | null>(null);
   const [focusTarget, setFocusTarget] = useState<FocusTarget | null>(null);
@@ -55,9 +55,13 @@ export default function FlightMap() {
     [aircraft],
   );
 
+  function togglePanel(panel: Panel) {
+    setActivePanel((current) => (current === panel ? null : panel));
+  }
+
   function handleSelectFlight(id: string) {
     setSelectedFlightId(id);
-    setShowHistory(false);
+    setActivePanel(null);
   }
 
   function handleSearchSelect(plane: Aircraft) {
@@ -69,7 +73,7 @@ export default function FlightMap() {
       latitude: plane.latitude,
       seq: focusSeq.current,
     });
-    setShowSearch(false);
+    setActivePanel(null);
   }
 
   function handleClosePlayback() {
@@ -92,27 +96,27 @@ export default function FlightMap() {
         connected={connected}
         totalCount={aircraft.length}
         regionalCount={regionalCount}
-        showSearch={showSearch}
-        onSearchClick={() => setShowSearch((v) => !v)}
-        showHistory={showHistory}
-        onHistoryClick={() => setShowHistory((v) => !v)}
-        showAnalytics={showAnalytics}
-        onAnalyticsClick={() => setShowAnalytics((v) => !v)}
+        showSearch={activePanel === "search"}
+        onSearchClick={() => togglePanel("search")}
+        showHistory={activePanel === "history"}
+        onHistoryClick={() => togglePanel("history")}
+        showAnalytics={activePanel === "analytics"}
+        onAnalyticsClick={() => togglePanel("analytics")}
       />
 
-      {showSearch && (
+      {activePanel === "search" && (
         <FlightSearch
           aircraft={aircraft}
           onSelect={handleSearchSelect}
-          onClose={() => setShowSearch(false)}
+          onClose={() => setActivePanel(null)}
         />
       )}
 
-      {showHistory && (
+      {activePanel === "history" && (
         <FlightHistoryPanel
           selectedId={selectedFlightId}
           onSelect={handleSelectFlight}
-          onClose={() => setShowHistory(false)}
+          onClose={() => setActivePanel(null)}
         />
       )}
 
@@ -126,8 +130,8 @@ export default function FlightMap() {
         />
       )}
 
-      {showAnalytics && (
-        <AnalyticsDashboard onClose={() => setShowAnalytics(false)} />
+      {activePanel === "analytics" && (
+        <AnalyticsDashboard onClose={() => setActivePanel(null)} />
       )}
     </div>
   );
