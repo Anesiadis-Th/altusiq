@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useFlightData } from "@/hooks/useFlightData";
 import { useFlightTrack } from "@/hooks/useFlights";
@@ -11,8 +11,7 @@ import FlightSearch from "./FlightSearch";
 import FlightHistoryPanel from "@/components/flights/FlightHistoryPanel";
 import PlaybackControls from "@/components/flights/PlaybackControls";
 
-// Lazily loaded so Recharts is fetched only when the overlay is first opened,
-// keeping it out of the initial map bundle.
+// Lazily loaded so Recharts is fetched only when the overlay is first opened,keeping it out of the initial map bundle.
 const AnalyticsDashboard = dynamic(
   () => import("@/components/analytics/AnalyticsDashboard"),
   { ssr: false },
@@ -46,6 +45,8 @@ export default function FlightMap() {
   const [selectedIcao, setSelectedIcao] = useState<string | null>(null);
   const [focusTarget, setFocusTarget] = useState<FocusTarget | null>(null);
   const focusSeq = useRef(0);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const topBarRef = useRef<HTMLDivElement>(null);
 
   const { data: track, isLoading: isTrackLoading } =
     useFlightTrack(selectedFlightId);
@@ -54,6 +55,32 @@ export default function FlightMap() {
     () => computeRegionalCount(aircraft),
     [aircraft],
   );
+
+  useEffect(() => {
+    if (activePanel !== "search" && activePanel !== "history") return;
+
+    function handlePointerDown(event: PointerEvent) {
+      const target = event.target as Node;
+
+      // The TopBar is not "outside": its buttons toggle the panel themselves and closing here first would let the click immediately reopen it.
+      if (panelRef.current?.contains(target)) return;
+      if (topBarRef.current?.contains(target)) return;
+
+      setActivePanel(null);
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setActivePanel(null);
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [activePanel]);
 
   function togglePanel(panel: Panel) {
     setActivePanel((current) => (current === panel ? null : panel));
@@ -93,6 +120,7 @@ export default function FlightMap() {
       />
 
       <TopBar
+        ref={topBarRef}
         connected={connected}
         totalCount={aircraft.length}
         regionalCount={regionalCount}
@@ -104,21 +132,23 @@ export default function FlightMap() {
         onAnalyticsClick={() => togglePanel("analytics")}
       />
 
-      {activePanel === "search" && (
-        <FlightSearch
-          aircraft={aircraft}
-          onSelect={handleSearchSelect}
-          onClose={() => setActivePanel(null)}
-        />
-      )}
+      <div ref={panelRef}>
+        {activePanel === "search" && (
+          <FlightSearch
+            aircraft={aircraft}
+            onSelect={handleSearchSelect}
+            onClose={() => setActivePanel(null)}
+          />
+        )}
 
-      {activePanel === "history" && (
-        <FlightHistoryPanel
-          selectedId={selectedFlightId}
-          onSelect={handleSelectFlight}
-          onClose={() => setActivePanel(null)}
-        />
-      )}
+        {activePanel === "history" && (
+          <FlightHistoryPanel
+            selectedId={selectedFlightId}
+            onSelect={handleSelectFlight}
+            onClose={() => setActivePanel(null)}
+          />
+        )}
+      </div>
 
       {selectedFlightId && isTrackLoading && <TrackLoadingSkeleton />}
 
@@ -138,6 +168,7 @@ export default function FlightMap() {
 }
 
 interface TopBarProps {
+  ref?: React.Ref<HTMLDivElement>;
   connected: boolean;
   totalCount: number;
   regionalCount: number;
@@ -150,6 +181,7 @@ interface TopBarProps {
 }
 
 function TopBar({
+  ref,
   connected,
   totalCount,
   regionalCount,
@@ -161,7 +193,10 @@ function TopBar({
   onAnalyticsClick,
 }: TopBarProps) {
   return (
-    <div className="absolute top-4 left-4 right-4 sm:right-auto z-10 flex items-center gap-1.5 sm:gap-2">
+    <div
+      ref={ref}
+      className="absolute top-4 left-4 right-4 sm:right-auto z-10 flex items-center gap-1.5 sm:gap-2"
+    >
       <div className="bg-gray-900/90 backdrop-blur-sm border border-gray-700/50 rounded-lg px-2.5 sm:px-3 py-2 text-xs sm:text-sm flex items-center gap-2 min-w-0">
         <span
           className={`w-2 h-2 rounded-full flex-shrink-0 ${connected ? "bg-green-400" : "bg-red-400"}`}
