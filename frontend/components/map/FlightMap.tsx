@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useFlightData } from "@/hooks/useFlightData";
 import { useFlightTrack } from "@/hooks/useFlights";
 import { usePlayback } from "@/hooks/usePlayback";
+import { useActivePanel } from "@/hooks/useActivePanel";
 import { Aircraft } from "@/types/aircraft";
 import MapView, { FocusTarget } from "./MapView";
 import FlightSearch from "./FlightSearch";
@@ -16,8 +17,6 @@ const AnalyticsDashboard = dynamic(
   () => import("@/components/analytics/AnalyticsDashboard"),
   { ssr: false },
 );
-
-type Panel = "search" | "history" | "analytics";
 
 const SCANDINAVIA_BBOX = {
   minLon: 4.0,
@@ -40,13 +39,17 @@ function computeRegionalCount(aircraft: Aircraft[]): number {
 
 export default function FlightMap() {
   const { aircraft, connected } = useFlightData();
-  const [activePanel, setActivePanel] = useState<Panel | null>(null);
   const [selectedFlightId, setSelectedFlightId] = useState<string | null>(null);
   const [selectedIcao, setSelectedIcao] = useState<string | null>(null);
   const [focusTarget, setFocusTarget] = useState<FocusTarget | null>(null);
   const focusSeq = useRef(0);
   const panelRef = useRef<HTMLDivElement>(null);
   const topBarRef = useRef<HTMLDivElement>(null);
+  const {
+    activePanel,
+    toggle: togglePanel,
+    close: closePanel,
+  } = useActivePanel({ panelRef, topBarRef });
 
   const { data: track, isLoading: isTrackLoading } =
     useFlightTrack(selectedFlightId);
@@ -56,39 +59,9 @@ export default function FlightMap() {
     [aircraft],
   );
 
-  useEffect(() => {
-    if (activePanel !== "search" && activePanel !== "history") return;
-
-    function handlePointerDown(event: PointerEvent) {
-      const target = event.target as Node;
-
-      // The TopBar is not "outside": its buttons toggle the panel themselves and closing here first would let the click immediately reopen it.
-      if (panelRef.current?.contains(target)) return;
-      if (topBarRef.current?.contains(target)) return;
-
-      setActivePanel(null);
-    }
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") setActivePanel(null);
-    }
-
-    document.addEventListener("pointerdown", handlePointerDown);
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [activePanel]);
-
-  function togglePanel(panel: Panel) {
-    setActivePanel((current) => (current === panel ? null : panel));
-  }
-
   function handleSelectFlight(id: string) {
     setSelectedFlightId(id);
-    setActivePanel(null);
+    closePanel();
   }
 
   function handleSearchSelect(plane: Aircraft) {
@@ -100,7 +73,7 @@ export default function FlightMap() {
       latitude: plane.latitude,
       seq: focusSeq.current,
     });
-    setActivePanel(null);
+    closePanel();
   }
 
   function handleClosePlayback() {
@@ -137,7 +110,7 @@ export default function FlightMap() {
           <FlightSearch
             aircraft={aircraft}
             onSelect={handleSearchSelect}
-            onClose={() => setActivePanel(null)}
+            onClose={() => closePanel()}
           />
         )}
 
@@ -145,7 +118,7 @@ export default function FlightMap() {
           <FlightHistoryPanel
             selectedId={selectedFlightId}
             onSelect={handleSelectFlight}
-            onClose={() => setActivePanel(null)}
+            onClose={() => closePanel()}
           />
         )}
       </div>
@@ -161,7 +134,7 @@ export default function FlightMap() {
       )}
 
       {activePanel === "analytics" && (
-        <AnalyticsDashboard onClose={() => setActivePanel(null)} />
+        <AnalyticsDashboard onClose={() => closePanel()} />
       )}
     </div>
   );

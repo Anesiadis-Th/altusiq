@@ -166,7 +166,7 @@ graph TB
 
 ## Tech Stack
 
-**Frontend** — Next.js, TypeScript, TailwindCSS, TanStack Query, Mapbox GL JS, Recharts
+**Frontend** — Next.js, TypeScript, TailwindCSS, TanStack Query, Mapbox GL JS, Recharts, Vitest
 
 **Backend** — ASP.NET Core (.NET 8), SignalR, Entity Framework Core, NetTopologySuite, Serilog
 
@@ -228,9 +228,29 @@ Opens at `http://localhost:3000`.
 
 ---
 
+## Tests
+
+```bash
+cd frontend
+npm test          # run once
+npm run test:watch
+```
+
+44 Vitest tests cover the frontend's pure logic — the parts where a silent regression would be invisible on screen:
+
+- **Flight search** — IATA→ICAO callsign translation (`SK0034` → `SAS34`, including the leading-zero strip airlines actually use), one-to-many airline codes (`LH` → `DLH` and `GEC`), result ranking (exact > prefix > substring > hex), and exclusion of grounded aircraft.
+- **Dead reckoning** — the correction blend that lerps onto each new fix instead of teleporting, tolerance of a single missed 120 s poll, eviction at exactly the 150 s extrapolation limit, and the on-ground freeze.
+- **Panel state** — the map's overlays are mutually exclusive, dismiss on outside click and Escape, and clean up their listeners.
+
+Deliberately untested: anything requiring Mapbox, SignalR, or the database. Those are verified by driving a real browser against the deployed backend, which is a better tool for the job than a wall of mocks. Where a UI invariant is worth locking down, the logic is extracted into a hook (`useActivePanel`) and tested directly.
+
+The suite is mutation-checked — breaking the leading-zero strip, the grounded filter, the eviction TTL, the correction blend, or panel exclusivity each turns it red.
+
+---
+
 ## Deployment
 
-Every push runs CI — `dotnet build` for the backend, `npm run lint` and `npm run build` for the frontend. The backend deploys to **Fly.io** via GitHub Actions on every push to `master`, gated on CI passing, so a commit that doesn't compile fails a check instead of a mid-deploy Docker build. The frontend deploys to **Vercel** automatically on push.
+Every push runs CI — `dotnet build` for the backend, `npm run lint`, `npm test` and `npm run build` for the frontend. The backend deploys to **Fly.io** via GitHub Actions on every push to `master`, gated on CI passing, so a commit that doesn't compile fails a check instead of a mid-deploy Docker build. The frontend deploys to **Vercel** automatically on push.
 
 The backend machine runs **always-on** (`min_machines_running = 1`) — a deliberate few-dollars-a-month cost so ingestion is continuous and the demo is always warm. Backend secrets are set via `fly secrets set` and never touch the repository. See [ADR-002](docs/adr/002-backend-hosting-provider.md) for why Fly.io was chosen.
 
