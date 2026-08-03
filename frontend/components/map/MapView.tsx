@@ -13,7 +13,6 @@ import {
 } from "@/lib/aircraftLayer";
 import FlightPanel from "./FlightPanel";
 import { useActiveTrack } from "@/hooks/useFlights";
-import airports from "@/data/airports.json";
 
 export interface FocusTarget {
   icao24: string;
@@ -39,14 +38,21 @@ const rotateExpression: mapboxgl.ExpressionSpecification = [
   0,
 ];
 
-const airportGeoJSON: GeoJSON.FeatureCollection = {
-  type: "FeatureCollection",
-  features: airports.map((a) => ({
-    type: "Feature",
-    geometry: { type: "Point", coordinates: [a.lon, a.lat] },
-    properties: { iata: a.iata, name: a.name },
-  })),
-};
+// 4,034 airports worldwide, fetched by Mapbox rather than imported, so the
+// ~590 KB never enters the map bundle (it is ~100 KB gzipped over the wire and
+// parses in Mapbox's GeoJSON worker, off the main thread).
+const AIRPORTS_URL = "/airports.geojson";
+
+// Rendering every airport at world zoom buries the aircraft and makes the label
+// collider chew through 4k features per camera move. Reveal them by tier
+// instead: large hubs always, medium from z6, small from z8. Zoom expressions
+// in filters only evaluate at integer zooms, so tiers pop in on zoom-level
+// boundaries — fine here, since the layers are gated by minzoom anyway.
+const airportTierFilter: mapboxgl.FilterSpecification = [
+  "<=",
+  ["get", "tier"],
+  ["step", ["zoom"], 1, 6, 2, 8, 3],
+];
 
 function toTrackLineCollection(
   track: FlightTrack | null | undefined,
@@ -178,7 +184,7 @@ export default function MapView({
 
       instance.addSource("airports", {
         type: "geojson",
-        data: airportGeoJSON,
+        data: AIRPORTS_URL,
       });
 
       instance.addSource("aircraft", {
@@ -231,6 +237,7 @@ export default function MapView({
         type: "circle",
         source: "airports",
         minzoom: 4,
+        filter: airportTierFilter,
         paint: {
           "circle-radius": 3,
           "circle-color": "#ffffff",
@@ -246,6 +253,7 @@ export default function MapView({
         type: "symbol",
         source: "airports",
         minzoom: 5,
+        filter: airportTierFilter,
         layout: {
           "text-field": ["get", "iata"],
           "text-size": 10,
