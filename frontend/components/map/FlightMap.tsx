@@ -61,14 +61,22 @@ export default function FlightMap() {
     [aircraft],
   );
 
+  function handleSelectIcao(icao24: string | null) {
+    setSelectedIcao(icao24);
+    if (!icao24) return;
+    playback.pause();
+    setSelectedFlightId(null);
+  }
+
   function handleSelectFlight(id: string) {
     setSelectedFlightId(id);
+    setSelectedIcao(null);
     closePanel();
   }
 
   function handleSearchSelect(plane: Aircraft) {
     focusSeq.current += 1;
-    setSelectedIcao(plane.icao24);
+    handleSelectIcao(plane.icao24);
     setFocusTarget({
       icao24: plane.icao24,
       longitude: plane.longitude,
@@ -88,7 +96,7 @@ export default function FlightMap() {
       <MapView
         aircraft={aircraft}
         selectedIcao={selectedIcao}
-        onSelectIcao={setSelectedIcao}
+        onSelectIcao={handleSelectIcao}
         focusTarget={focusTarget}
         playbackTrack={track ?? null}
         playbackPosition={playback.currentPosition}
