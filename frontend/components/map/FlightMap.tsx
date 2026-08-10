@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import dynamic from "next/dynamic";
+import Link from "next/link";
+import { BarChart3, History, Plane, Search } from "lucide-react";
 import { useFlightData } from "@/hooks/useFlightData";
 import { useFlightTrack } from "@/hooks/useFlights";
 import { usePlayback } from "@/hooks/usePlayback";
@@ -11,12 +12,13 @@ import MapView, { FocusTarget } from "./MapView";
 import FlightSearch from "./FlightSearch";
 import FlightHistoryPanel from "@/components/flights/FlightHistoryPanel";
 import PlaybackControls from "@/components/flights/PlaybackControls";
-
-// Lazily loaded so Recharts is fetched only when the overlay is first opened,keeping it out of the initial map bundle.
-const AnalyticsDashboard = dynamic(
-  () => import("@/components/analytics/AnalyticsDashboard"),
-  { ssr: false },
-);
+import { MicroLabel } from "@/components/ui/Label";
+import {
+  ControlGroup,
+  GroupButton,
+  GroupDivider,
+  groupItemClasses,
+} from "@/components/ui/Button";
 
 const SCANDINAVIA_BBOX = {
   minLon: 4.0,
@@ -101,8 +103,6 @@ export default function FlightMap() {
         onSearchClick={() => togglePanel("search")}
         showHistory={activePanel === "history"}
         onHistoryClick={() => togglePanel("history")}
-        showAnalytics={activePanel === "analytics"}
-        onAnalyticsClick={() => togglePanel("analytics")}
       />
 
       <div ref={panelRef}>
@@ -132,10 +132,6 @@ export default function FlightMap() {
           onClose={handleClosePlayback}
         />
       )}
-
-      {activePanel === "analytics" && (
-        <AnalyticsDashboard onClose={() => closePanel()} />
-      )}
     </div>
   );
 }
@@ -149,8 +145,6 @@ interface TopBarProps {
   onSearchClick: () => void;
   showHistory: boolean;
   onHistoryClick: () => void;
-  showAnalytics: boolean;
-  onAnalyticsClick: () => void;
 }
 
 function TopBar({
@@ -162,99 +156,103 @@ function TopBar({
   onSearchClick,
   showHistory,
   onHistoryClick,
-  showAnalytics,
-  onAnalyticsClick,
 }: TopBarProps) {
+  // The rail is docked flush to the left edge, so the toolbar steps aside for
+  // it on sm+ rather than sitting on top of it.
+  const railOpen = showSearch || showHistory;
+
   return (
     <div
       ref={ref}
-      className="absolute top-4 left-4 right-4 sm:right-auto z-10 flex items-center gap-1.5 sm:gap-2"
+      className={`absolute top-4 left-4 right-4 z-20 flex items-center gap-2 transition-[left] duration-200 sm:right-auto ${
+        railOpen ? "sm:left-84" : "sm:left-4"
+      }`}
     >
-      <div className="bg-gray-900/90 backdrop-blur-sm border border-gray-700/50 rounded-lg px-2.5 sm:px-3 py-2 text-xs sm:text-sm flex items-center gap-2 min-w-0">
+      <div className="flex h-8 min-w-0 items-center gap-2 rounded-control border border-line bg-surface px-2.5">
         <span
-          className={`w-2 h-2 rounded-full flex-shrink-0 ${connected ? "bg-green-400" : "bg-red-400"}`}
+          className={`h-2 w-2 shrink-0 rounded-full ${connected ? "bg-green-400" : "bg-red-400"}`}
         />
         {connected ? (
           <span
-            className="text-white whitespace-nowrap truncate"
+            className="flex min-w-0 items-center gap-1.5 whitespace-nowrap text-[13px]"
             title={`${regionalCount.toLocaleString()} in Scandinavia`}
           >
-            {totalCount.toLocaleString()}
-            <span className="hidden sm:inline"> aircraft</span>
-            <span className="sm:hidden"> ✈</span>
-            <span className="text-gray-600 mx-1.5 sm:mx-2">·</span>
-            <span className="text-blue-400">
+            <span className="font-mono tabular-nums text-white">
+              {totalCount.toLocaleString()}
+            </span>
+            <span className="hidden text-gray-400 sm:inline">aircraft</span>
+            <Plane size={14} className="shrink-0 text-gray-400 sm:hidden" />
+            <span className="text-gray-600">·</span>
+            <span className="font-mono tabular-nums text-blue-400">
               {regionalCount.toLocaleString()}
-              <span className="hidden sm:inline"> in Scandinavia</span>
+            </span>
+            <span className="hidden text-gray-400 sm:inline">
+              in Scandinavia
             </span>
           </span>
         ) : (
-          <span className="text-gray-400">Connecting...</span>
+          <span className="text-gray-400 text-[13px] whitespace-nowrap">
+            Connecting…
+          </span>
         )}
       </div>
 
-      <button
-        onClick={onSearchClick}
-        aria-label="Search flights"
-        className={`backdrop-blur-sm border rounded-lg px-2.5 sm:px-3 py-2 text-xs sm:text-sm whitespace-nowrap transition-colors ${
-          showSearch
-            ? "bg-blue-500/20 border-blue-500/50 text-blue-400"
-            : "bg-gray-900/90 border-gray-700/50 text-gray-300 hover:text-white hover:border-gray-500/50"
-        }`}
-      >
-        <span className="hidden sm:inline">Search</span>
-        <span className="sm:hidden">🔍</span>
-      </button>
-
-      <button
-        onClick={onHistoryClick}
-        className={`backdrop-blur-sm border rounded-lg px-2.5 sm:px-3 py-2 text-xs sm:text-sm whitespace-nowrap transition-colors ${
-          showHistory
-            ? "bg-blue-500/20 border-blue-500/50 text-blue-400"
-            : "bg-gray-900/90 border-gray-700/50 text-gray-300 hover:text-white hover:border-gray-500/50"
-        }`}
-      >
-        History
-      </button>
-
-      <button
-        onClick={onAnalyticsClick}
-        className={`backdrop-blur-sm border rounded-lg px-2.5 sm:px-3 py-2 text-xs sm:text-sm whitespace-nowrap transition-colors ${
-          showAnalytics
-            ? "bg-blue-500/20 border-blue-500/50 text-blue-400"
-            : "bg-gray-900/90 border-gray-700/50 text-gray-300 hover:text-white hover:border-gray-500/50"
-        }`}
-      >
-        Analytics
-      </button>
+      <ControlGroup>
+        <GroupButton
+          active={showSearch}
+          onClick={onSearchClick}
+          aria-label="Search flights"
+        >
+          <Search size={16} />
+          <span className="hidden sm:inline">Search</span>
+        </GroupButton>
+        <GroupDivider />
+        <GroupButton
+          active={showHistory}
+          onClick={onHistoryClick}
+          aria-label="Recent flights"
+        >
+          <History size={16} />
+          <span className="hidden sm:inline">History</span>
+        </GroupButton>
+        <GroupDivider />
+        <Link
+          href="/analytics"
+          aria-label="Analytics"
+          className={groupItemClasses()}
+        >
+          <BarChart3 size={16} />
+          <span className="hidden sm:inline">Analytics</span>
+        </Link>
+      </ControlGroup>
     </div>
   );
 }
 
 function TrackLoadingSkeleton() {
   return (
-    <div className="absolute bottom-4 sm:bottom-8 left-1/2 -translate-x-1/2 z-10 w-[calc(100%-2rem)] max-w-[520px] bg-gray-900/95 backdrop-blur-sm border border-gray-700/50 rounded-xl px-4 sm:px-5 py-4 shadow-xl">
+    <div className="absolute bottom-4 sm:bottom-8 left-1/2 -translate-x-1/2 z-10 w-[calc(100%-2rem)] max-w-[520px] rounded-panel border border-line bg-surface px-4 py-4 sm:px-5">
       <div className="flex items-center gap-3 mb-3">
         <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin flex-shrink-0" />
-        <div className="h-3 w-24 bg-gray-700 rounded animate-pulse" />
-        <div className="ml-auto h-3 w-16 bg-gray-700 rounded animate-pulse" />
+        <div className="h-3 w-24 bg-raised rounded-control animate-pulse" />
+        <div className="ml-auto h-3 w-16 bg-raised rounded-control animate-pulse" />
       </div>
       <div className="flex justify-between mb-3 px-1">
         {["ALT", "SPD", "HDG"].map((l) => (
           <div key={l} className="flex flex-col items-center gap-1">
-            <div className="h-2 w-6 bg-gray-700 rounded animate-pulse" />
-            <div className="h-3 w-16 bg-gray-700 rounded animate-pulse" />
+            <MicroLabel className="text-gray-600">{l}</MicroLabel>
+            <div className="h-3 w-16 bg-raised rounded-control animate-pulse" />
           </div>
         ))}
       </div>
-      <div className="h-1 w-full bg-gray-700 rounded animate-pulse mb-3" />
+      <div className="h-1 w-full bg-raised rounded-control animate-pulse mb-3" />
       <div className="flex items-center justify-between">
-        <div className="w-8 h-8 rounded-full bg-gray-700 animate-pulse" />
+        <div className="w-8 h-8 rounded-full bg-raised animate-pulse" />
         <div className="flex gap-1">
           {[1, 2, 5, 10, 30].map((s) => (
             <div
               key={s}
-              className="w-8 h-6 bg-gray-700 rounded animate-pulse"
+              className="w-8 h-6 bg-raised rounded-control animate-pulse"
             />
           ))}
         </div>

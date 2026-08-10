@@ -1,10 +1,13 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { X } from "lucide-react";
 import { Aircraft } from "@/types/aircraft";
 import { RouteAirport } from "@/types/route";
 import { useRoute } from "@/hooks/useRoute";
 import { haversineKm, isRoutePlausible } from "@/lib/geo";
+import { MicroLabel } from "@/components/ui/Label";
+import { IconButton } from "@/components/ui/Button";
 
 const MIN_ETA_SPEED_MS = 30;
 const DISMISS_DISTANCE_PX = 120;
@@ -155,7 +158,7 @@ export default function FlightPanel({ aircraft, onClose }: FlightPanelProps) {
   return (
     <div
       ref={sheetRef}
-      className="absolute inset-x-0 bottom-0 z-20 max-h-[70dvh] overflow-y-auto rounded-t-2xl border-t border-gray-700 bg-gray-900/95 pb-[env(safe-area-inset-bottom)] shadow-2xl sm:inset-x-auto sm:bottom-auto sm:top-4 sm:right-4 sm:z-10 sm:w-72 sm:max-h-none sm:overflow-hidden sm:rounded-xl sm:border sm:pb-0"
+      className="absolute inset-x-0 bottom-0 z-20 max-h-[70dvh] overflow-y-auto rounded-t-panel border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] sm:inset-x-auto sm:bottom-auto sm:top-4 sm:right-4 sm:z-10 sm:w-80 sm:max-h-none sm:overflow-hidden sm:rounded-panel sm:border sm:border-line sm:pb-0"
       style={{
         transform: dragY > 0 ? `translateY(${dragY}px)` : undefined,
         transition: isDragging
@@ -175,25 +178,22 @@ export default function FlightPanel({ aircraft, onClose }: FlightPanelProps) {
         <div className="mx-auto h-1 w-10 rounded-full bg-gray-700" />
       </div>
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700">
-        <div>
-          <p className="text-white font-semibold text-base tracking-wide">
+      <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-line">
+        <div className="min-w-0">
+          <p className="text-white font-semibold text-base font-mono tabular-nums">
             {aircraft.callsign?.trim() || "No Callsign"}
           </p>
-          <p className="text-gray-400 text-xs mt-0.5">
+          <p className="text-gray-400 text-xs font-mono tabular-nums mt-0.5">
             {aircraft.icao24.toUpperCase()}
           </p>
         </div>
-        <button
-          onClick={onClose}
-          className="text-gray-500 hover:text-white transition-colors text-xl leading-none"
-        >
-          ×
-        </button>
+        <IconButton onClick={onClose} aria-label="Close flight panel">
+          <X size={16} />
+        </IconButton>
       </div>
 
       {/* Route */}
-      <div className="px-4 py-3 border-b border-gray-700">
+      <div className="px-4 py-3 border-b border-line">
         {routeLoading ? (
           <p className="text-gray-500 text-xs">Looking up route…</p>
         ) : plausibleRoute ? (
@@ -213,7 +213,9 @@ export default function FlightPanel({ aircraft, onClose }: FlightPanelProps) {
                 className="text-gray-400 text-xs mt-2"
                 title="Great-circle distance at current ground speed"
               >
-                {eta.distance} to go · ETA ≈ {eta.time}
+                <span className="font-mono tabular-nums">{eta.distance}</span>{" "}
+                to go · ETA ≈{" "}
+                <span className="font-mono tabular-nums">{eta.time}</span>
               </p>
             )}
           </>
@@ -227,8 +229,12 @@ export default function FlightPanel({ aircraft, onClose }: FlightPanelProps) {
       </div>
 
       {/* Body */}
-      <div className="px-4 py-3 space-y-3">
-        <Row label="Registered in" value={aircraft.origin_country ?? "Unknown"} />
+      <div className="px-4 py-3">
+        <Row
+          label="Registered in"
+          value={aircraft.origin_country ?? "Unknown"}
+          mono={false}
+        />
         <Row label="Altitude" value={altitude} />
         <Row label="Speed" value={speed} />
         <Row label="Vertical Rate" value={verticalRate} />
@@ -237,14 +243,17 @@ export default function FlightPanel({ aircraft, onClose }: FlightPanelProps) {
           label="Status"
           value={aircraft.on_ground ? "On Ground" : "Airborne"}
           highlight={!aircraft.on_ground}
+          mono={false}
         />
       </div>
 
       {/* Footer */}
-      <div className="px-4 py-2 border-t border-gray-700">
+      <div className="px-4 py-2 border-t border-line">
         <p className="text-gray-600 text-xs">
           Last contact:{" "}
-          {new Date(aircraft.last_contact * 1000).toLocaleTimeString()}
+          <span className="font-mono tabular-nums">
+            {new Date(aircraft.last_contact * 1000).toLocaleTimeString()}
+          </span>
         </p>
       </div>
     </div>
@@ -260,7 +269,7 @@ function RouteEndpoint({
 }) {
   return (
     <div className={`min-w-0 ${alignRight ? "text-right" : ""}`}>
-      <p className="text-white text-lg font-semibold">
+      <p className="text-white text-lg font-semibold font-mono tabular-nums">
         {airport.iata_code ?? airport.icao_code ?? "?"}
       </p>
       <p className="text-gray-400 text-xs truncate">
@@ -274,16 +283,18 @@ function Row({
   label,
   value,
   highlight = false,
+  mono = true,
 }: {
   label: string;
   value: string;
   highlight?: boolean;
+  mono?: boolean;
 }) {
   return (
-    <div className="flex justify-between items-center">
-      <span className="text-gray-400 text-sm">{label}</span>
+    <div className="flex h-10 items-center justify-between gap-3">
+      <MicroLabel>{label}</MicroLabel>
       <span
-        className={`text-sm font-medium ${
+        className={`text-[13px] font-medium ${mono ? "font-mono tabular-nums" : ""} ${
           highlight ? "text-blue-400" : "text-white"
         }`}
       >

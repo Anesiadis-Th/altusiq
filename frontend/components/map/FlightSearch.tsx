@@ -1,8 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Search } from "lucide-react";
 import { Aircraft } from "@/types/aircraft";
 import { searchAircraft } from "@/lib/flightSearch";
+import { Rail, RailBody, RailHeader } from "@/components/ui/Rail";
+import { MicroLabel } from "@/components/ui/Label";
+import { focusRingInset } from "@/components/ui/Button";
 
 interface FlightSearchProps {
   aircraft: Aircraft[];
@@ -39,61 +43,67 @@ export default function FlightSearch({
   }
 
   return (
-    <div className="absolute left-4 right-4 top-16 z-10 sm:right-auto sm:w-80 bg-gray-900 bg-opacity-95 rounded-lg overflow-hidden shadow-xl">
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-700">
-        <span className="text-gray-500 text-sm">🔍</span>
-        <input
-          autoFocus
-          value={query}
-          onChange={(event) => {
-            setQuery(event.target.value);
-            setHighlighted(0);
-          }}
-          onKeyDown={handleKeyDown}
-          placeholder="Flight number or callsign…"
-          className="flex-1 min-w-0 bg-transparent text-white text-sm placeholder-gray-500 outline-none"
-        />
-        <button
-          onClick={onClose}
-          className="text-gray-400 hover:text-white text-lg leading-none"
-        >
-          ✕
-        </button>
+    <Rail label="Flight search">
+      <RailHeader onClose={onClose} closeLabel="Close search">
+        <MicroLabel className="flex-1">Search</MicroLabel>
+      </RailHeader>
+
+      <div className="shrink-0 border-b border-line p-2">
+        <div className="flex h-8 items-center gap-2 rounded-control bg-app px-2.5 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-blue-500">
+          <Search size={16} className="shrink-0 text-gray-500" />
+          <input
+            autoFocus
+            value={query}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setHighlighted(0);
+            }}
+            onKeyDown={handleKeyDown}
+            placeholder="Flight number or callsign…"
+            aria-label="Flight number or callsign"
+            className="min-w-0 flex-1 bg-transparent text-[13px] text-white placeholder-gray-500 outline-none"
+          />
+        </div>
       </div>
 
       {query.trim().length < 2 ? (
-        <div className="p-4 text-gray-500 text-xs">
-          Search live aircraft worldwide — try a flight number (SK4787), a
-          callsign (SAS4787) or a hex code.
-        </div>
+        <RailBody className="px-3 py-3">
+          <p className="text-gray-500 text-xs leading-relaxed">
+            Search live aircraft worldwide. Try a flight number (
+            <span className="font-mono tabular-nums">SK4787</span>), a callsign
+            (<span className="font-mono tabular-nums">SAS4787</span>) or a hex
+            code.
+          </p>
+        </RailBody>
       ) : results.length === 0 ? (
-        <div className="p-4 text-gray-400 text-sm">
-          No matching live flights.
-        </div>
+        <RailBody className="px-3 py-3">
+          <p className="text-gray-400 text-[13px]">No matching live flights.</p>
+        </RailBody>
       ) : (
-        <div className="overflow-y-auto max-h-[calc(100dvh-16rem)] sm:max-h-[360px]">
+        <RailBody>
           {results.map((result, index) => (
             <button
               key={result.aircraft.icao24}
               onClick={() => onSelect(result.aircraft)}
               onMouseEnter={() => setHighlighted(index)}
-              className={`w-full text-left px-4 py-2.5 border-b border-gray-800 transition-colors ${
-                index === activeIndex ? "bg-gray-800" : ""
+              className={`flex min-h-11 w-full items-center justify-between gap-2 border-b border-line px-3 py-2 text-left transition-colors last:border-b-0 hover:bg-raised ${focusRingInset} ${
+                index === activeIndex ? "bg-raised" : ""
               }`}
             >
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-white text-sm font-mono">
-                  {result.label}
-                </span>
-                <span className="text-gray-500 text-xs truncate">
-                  {result.aircraft.origin_country ??
-                    result.aircraft.icao24.toUpperCase()}
-                </span>
-              </div>
+              <span className="text-white text-[13px] font-mono tabular-nums">
+                {result.label}
+              </span>
+              <span className="truncate text-gray-500 text-xs">
+                {result.aircraft.origin_country ?? (
+                  <span className="font-mono tabular-nums">
+                    {result.aircraft.icao24.toUpperCase()}
+                  </span>
+                )}
+              </span>
             </button>
           ))}
-        </div>
+        </RailBody>
       )}
-    </div>
+    </Rail>
   );
 }

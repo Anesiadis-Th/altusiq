@@ -2,6 +2,9 @@
 
 import { useFlights } from "@/hooks/useFlights";
 import { FlightSummary } from "@/types/flight";
+import { Rail, RailBody, RailHeader } from "@/components/ui/Rail";
+import { MicroLabel } from "@/components/ui/Label";
+import { focusRingInset } from "@/components/ui/Button";
 
 interface FlightHistoryPanelProps {
   selectedId: string | null;
@@ -32,63 +35,69 @@ export default function FlightHistoryPanel({
   const { data: flights, isLoading, isError } = useFlights();
 
   return (
-    <div className="absolute left-4 right-4 top-16 z-10 sm:right-auto sm:w-72 bg-gray-900 bg-opacity-95 rounded-lg overflow-hidden shadow-xl">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700">
-        <h2 className="text-white text-sm font-semibold">Recent Flights</h2>
-        <button
-          onClick={onClose}
-          className="text-gray-400 hover:text-white text-lg leading-none"
-        >
-          ✕
-        </button>
-      </div>
+    <Rail label="Recent flights">
+      <RailHeader onClose={onClose} closeLabel="Close recent flights">
+        <MicroLabel className="flex-1">Recent flights</MicroLabel>
+      </RailHeader>
 
-      {isLoading && <div className="p-4 text-gray-400 text-sm">Loading...</div>}
+      {isLoading && (
+        <RailBody className="px-3 py-3">
+          <p className="text-gray-400 text-[13px]">Loading…</p>
+        </RailBody>
+      )}
+
       {isError && (
-        <div className="p-4 text-red-400 text-sm">Failed to load flights.</div>
+        <RailBody className="px-3 py-3">
+          <p className="text-red-400 text-[13px]">Failed to load flights.</p>
+        </RailBody>
       )}
 
       {!isLoading && !isError && (!flights || flights.length === 0) && (
-        <div className="p-4 text-gray-400 text-sm">
-          No completed flights yet — check back in a few minutes.
-        </div>
+        <RailBody className="px-3 py-3">
+          <p className="text-gray-400 text-[13px] leading-relaxed">
+            No completed flights yet — check back in a few minutes.
+          </p>
+        </RailBody>
       )}
 
       {flights && flights.length > 0 && (
-        <div className="overflow-y-auto max-h-[calc(100dvh-16rem)] sm:max-h-[480px]">
+        <RailBody>
           {flights.map((flight: FlightSummary) => (
             <button
               key={flight.id}
               onClick={() => onSelect(flight.id)}
-              className={`w-full text-left px-4 py-3 border-b border-gray-800 hover:bg-gray-800 transition-colors ${
+              className={`w-full border-b border-line px-3 py-1.5 text-left leading-snug transition-colors last:border-b-0 hover:bg-raised ${focusRingInset} ${
                 selectedId === flight.id
-                  ? "bg-gray-800 border-l-2 border-l-blue-400"
+                  ? "border-l-2 border-l-blue-400 bg-raised"
                   : ""
               }`}
             >
-              <div className="flex items-center justify-between">
-                <span className="text-white text-sm font-mono">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-white text-[13px] font-mono tabular-nums">
                   {flight.callsign ?? flight.icao24.toUpperCase()}
                 </span>
-                <span className="text-gray-500 text-xs">
+                <span className="text-gray-500 text-xs font-mono tabular-nums">
                   {formatDuration(flight.opened_at, flight.closed_at)}
                 </span>
               </div>
-              <div className="text-gray-500 text-xs mt-0.5">
-                Reg: {flight.origin_country || "Unknown"} ·{" "}
-                {formatTime(flight.opened_at)}
-                {flight.closed_at ? ` → ${formatTime(flight.closed_at)}` : ""}
+              <div className="text-gray-500 text-xs">
+                Reg: {flight.origin_country || "Unknown"}
+                <span className="mx-1.5">·</span>
+                <span className="font-mono tabular-nums">
+                  {formatTime(flight.opened_at)}
+                  {flight.closed_at ? ` → ${formatTime(flight.closed_at)}` : ""}
+                </span>
               </div>
               {(flight.departure_airport || flight.arrival_airport) && (
-                <div className="text-gray-400 text-xs mt-0.5 font-mono">
+                <div className="text-gray-400 text-xs font-mono tabular-nums">
                   {flight.departure_airport ?? "—"} →{" "}
                   {flight.arrival_airport ?? "—"}
                 </div>
               )}
             </button>
           ))}
-        </div>
+        </RailBody>
       )}
-    </div>
+    </Rail>
   );
 }

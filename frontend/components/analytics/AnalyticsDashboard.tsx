@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import {
   ResponsiveContainer,
   BarChart,
@@ -16,6 +18,8 @@ import {
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { airportLabel, airportName } from "@/lib/airports";
 import { Analytics, Route } from "@/types/analytics";
+import { Card, CardBody, CardHeader, StatCard } from "@/components/ui/Card";
+import { buttonClasses } from "@/components/ui/Button";
 
 const COLOR_DEPARTURES = "#3b82f6"; // blue-500
 const COLOR_ARRIVALS = "#38bdf8"; // sky-400
@@ -32,45 +36,36 @@ const TOOLTIP_STYLE = {
 
 const TICK = { fill: AXIS, fontSize: 12 } as const;
 
-export default function AnalyticsDashboard({
-  onClose,
-}: {
-  onClose: () => void;
-}) {
+export default function AnalyticsDashboard() {
   const { data, isLoading, error } = useAnalytics();
 
   if (isLoading) {
     return (
-      <Overlay>
-        <div className="min-h-dvh flex items-center justify-center text-gray-400">
+      <Page>
+        <div className="flex min-h-[60dvh] items-center justify-center text-gray-400 text-[13px]">
           Loading analytics…
         </div>
-      </Overlay>
+      </Page>
     );
   }
 
   if (error || !data) {
     return (
-      <Overlay>
-        <div className="min-h-dvh flex flex-col items-center justify-center gap-3">
-          <p className="text-red-400">Failed to load analytics.</p>
-          <button
-            onClick={onClose}
-            className="text-blue-400 hover:text-blue-300 text-sm"
-          >
-            ← Back to map
-          </button>
+      <Page>
+        <div className="flex min-h-[60dvh] flex-col items-center justify-center gap-4">
+          <p className="text-red-400 text-[13px]">Failed to load analytics.</p>
+          <BackToMap />
         </div>
-      </Overlay>
+      </Page>
     );
   }
 
   return (
-    <Overlay>
-      <Header data={data} onClose={onClose} />
+    <Page>
+      <Header data={data} />
       <StatCards data={data} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-5">
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <ChartCard title="Busiest airports" subtitle="Departures + arrivals">
           <BusiestAirportsChart data={data} />
         </ChartCard>
@@ -94,40 +89,41 @@ export default function AnalyticsDashboard({
           <AltitudeBandsChart data={data} />
         </ChartCard>
       </div>
-    </Overlay>
+    </Page>
   );
 }
 
-function Overlay({ children }: { children: React.ReactNode }) {
+function Page({ children }: { children: React.ReactNode }) {
   return (
-    <div className="absolute inset-0 z-40 overflow-y-auto bg-gray-950/75 backdrop-blur-md">
-      <div className="px-4 py-4 sm:px-6 sm:py-6 max-w-7xl mx-auto">{children}</div>
-    </div>
+    <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-6">{children}</div>
   );
 }
 
-function Header({
-  data,
-  onClose,
-}: {
-  data: Analytics;
-  onClose: () => void;
-}) {
+function BackToMap() {
   return (
-    <div className="flex items-center justify-between mb-6">
+    <Link href="/" className={buttonClasses("ghost")}>
+      <ArrowLeft size={16} />
+      Live map
+    </Link>
+  );
+}
+
+function Header({ data }: { data: Analytics }) {
+  return (
+    <div className="mb-5 flex items-start justify-between gap-4">
       <div>
-        <h1 className="text-2xl font-semibold text-white">Analytics</h1>
-        <p className="text-gray-500 text-sm mt-0.5">
-          Last {data.range_days} days · {data.total_flights.toLocaleString()}{" "}
+        <h1 className="text-white text-xl font-semibold">Analytics</h1>
+        <p className="text-gray-500 text-[13px] mt-1">
+          Last{" "}
+          <span className="font-mono tabular-nums">{data.range_days}</span> days
+          <span className="mx-1.5">·</span>
+          <span className="font-mono tabular-nums">
+            {data.total_flights.toLocaleString()}
+          </span>{" "}
           flights
         </p>
       </div>
-      <button
-        onClick={onClose}
-        className="bg-gray-900/90 border border-gray-700/50 rounded-lg px-3 py-2 text-sm text-gray-300 hover:text-white hover:border-gray-500/50 transition-colors"
-      >
-        ← Live map
-      </button>
+      <BackToMap />
     </div>
   );
 }
@@ -146,7 +142,7 @@ function StatCards({ data }: { data: Analytics }) {
   );
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
       <StatCard
         label="Total flights"
         value={data.total_flights.toLocaleString()}
@@ -161,7 +157,10 @@ function StatCards({ data }: { data: Analytics }) {
         value={busiest ? airportLabel(busiest.icao) : "—"}
         hint={
           busiest
-            ? [airportName(busiest.icao), `${busiest.total.toLocaleString()} movements`]
+            ? [
+                airportName(busiest.icao),
+                `${busiest.total.toLocaleString()} movements`,
+              ]
                 .filter(Boolean)
                 .join(" · ")
             : undefined
@@ -176,24 +175,6 @@ function StatCards({ data }: { data: Analytics }) {
   );
 }
 
-function StatCard({
-  label,
-  value,
-  hint,
-}: {
-  label: string;
-  value: string;
-  hint?: string;
-}) {
-  return (
-    <div className="bg-gray-900/70 border border-gray-800 rounded-xl px-4 py-3">
-      <p className="text-gray-500 text-xs uppercase tracking-wide">{label}</p>
-      <p className="text-white text-2xl font-semibold mt-1">{value}</p>
-      {hint && <p className="text-gray-600 text-xs mt-1">{hint}</p>}
-    </div>
-  );
-}
-
 function ChartCard({
   title,
   subtitle,
@@ -204,13 +185,12 @@ function ChartCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-gray-900/70 border border-gray-800 rounded-xl p-4">
-      <div className="mb-3">
-        <h2 className="text-white font-medium">{title}</h2>
-        <p className="text-gray-500 text-xs">{subtitle}</p>
-      </div>
-      <div className="h-72">{children}</div>
-    </div>
+    <Card>
+      <CardHeader title={title} subtitle={subtitle} />
+      <CardBody>
+        <div className="h-72">{children}</div>
+      </CardBody>
+    </Card>
   );
 }
 
@@ -359,7 +339,12 @@ function FlightsPerHourChart({ data }: { data: Analytics }) {
             `${String(label).padStart(2, "0")}:00 UTC`
           }
         />
-        <Bar dataKey="count" fill={COLOR_ACCENT} name="Flights" radius={[3, 3, 0, 0]} />
+        <Bar
+          dataKey="count"
+          fill={COLOR_ACCENT}
+          name="Flights"
+          radius={[3, 3, 0, 0]}
+        />
       </BarChart>
     </ResponsiveContainer>
   );
@@ -391,7 +376,7 @@ function AltitudeBandsChart({ data }: { data: Analytics }) {
 
 function EmptyChart() {
   return (
-    <div className="h-full flex items-center justify-center text-gray-600 text-sm">
+    <div className="flex h-full items-center justify-center text-gray-600 text-[13px]">
       No data in this window
     </div>
   );

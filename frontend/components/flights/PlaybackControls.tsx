@@ -1,7 +1,17 @@
 "use client";
 
+import { Fragment } from "react";
+import { Pause, Play, X } from "lucide-react";
 import { PlaybackState } from "@/hooks/usePlayback";
 import { FlightTrack } from "@/types/flight";
+import { MicroLabel } from "@/components/ui/Label";
+import {
+  ControlGroup,
+  GroupButton,
+  GroupDivider,
+  IconButton,
+  focusRing,
+} from "@/components/ui/Button";
 
 interface PlaybackControlsProps {
   track: FlightTrack;
@@ -61,27 +71,30 @@ export default function PlaybackControls({
   const displayHeading = currentPosition?.heading ?? null;
 
   return (
-    <div className="absolute bottom-4 sm:bottom-8 left-1/2 -translate-x-1/2 z-30 w-[calc(100%-2rem)] max-w-[520px] bg-gray-900 bg-opacity-95 rounded-xl px-4 sm:px-5 py-4 shadow-xl">
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-white text-sm font-semibold font-mono">
+    <div className="absolute bottom-4 sm:bottom-8 left-1/2 -translate-x-1/2 z-30 w-[calc(100%-2rem)] max-w-[520px] rounded-panel border border-line bg-surface px-4 py-4 sm:px-5">
+      <div className="mb-3 flex items-center gap-3">
+        <span className="text-white text-[13px] font-semibold font-mono tabular-nums">
           {label}
         </span>
-        <span className="text-gray-400 text-xs">{currentTime}</span>
-        <button
+        <span className="text-gray-400 text-xs font-mono tabular-nums">
+          {currentTime}
+        </span>
+        {isCompleted && (
+          <span className="text-green-400 text-xs font-medium">Completed</span>
+        )}
+        <IconButton
           onClick={onClose}
-          className="text-gray-400 hover:text-white text-lg leading-none"
+          aria-label="Close playback"
+          className="ml-auto"
         >
-          ✕
-        </button>
+          <X size={16} />
+        </IconButton>
       </div>
 
-      <div className="flex items-center justify-between mb-3 px-1">
+      <div className="mb-3 flex items-center justify-between px-1">
         <DataPill label="ALT" value={formatAltitude(displayAltitude)} />
         <DataPill label="SPD" value={formatSpeed(displayVelocity)} />
         <DataPill label="HDG" value={formatHeading(displayHeading)} />
-        {isCompleted && (
-          <span className="text-xs text-green-400 font-medium">Completed</span>
-        )}
       </div>
 
       <input
@@ -90,34 +103,38 @@ export default function PlaybackControls({
         max={1}
         step={0.001}
         value={progress}
+        aria-label="Playback position"
         onPointerDown={() => pause()}
         onChange={(e) => seek(parseFloat(e.target.value))}
-        className="w-full h-1 accent-blue-400 mb-3 cursor-pointer"
+        className={`mb-3 h-1 w-full cursor-pointer accent-blue-400 ${focusRing}`}
       />
 
       <div className="flex items-center justify-between">
         <button
           onClick={playing ? pause : play}
-          className="w-8 h-8 flex items-center justify-center rounded-full bg-blue-500 hover:bg-blue-400 text-white text-sm transition-colors"
+          aria-label={playing ? "Pause playback" : "Play playback"}
+          className={`flex h-8 w-8 items-center justify-center rounded-full bg-blue-500 text-white transition-colors hover:bg-blue-400 active:bg-blue-500 ${focusRing}`}
         >
-          {playing ? "⏸" : "▶"}
+          {playing ? <Pause size={16} /> : <Play size={16} />}
         </button>
 
-        <div className="flex items-center gap-1">
-          {SPEEDS.map((s) => (
-            <button
-              key={s}
-              onClick={() => setSpeed(s)}
-              className={`px-2 py-1 rounded text-xs transition-colors ${
-                speed === s
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-              }`}
-            >
-              {s}×
-            </button>
+        <ControlGroup>
+          {SPEEDS.map((s, i) => (
+            // Fragment, not a wrapper element: the group's first:/last: corner
+            // rounding needs the buttons to stay direct children.
+            <Fragment key={s}>
+              {i > 0 && <GroupDivider />}
+              <GroupButton
+                active={speed === s}
+                onClick={() => setSpeed(s)}
+                aria-label={`${s}× speed`}
+                className="font-mono tabular-nums"
+              >
+                {s}×
+              </GroupButton>
+            </Fragment>
           ))}
-        </div>
+        </ControlGroup>
       </div>
     </div>
   );
@@ -126,10 +143,10 @@ export default function PlaybackControls({
 function DataPill({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col items-center gap-0.5">
-      <span className="text-gray-500 text-xs uppercase tracking-wider">
-        {label}
+      <MicroLabel>{label}</MicroLabel>
+      <span className="text-white text-[13px] font-mono tabular-nums">
+        {value}
       </span>
-      <span className="text-white text-sm font-mono tabular-nums">{value}</span>
     </div>
   );
 }
