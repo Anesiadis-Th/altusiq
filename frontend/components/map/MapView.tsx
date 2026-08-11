@@ -208,31 +208,6 @@ export default function MapView({
       });
 
       instance.addLayer({
-        id: "track-line",
-        type: "line",
-        source: "track",
-        layout: { "line-join": "round", "line-cap": "round" },
-        paint: {
-          "line-color": "#63b3ed",
-          "line-width": 2,
-          "line-opacity": 0.7,
-          "line-dasharray": [3, 2],
-        },
-      });
-
-      instance.addLayer({
-        id: "live-track-line",
-        type: "line",
-        source: "live-track",
-        layout: { "line-join": "round", "line-cap": "round" },
-        paint: {
-          "line-color": "#63b3ed",
-          "line-width": 2.5,
-          "line-opacity": 0.85,
-        },
-      });
-
-      instance.addLayer({
         id: "airport-circles",
         type: "circle",
         source: "airports",
@@ -299,6 +274,31 @@ export default function MapView({
       );
 
       instance.addLayer({
+        id: "track-line",
+        type: "line",
+        source: "track",
+        layout: { "line-join": "round", "line-cap": "round" },
+        paint: {
+          "line-color": "#63b3ed",
+          "line-width": 2,
+          "line-opacity": 0.7,
+          "line-dasharray": [3, 2],
+        },
+      });
+
+      instance.addLayer({
+        id: "live-track-line",
+        type: "line",
+        source: "live-track",
+        layout: { "line-join": "round", "line-cap": "round" },
+        paint: {
+          "line-color": "#63b3ed",
+          "line-width": 2.5,
+          "line-opacity": 0.85,
+        },
+      });
+
+      instance.addLayer({
         id: "playback-marker",
         type: "circle",
         source: "playback-marker",
@@ -346,8 +346,7 @@ export default function MapView({
   useEffect(() => {
     if (!map.current || !ready) return;
     return startAircraftRenderLoop(
-      () =>
-        map.current?.getSource("aircraft") as AircraftSource | undefined,
+      () => map.current?.getSource("aircraft") as AircraftSource | undefined,
       engine.current,
     );
   }, [ready]);
@@ -360,8 +359,7 @@ export default function MapView({
       ["get", "icao24"],
       selectedIcao ?? "",
     ]);
-    // A filter change alone may not repaint an idle map, so the selection ring
-    // can lag until the next camera move. Force one render to apply it now.
+
     instance.triggerRepaint();
   }, [selectedIcao, ready]);
 
@@ -432,9 +430,6 @@ export default function MapView({
     return () => window.clearInterval(id);
   }, [selectedIcao]);
 
-  // Fly to a search-selected aircraft. The dead-reckoned position is fresher
-  // than the broadcast fix (which can be up to a poll interval stale), so
-  // prefer it and fall back to the coordinates captured at selection time.
   useEffect(() => {
     if (!map.current || !ready || !focusTarget) return;
     const position = engine.current.position(

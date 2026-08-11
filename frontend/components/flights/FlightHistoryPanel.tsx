@@ -24,7 +24,8 @@ function formatDuration(openedAt: string, closedAt: string | null): string {
   const mins = Math.round(
     (new Date(closedAt).getTime() - new Date(openedAt).getTime()) / 60000,
   );
-  return `${mins}m`;
+  if (mins < 60) return `${mins}m`;
+  return `${Math.floor(mins / 60)}h ${String(mins % 60).padStart(2, "0")}m`;
 }
 
 export default function FlightHistoryPanel({
