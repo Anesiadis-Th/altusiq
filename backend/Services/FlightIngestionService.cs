@@ -32,10 +32,10 @@ public class FlightIngestionService
         {
             var now = DateTime.UtcNow;
 
-            // A trail closes when the aircraft drops out of the global feed, not when
-            // it leaves the ingestion bbox. Closing on bbox exit truncated every
-            // outbound flight in mid-air and made ClosedAt the boundary crossing
-            // rather than the landing.
+            // Close on disappearance from the global feed, never on bbox exit:
+            // leaving the region is not the end of the flight, and treating it as
+            // one truncates the track in mid-air and puts ClosedAt at the boundary
+            // crossing instead of the landing.
             var timedOut = _trails
                 .Where(kvp => (now - kvp.Value.LastSeen).TotalSeconds > _settings.GapThresholdSeconds)
                 .Select(kvp => kvp.Key)

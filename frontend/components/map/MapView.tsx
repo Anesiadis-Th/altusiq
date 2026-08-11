@@ -255,24 +255,6 @@ export default function MapView({
         },
       });
 
-      instance.addLayer(
-        {
-          id: "aircraft-highlight",
-          type: "circle",
-          source: "aircraft",
-          filter: ["==", ["get", "icao24"], ""],
-          paint: {
-            "circle-radius": 18,
-            "circle-color": "#63b3ed",
-            "circle-opacity": 0.16,
-            "circle-stroke-color": "#63b3ed",
-            "circle-stroke-width": 1.5,
-            "circle-stroke-opacity": 0.7,
-          },
-        },
-        "aircraft-layer",
-      );
-
       instance.addLayer({
         id: "track-line",
         type: "line",
@@ -295,6 +277,40 @@ export default function MapView({
           "line-color": "#63b3ed",
           "line-width": 2.5,
           "line-opacity": 0.85,
+        },
+      });
+
+      // The selected aircraft is redrawn here, above aircraft-layer, because every
+      // plane shares that one symbol layer — within it there is no way to raise one
+      // icon above the rest. It stays in aircraft-layer too; the duplicate is an
+      // exact overdraw at the same coordinates and rotation, so it is invisible and
+      // keeps the click/hover handlers bound to a single layer.
+      instance.addLayer({
+        id: "aircraft-highlight",
+        type: "circle",
+        source: "aircraft",
+        filter: ["==", ["get", "icao24"], ""],
+        paint: {
+          "circle-radius": 18,
+          "circle-color": "#63b3ed",
+          "circle-opacity": 0.16,
+          "circle-stroke-color": "#63b3ed",
+          "circle-stroke-width": 1.5,
+          "circle-stroke-opacity": 0.7,
+        },
+      });
+
+      instance.addLayer({
+        id: "aircraft-selected",
+        type: "symbol",
+        source: "aircraft",
+        filter: ["==", ["get", "icao24"], ""],
+        layout: {
+          "icon-image": "aircraft",
+          "icon-allow-overlap": true,
+          "icon-ignore-placement": true,
+          "icon-rotation-alignment": "map",
+          "icon-rotate": rotateExpression,
         },
       });
 
@@ -354,11 +370,13 @@ export default function MapView({
   useEffect(() => {
     const instance = map.current;
     if (!instance || !ready) return;
-    instance.setFilter("aircraft-highlight", [
+    const selectionFilter: mapboxgl.FilterSpecification = [
       "==",
       ["get", "icao24"],
       selectedIcao ?? "",
-    ]);
+    ];
+    instance.setFilter("aircraft-highlight", selectionFilter);
+    instance.setFilter("aircraft-selected", selectionFilter);
 
     instance.triggerRepaint();
   }, [selectedIcao, ready]);
