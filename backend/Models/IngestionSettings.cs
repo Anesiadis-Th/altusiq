@@ -9,5 +9,6 @@ public class IngestionSettings
     public int PollIntervalSeconds { get; set; } = 120;
     public int GapThresholdSeconds { get; set; } = 120;
     public int MinPointIntervalSeconds { get; set; } = 30;
+    public int OutOfRegionPointIntervalSeconds { get; set; } = 300;
     public int MaxTrackPoints { get; set; } = 300;
 }

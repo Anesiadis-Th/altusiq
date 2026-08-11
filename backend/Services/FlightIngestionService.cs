@@ -12,8 +12,7 @@ public class FlightIngestionService
     private readonly IngestionSettings _settings;
     private readonly ILogger<FlightIngestionService> _logger;
     private readonly GeometryFactory _geometryFactory = new(new PrecisionModel(), 4326);
-    private readonly Dictionary<string, ActiveFlight> _activeFlights = new();
-    private readonly Dictionary<string, ActiveFlight> _liveTrails = new();
+    private readonly Dictionary<string, ActiveFlight> _trails = new();
     private readonly SemaphoreSlim _lock = new(1, 1);
 
     public FlightIngestionService(
@@ -33,7 +32,11 @@ public class FlightIngestionService
         {
             var now = DateTime.UtcNow;
 
-            var timedOut = _activeFlights
+            // A trail closes when the aircraft drops out of the global feed, not when
+            // it leaves the ingestion bbox. Closing on bbox exit truncated every
+            // outbound flight in mid-air and made ClosedAt the boundary crossing
+            // rather than the landing.
+            var timedOut = _trails
                 .Where(kvp => (now - kvp.Value.LastSeen).TotalSeconds > _settings.GapThresholdSeconds)
                 .Select(kvp => kvp.Key)
                 .ToList();
@@ -42,7 +45,7 @@ public class FlightIngestionService
             {
                 try
                 {
-                    await CloseFlightsAsync(timedOut, now, ct);
+                    await CloseFlightsAsync(timedOut, ct);
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)
                 {
@@ -52,14 +55,6 @@ public class FlightIngestionService
                 }
             }
 
-            var staleTrails = _liveTrails
-                .Where(kvp => (now - kvp.Value.LastSeen).TotalSeconds > _settings.GapThresholdSeconds)
-                .Select(kvp => kvp.Key)
-                .ToList();
-
-            foreach (var icao in staleTrails)
-                _liveTrails.Remove(icao);
-
             var airborne = aircraft
                 .Where(a => !a.OnGround
                     && a.Longitude.HasValue
@@ -68,14 +63,7 @@ public class FlightIngestionService
                 .ToDictionary(g => g.Key, g => g.First());
 
             foreach (var (icao, plane) in airborne)
-                _liveTrails[icao] = AppendPosition(_liveTrails.GetValueOrDefault(icao), plane, now);
-
-            var inRegion = airborne
-                .Where(kvp => kvp.Value.Longitude >= _settings.MinLon && kvp.Value.Longitude <= _settings.MaxLon
-                    && kvp.Value.Latitude >= _settings.MinLat && kvp.Value.Latitude <= _settings.MaxLat);
-
-            foreach (var (icao, plane) in inRegion)
-                _activeFlights[icao] = AppendPosition(_activeFlights.GetValueOrDefault(icao), plane, now);
+                _trails[icao] = AppendPosition(_trails.GetValueOrDefault(icao), plane, now);
         }
         finally
         {
@@ -92,7 +80,8 @@ public class FlightIngestionService
             Callsign: plane.Callsign?.Trim(),
             OriginCountry: plane.OriginCountry,
             TrackPoints: [],
-            LastRecordedAt: DateTime.MinValue
+            LastRecordedAt: DateTime.MinValue,
+            RegionPointCount: 0
         );
 
         if ((now - active.LastRecordedAt).TotalSeconds < _settings.MinPointIntervalSeconds)
@@ -112,11 +101,17 @@ public class FlightIngestionService
         if (updatedPoints.Count > _settings.MaxTrackPoints)
             updatedPoints.RemoveRange(0, updatedPoints.Count - _settings.MaxTrackPoints);
 
+        // Sticky: trimming the oldest points must not erase the fact that this
+        // aircraft was over the region, or a long-haul departure would stop
+        // qualifying for persistence part-way through its own flight.
+        var regionPointCount = active.RegionPointCount + (IsInRegion(point) ? 1 : 0);
+
         return active with
         {
             LastSeen = now,
             LastRecordedAt = now,
-            TrackPoints = updatedPoints
+            TrackPoints = updatedPoints,
+            RegionPointCount = regionPointCount
         };
     }
 
@@ -126,7 +121,7 @@ public class FlightIngestionService
         await _lock.WaitAsync(ct);
         try
         {
-            var active = _liveTrails.GetValueOrDefault(key) ?? _activeFlights.GetValueOrDefault(key);
+            var active = _trails.GetValueOrDefault(key);
             if (active is null)
                 return null;
 
@@ -154,45 +149,99 @@ public class FlightIngestionService
         }
     }
 
-    private async Task CloseFlightsAsync(List<string> icaos, DateTime closedAt, CancellationToken ct)
+    private async Task CloseFlightsAsync(List<string> icaos, CancellationToken ct)
     {
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AltusIqDbContext>();
 
+        var persisted = 0;
+
         foreach (var icao in icaos)
         {
-            if (!_activeFlights.TryGetValue(icao, out var active))
+            if (!_trails.TryGetValue(icao, out var active))
                 continue;
 
-            if (active.TrackPoints.Count >= 2)
+            // Two in-region fixes is the same eligibility bar the bbox-filtered
+            // dictionary used to apply, so the persisted flight population (and the
+            // analytics built on it) stays comparable. Aircraft that only clipped a
+            // corner of the region are still dropped rather than persisted at full
+            // global length.
+            if (active.RegionPointCount < 2)
+                continue;
+
+            var points = ThinOutOfRegionPoints(active.TrackPoints);
+            if (points.Count < 2)
+                continue;
+
+            var first = points[0];
+            var last = points[^1];
+
+            db.Flights.Add(new Flight
             {
-                var last = active.TrackPoints[^1];
+                Id = active.Id,
+                Icao24 = icao,
+                Callsign = active.Callsign,
+                OriginCountry = active.OriginCountry,
+                OpenedAt = DateTimeOffset.FromUnixTimeSeconds(first.Timestamp).UtcDateTime,
+                ClosedAt = DateTimeOffset.FromUnixTimeSeconds(last.Timestamp).UtcDateTime,
+                LastPosition = _geometryFactory.CreatePoint(
+                    new Coordinate(last.Longitude, last.Latitude)),
+                LastAltitude = last.Altitude,
+                // Peak over the untrimmed track: LastAltitude is now a landing
+                // altitude for most flights, so it no longer works as a cruise proxy.
+                MaxAltitude = active.TrackPoints.Max(p => p.Altitude),
+                TrackPoints = points
+            });
 
-                db.Flights.Add(new Flight
-                {
-                    Id = active.Id,
-                    Icao24 = icao,
-                    Callsign = active.Callsign,
-                    OriginCountry = active.OriginCountry,
-                    OpenedAt = active.OpenedAt,
-                    ClosedAt = closedAt,
-                    LastPosition = _geometryFactory.CreatePoint(
-                        new Coordinate(last.Longitude, last.Latitude)),
-                    LastAltitude = last.Altitude,
-                    TrackPoints = active.TrackPoints
-                });
-            }
-
+            persisted++;
         }
 
-        var saved = await db.SaveChangesAsync(ct);
+        await db.SaveChangesAsync(ct);
 
         foreach (var icao in icaos)
-            _activeFlights.Remove(icao);
+            _trails.Remove(icao);
 
-        if (saved > 0)
-            _logger.LogInformation("Persisted {Count} completed flights", saved);
+        if (persisted > 0)
+            _logger.LogInformation("Persisted {Count} completed flights", persisted);
     }
+
+    /// <summary>
+    /// Keeps every in-region fix at full poll resolution and thins the rest to one
+    /// point per OutOfRegionPointIntervalSeconds. The out-of-region leg is a straight
+    /// line at cruise, so it draws identically at 5-minute spacing while costing a
+    /// fraction of the jsonb.
+    /// </summary>
+    private List<TrackPoint> ThinOutOfRegionPoints(List<TrackPoint> points)
+    {
+        if (points.Count < 3 || _settings.OutOfRegionPointIntervalSeconds <= _settings.MinPointIntervalSeconds)
+            return new List<TrackPoint>(points);
+
+        var kept = new List<TrackPoint>(points.Count) { points[0] };
+
+        for (var i = 1; i < points.Count - 1; i++)
+        {
+            var point = points[i];
+
+            // The neighbour checks keep the fixes on either side of a boundary
+            // crossing, so the line enters and leaves the region on the real track
+            // rather than cutting a chord across it.
+            if (IsInRegion(point) || IsInRegion(points[i - 1]) || IsInRegion(points[i + 1]))
+            {
+                kept.Add(point);
+                continue;
+            }
+
+            if (point.Timestamp - kept[^1].Timestamp >= _settings.OutOfRegionPointIntervalSeconds)
+                kept.Add(point);
+        }
+
+        kept.Add(points[^1]);
+        return kept;
+    }
+
+    private bool IsInRegion(TrackPoint point) =>
+        point.Longitude >= _settings.MinLon && point.Longitude <= _settings.MaxLon
+        && point.Latitude >= _settings.MinLat && point.Latitude <= _settings.MaxLat;
 }
 
 internal record ActiveFlight(
@@ -202,5 +251,6 @@ internal record ActiveFlight(
     string? Callsign,
     string? OriginCountry,
     List<TrackPoint> TrackPoints,
-    DateTime LastRecordedAt
+    DateTime LastRecordedAt,
+    int RegionPointCount
 );

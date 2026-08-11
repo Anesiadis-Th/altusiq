@@ -12,6 +12,7 @@ public class Flight
     public DateTime? ClosedAt { get; set; }
     public Point? LastPosition { get; set; }
     public double? LastAltitude { get; set; }
+    public double? MaxAltitude { get; set; }
     public List<TrackPoint> TrackPoints { get; set; } = [];
     public string? DepartureAirport { get; set; }
     public string? ArrivalAirport { get; set; }

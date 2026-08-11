@@ -169,17 +169,22 @@ public class AnalyticsService(AltusIqDbContext db, IMemoryCache cache)
     private static async Task<IReadOnlyList<AltitudeBandDto>> GetAltitudeBandsAsync(
         IQueryable<Models.Flight> window, CancellationToken ct)
     {
-        // Bucket by last reported altitude. The nested ternary translates to a SQL
-        // CASE, so the bucketing happens server-side with no jsonb/raw SQL.
+        // Bucket by peak observed altitude. LastAltitude is only a usable cruise
+        // proxy for flights that were cut off at the region boundary — now that
+        // tracks run to landing it reports touchdown, so it collapses into the
+        // bottom band. Rows written before MaxAltitude existed fall back to it.
+        // The nested ternary translates to a SQL CASE, so the bucketing happens
+        // server-side with no jsonb/raw SQL.
         var rows = await window
-            .Where(f => f.LastAltitude != null)
+            .Select(f => new { Altitude = f.MaxAltitude ?? f.LastAltitude })
+            .Where(f => f.Altitude != null)
             .GroupBy(f =>
-                f.LastAltitude < 2000 ? "0–2 km" :
-                f.LastAltitude < 4000 ? "2–4 km" :
-                f.LastAltitude < 6000 ? "4–6 km" :
-                f.LastAltitude < 8000 ? "6–8 km" :
-                f.LastAltitude < 10000 ? "8–10 km" :
-                f.LastAltitude < 12000 ? "10–12 km" : "12 km+")
+                f.Altitude < 2000 ? "0–2 km" :
+                f.Altitude < 4000 ? "2–4 km" :
+                f.Altitude < 6000 ? "4–6 km" :
+                f.Altitude < 8000 ? "6–8 km" :
+                f.Altitude < 10000 ? "8–10 km" :
+                f.Altitude < 12000 ? "10–12 km" : "12 km+")
             .Select(g => new { Band = g.Key, Count = g.Count() })
             .ToListAsync(ct);
 
