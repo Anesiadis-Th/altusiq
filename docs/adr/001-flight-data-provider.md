@@ -2,7 +2,9 @@
 
 ## Status
 
-Accepted
+Accepted, amended by [ADR-010](010-poll-interval-and-dead-reckoning.md).
+
+The choice of provider stands. The consequence "no request limits for authenticated users beyond a 10-second polling interval" was true when written but no longer is: OpenSky moved to a per-bucket daily credit system, which caps continuous polling at roughly one call every 87 seconds.
 
 ## Context
 

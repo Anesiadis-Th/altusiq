@@ -2,7 +2,9 @@
 
 ## Status
 
-Accepted
+Accepted, partially superseded by [ADR-011](011-global-live-coverage.md).
+
+The flight-as-track schema below stands. The **regional scoping** lever does not: the bounding box no longer decides what is observed or recorded, only which completed flights are persisted. The poll-rate arithmetic in Context, and the per-poll/per-interval figures under Downsampling and Track capping, assume the 10-second Phase 1 interval and were invalidated by [ADR-010](010-poll-interval-and-dead-reckoning.md). See ADR-011's Consequences for the corrected numbers.
 
 ## Context
 
