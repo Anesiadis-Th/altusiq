@@ -11,14 +11,12 @@ export interface SampledAircraft {
   longitude: number;
   latitude: number;
   heading: number | null;
-  category: number | null;
 }
 
 interface Track {
   icao24: string;
   heading: number | null;
   velocity: number | null;
-  category: number | null;
   onGround: boolean;
   baseLon: number;
   baseLat: number;
@@ -80,9 +78,6 @@ export class DeadReckoningEngine {
         const rendered = this.renderPosition(existing, nowMs);
         existing.heading = a.heading;
         existing.velocity = a.velocity;
-        // Sticky, unlike the fields above: it describes the airframe, not the fix,
-        // and nulling it on a poll that omits it flickers the icon back to generic.
-        if (a.category != null) existing.category = a.category;
         existing.onGround = a.on_ground;
         existing.baseLon = a.longitude;
         existing.baseLat = a.latitude;
@@ -95,7 +90,6 @@ export class DeadReckoningEngine {
           icao24: a.icao24,
           heading: a.heading,
           velocity: a.velocity,
-          category: a.category,
           onGround: a.on_ground,
           baseLon: a.longitude,
           baseLat: a.latitude,
@@ -126,7 +120,6 @@ export class DeadReckoningEngine {
         longitude: position.lon,
         latitude: position.lat,
         heading: track.heading,
-        category: track.category,
       });
     }
     for (const icao24 of expired) this.tracks.delete(icao24);
