@@ -175,6 +175,7 @@ export default function MapView({
       style: "mapbox://styles/mapbox/dark-v11",
       center: [15, 57],
       zoom: 4,
+      projection: "mercator",
     });
 
     instance.addControl(new mapboxgl.NavigationControl(), "bottom-right");
