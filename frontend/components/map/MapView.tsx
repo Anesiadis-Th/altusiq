@@ -11,6 +11,11 @@ import {
   AircraftSource,
   startAircraftRenderLoop,
 } from "@/lib/aircraftLayer";
+import {
+  iconImageExpression,
+  iconSizeExpression,
+  loadAircraftIcons,
+} from "@/lib/aircraftIcons";
 import FlightPanel from "./FlightPanel";
 import { useActiveTrack } from "@/hooks/useFlights";
 
@@ -29,8 +34,6 @@ interface MapViewProps {
   playbackTrack?: FlightTrack | null;
   playbackPosition?: PlaybackPosition | null;
 }
-
-const AIRCRAFT_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24"><path d="M21 16V14L13 9V3.5C13 2.67 12.33 2 11.5 2C10.67 2 10 2.67 10 3.5V9L2 14V16L10 13.5V19L8 20.5V22L11.5 21L15 22V20.5L13 19V13.5L21 16Z" fill="#63b3ed" stroke="#1a202c" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
 
 const rotateExpression: mapboxgl.ExpressionSpecification = [
   "coalesce",
@@ -120,18 +123,6 @@ function toMarkerCollection(
   };
 }
 
-async function loadAircraftIcon(map: mapboxgl.Map): Promise<void> {
-  if (map.hasImage("aircraft")) return;
-  const image = new Image(48, 48);
-  const source = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(AIRCRAFT_SVG)}`;
-  await new Promise<void>((resolve, reject) => {
-    image.onload = () => resolve();
-    image.onerror = () => reject(new Error("Failed to load aircraft icon"));
-    image.src = source;
-  });
-  map.addImage("aircraft", image, { pixelRatio: 2 });
-}
-
 export default function MapView({
   aircraft,
   selectedIcao,
@@ -180,7 +171,7 @@ export default function MapView({
     instance.addControl(new mapboxgl.NavigationControl(), "bottom-right");
 
     instance.on("load", async () => {
-      await loadAircraftIcon(instance);
+      await loadAircraftIcons(instance);
 
       instance.addSource("airports", {
         type: "geojson",
@@ -248,7 +239,8 @@ export default function MapView({
         type: "symbol",
         source: "aircraft",
         layout: {
-          "icon-image": "aircraft",
+          "icon-image": iconImageExpression,
+          "icon-size": iconSizeExpression,
           "icon-allow-overlap": true,
           "icon-rotation-alignment": "map",
           "icon-rotate": rotateExpression,
@@ -306,7 +298,9 @@ export default function MapView({
         source: "aircraft",
         filter: ["==", ["get", "icao24"], ""],
         layout: {
-          "icon-image": "aircraft",
+          // Must stay identical to aircraft-layer's — see aircraftIcons.ts.
+          "icon-image": iconImageExpression,
+          "icon-size": iconSizeExpression,
           "icon-allow-overlap": true,
           "icon-ignore-placement": true,
           "icon-rotation-alignment": "map",

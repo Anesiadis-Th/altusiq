@@ -21,6 +21,7 @@ function plane(overrides: Partial<Aircraft> & { icao24: string }): Aircraft {
     heading: 0,
     vertical_rate: 0,
     last_contact: 1_700_000_000,
+    category: null,
     ...overrides,
   };
 }

@@ -12,7 +12,10 @@ namespace AltusIQ.Api.Background;
 
 public class FlightPollingService : BackgroundService
 {
+    // Do NOT raise to 18 for the category at index 17: it only arrives with
+    // extended=1, so a non-extended response would fail every row and empty the poll.
     private const int RequiredStateFields = 12;
+    private const int CategoryFieldIndex = 17;
 
     private readonly IOpenSkyAuthService _authService;
     private readonly HttpClient _httpClient;
@@ -107,6 +110,8 @@ public class FlightPollingService : BackgroundService
         _logger.LogInformation(
             "Received {Count} aircraft from OpenSky", aircraft.Count);
 
+        LogCategoryCoverage(aircraft);
+
         _snapshotStore.Update(aircraft);
         _heartbeat.RecordSuccess();
 
@@ -126,9 +131,11 @@ public class FlightPollingService : BackgroundService
     private async Task<HttpResponseMessage> SendStatesRequestAsync(
         string baseUrl, string token, CancellationToken cancellationToken)
     {
+        // extended=1 appends the emitter category; credits scale with bbox area
+        // alone, so it costs nothing.
         var request = new HttpRequestMessage(
             HttpMethod.Get,
-            $"{baseUrl}/api/states/all");
+            $"{baseUrl}/api/states/all?extended=1");
 
         request.Headers.Authorization =
             new AuthenticationHeaderValue("Bearer", token);
@@ -210,8 +217,30 @@ public class FlightPollingService : BackgroundService
             Velocity           = ReadDouble(state[9]),
             Heading            = ReadDouble(state[10]),
             VerticalRate       = ReadDouble(state[11]),
-            LastContact        = state[4].GetInt64()
+            LastContact        = state[4].GetInt64(),
+            Category           = state.GetArrayLength() > CategoryFieldIndex
+                ? ReadInt(state[CategoryFieldIndex])
+                : null
         };
+    }
+
+    // Drop once the real-world coverage is known. 0 and 1 are not usable categories,
+    // so they count against the share rather than towards it.
+    private void LogCategoryCoverage(List<Aircraft> aircraft)
+    {
+        if (aircraft.Count == 0)
+            return;
+
+        var known = aircraft.Count(a => a.Category is >= 2);
+
+        var distribution = string.Join(", ", aircraft
+            .GroupBy(a => a.Category)
+            .OrderByDescending(g => g.Count())
+            .Select(g => $"{g.Key?.ToString() ?? "absent"}={g.Count()}"));
+
+        _logger.LogInformation(
+            "Emitter category: {Known}/{Total} ({Percent:F1}%) usable. Distribution: {Distribution}",
+            known, aircraft.Count, 100.0 * known / aircraft.Count, distribution);
     }
 
     private static string? ReadString(JsonElement element) =>
@@ -219,4 +248,9 @@ public class FlightPollingService : BackgroundService
 
     private static double? ReadDouble(JsonElement element) =>
         element.ValueKind == JsonValueKind.Number ? element.GetDouble() : null;
+
+    private static int? ReadInt(JsonElement element) =>
+        element.ValueKind == JsonValueKind.Number && element.TryGetInt32(out var value)
+            ? value
+            : null;
 }

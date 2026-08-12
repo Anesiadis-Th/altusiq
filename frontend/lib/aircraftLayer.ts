@@ -3,6 +3,7 @@ import { DeadReckoningEngine, SampledAircraft } from "@/lib/deadReckoning";
 export interface AircraftFeatureProps {
   icao24: string;
   heading: number | null;
+  category: number | null;
 }
 
 export type AircraftFeatureCollection = GeoJSON.FeatureCollection<
@@ -22,7 +23,11 @@ export function toFeatureCollection(
     features: sampled.map((a) => ({
       type: "Feature",
       geometry: { type: "Point", coordinates: [a.longitude, a.latitude] },
-      properties: { icao24: a.icao24, heading: a.heading },
+      properties: {
+        icao24: a.icao24,
+        heading: a.heading,
+        category: a.category,
+      },
     })),
   };
 }

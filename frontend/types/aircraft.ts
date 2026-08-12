@@ -10,4 +10,5 @@ export interface Aircraft {
   heading: number | null;
   vertical_rate: number | null;
   last_contact: number;
+  category: number | null;
 }
