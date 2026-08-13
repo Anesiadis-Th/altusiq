@@ -75,7 +75,7 @@ export default function FlightHistoryPanel({
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="text-white text-[13px] font-mono tabular-nums">
-                  {flight.callsign ?? flight.icao24.toUpperCase()}
+                  {flight.callsign?.trim() || flight.icao24.toUpperCase()}
                 </span>
                 <span className="text-gray-500 text-xs font-mono tabular-nums">
                   {formatDuration(flight.opened_at, flight.closed_at)}

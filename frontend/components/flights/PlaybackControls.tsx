@@ -61,7 +61,7 @@ export default function PlaybackControls({
     setSpeed,
   } = playback;
 
-  const label = track.callsign ?? track.icao24.toUpperCase();
+  const label = track.callsign?.trim() || track.icao24.toUpperCase();
   const currentTime = currentTimestamp
     ? formatTimestamp(currentTimestamp)
     : "--:--:--";
