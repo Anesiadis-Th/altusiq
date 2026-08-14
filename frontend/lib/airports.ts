@@ -1,15 +1,19 @@
-import codes from "@/data/airportCodes.json";
+// ICAO to [IATA, name], from OurAirports. Fetched from public/ and never
+// imported, same rule as airports.geojson. See ADR-013.
+export type AirportCodes = Record<string, string[]>;
 
-// ICAO to [IATA, name], from OurAirports. Only imported by the lazy analytics
-// chunk, so it stays out of the initial map bundle.
-const table = codes as Record<string, string[]>;
+export const AIRPORT_CODES_URL = "/airportCodes.json";
 
-// Analytics is keyed by ICAO, the UI shows IATA. Airfields with no IATA code
-// keep their ICAO.
-export function airportLabel(icao: string): string {
-  return table[icao]?.[0] ?? icao;
+export function airportLabel(
+  codes: AirportCodes | undefined,
+  icao: string,
+): string {
+  return codes?.[icao]?.[0] ?? icao;
 }
 
-export function airportName(icao: string): string | null {
-  return table[icao]?.[1] ?? null;
+export function airportName(
+  codes: AirportCodes | undefined,
+  icao: string,
+): string | null {
+  return codes?.[icao]?.[1] ?? null;
 }

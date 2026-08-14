@@ -1,24 +1,29 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import Link from "next/link";
+import dynamic from "next/dynamic";
+import { useQueryClient } from "@tanstack/react-query";
 import { BarChart3, History, Plane, Search } from "lucide-react";
 import { useFlightData } from "@/hooks/useFlightData";
 import { useFlightTrack } from "@/hooks/useFlights";
 import { usePlayback } from "@/hooks/usePlayback";
 import { useActivePanel } from "@/hooks/useActivePanel";
+import { prefetchAnalytics } from "@/hooks/useAnalytics";
+import { prefetchAirportCodes } from "@/hooks/useAirportCodes";
 import { Aircraft } from "@/types/aircraft";
 import MapView, { FocusTarget } from "./MapView";
 import FlightSearch from "./FlightSearch";
 import FlightHistoryPanel from "@/components/flights/FlightHistoryPanel";
 import PlaybackControls from "@/components/flights/PlaybackControls";
+import AnalyticsShell from "@/components/analytics/AnalyticsShell";
+import AnalyticsSkeleton from "@/components/analytics/AnalyticsSkeleton";
 import { MicroLabel } from "@/components/ui/Label";
-import {
-  ControlGroup,
-  GroupButton,
-  GroupDivider,
-  groupItemClasses,
-} from "@/components/ui/Button";
+import { ControlGroup, GroupButton, GroupDivider } from "@/components/ui/Button";
+
+const AnalyticsContent = dynamic(
+  () => import("@/components/analytics/AnalyticsContent"),
+  { ssr: false, loading: () => <AnalyticsSkeleton /> },
+);
 
 const SCANDINAVIA_BBOX = {
   minLon: 4.0,
@@ -40,6 +45,7 @@ function computeRegionalCount(aircraft: Aircraft[]): number {
 }
 
 export default function FlightMap() {
+  const queryClient = useQueryClient();
   const { aircraft, connected } = useFlightData();
   const [selectedFlightId, setSelectedFlightId] = useState<string | null>(null);
   const [selectedIcao, setSelectedIcao] = useState<string | null>(null);
@@ -91,6 +97,14 @@ export default function FlightMap() {
     setSelectedFlightId(null);
   }
 
+  // The dynamic() above already owns that module. Importing it again just warms
+  // the chunk early, next to the two queries it would otherwise wait behind.
+  function handleAnalyticsHover() {
+    void import("@/components/analytics/AnalyticsContent");
+    prefetchAnalytics(queryClient);
+    prefetchAirportCodes(queryClient);
+  }
+
   return (
     <div className="relative w-full h-dvh">
       <MapView
@@ -111,6 +125,9 @@ export default function FlightMap() {
         onSearchClick={() => togglePanel("search")}
         showHistory={activePanel === "history"}
         onHistoryClick={() => togglePanel("history")}
+        showAnalytics={activePanel === "analytics"}
+        onAnalyticsClick={() => togglePanel("analytics")}
+        onAnalyticsHover={handleAnalyticsHover}
       />
 
       <div ref={panelRef}>
@@ -130,6 +147,14 @@ export default function FlightMap() {
           />
         )}
       </div>
+
+      {/* Outside the panelRef group on purpose: it's full-screen, so the
+          rails' outside-click dismissal has nothing to act on. */}
+      {activePanel === "analytics" && (
+        <AnalyticsShell onClose={closePanel}>
+          <AnalyticsContent />
+        </AnalyticsShell>
+      )}
 
       {selectedFlightId && isTrackLoading && <TrackLoadingSkeleton />}
 
@@ -153,6 +178,9 @@ interface TopBarProps {
   onSearchClick: () => void;
   showHistory: boolean;
   onHistoryClick: () => void;
+  showAnalytics: boolean;
+  onAnalyticsClick: () => void;
+  onAnalyticsHover: () => void;
 }
 
 function TopBar({
@@ -164,6 +192,9 @@ function TopBar({
   onSearchClick,
   showHistory,
   onHistoryClick,
+  showAnalytics,
+  onAnalyticsClick,
+  onAnalyticsHover,
 }: TopBarProps) {
   // The rail is flush to the left edge, so the toolbar steps aside on sm+
   // instead of sitting on top of it.
@@ -224,14 +255,16 @@ function TopBar({
           <span className="hidden sm:inline">History</span>
         </GroupButton>
         <GroupDivider />
-        <Link
-          href="/analytics"
+        <GroupButton
+          active={showAnalytics}
+          onClick={onAnalyticsClick}
+          onPointerEnter={onAnalyticsHover}
+          onFocus={onAnalyticsHover}
           aria-label="Analytics"
-          className={groupItemClasses()}
         >
           <BarChart3 size={16} />
           <span className="hidden sm:inline">Analytics</span>
-        </Link>
+        </GroupButton>
       </ControlGroup>
     </div>
   );

@@ -18,3 +18,4 @@ ADRs document significant technical decisions, the context that led to them, and
 | [010](010-poll-interval-and-dead-reckoning.md) | Always-on at ~120s polling with client-side dead reckoning | Accepted |
 | [011](011-global-live-coverage.md)       | Global live coverage, bbox scoped to persistence | Accepted |
 | [012](012-live-route-lookup.md)          | adsbdb for live route lookup                  | Accepted |
+| [013](013-analytics-presentation.md)     | Analytics as an in-map overlay with hand-drawn charts | Accepted |

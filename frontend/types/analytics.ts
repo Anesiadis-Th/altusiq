@@ -21,20 +21,16 @@ export interface FlightsPerHour {
   count: number;
 }
 
-export interface AltitudeBand {
-  label: string;
-  count: number;
-}
-
 export interface Analytics {
   range_days: number;
   from: string;
   to: string;
   total_flights: number;
   enriched_flights: number;
+  distinct_airports: number;
+  distinct_routes: number;
   busiest_airports: AirportTraffic[];
   top_routes: Route[];
   flights_per_day: FlightsPerDay[];
   flights_per_hour: FlightsPerHour[];
-  altitude_bands: AltitudeBand[];
 }

@@ -23,10 +23,12 @@ export function useActivePanel({
     setActivePanel(null);
   }
 
-  // Only the anchored panels dismiss this way. Analytics is full-screen, so
-  // every click lands inside it anyway.
   useEffect(() => {
-    if (activePanel !== "search" && activePanel !== "history") return;
+    if (!activePanel) return;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setActivePanel(null);
+    }
 
     function handlePointerDown(event: PointerEvent) {
       const target = event.target as Node;
@@ -39,16 +41,16 @@ export function useActivePanel({
       setActivePanel(null);
     }
 
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") setActivePanel(null);
-    }
+    // Escape closes anything. Outside-click is only for the anchored rails, since
+    // the analytics overlay covers the viewport and would close on its own content.
+    const anchored = activePanel === "search" || activePanel === "history";
 
-    document.addEventListener("pointerdown", handlePointerDown);
     document.addEventListener("keydown", handleKeyDown);
+    if (anchored) document.addEventListener("pointerdown", handlePointerDown);
 
     return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
       document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("pointerdown", handlePointerDown);
     };
   }, [activePanel, panelRef, topBarRef]);
 

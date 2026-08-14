@@ -7,6 +7,12 @@
   --color-line: var(--color-gray-800); /* the only border colour */
   --radius-panel: 0.5rem;
   --radius-control: 0.375rem;
+
+  /* Chart series, fixed slot order. chart-1 is the only one a single-series
+     chart may use. Colourblind-checked against --color-surface, so changing
+     either value means re-running the dataviz palette validator. */
+  --color-chart-1: #3b82f6;
+  --color-chart-2: #d95926;
 }
 
 html {

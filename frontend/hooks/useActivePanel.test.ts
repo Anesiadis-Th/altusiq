@@ -135,15 +135,20 @@ describe("useActivePanel", () => {
       expect(result.current.activePanel).toBe("history");
     });
 
-    // It covers the whole viewport, so there is no outside to click and
-    // Escape would fight its own close button.
-    it("leaves analytics alone", () => {
+    // The analytics overlay covers the viewport, so a click that looks outside
+    // is really on its own scrim — dismissing there would close it on contact.
+    it("ignores outside clicks while analytics is open", () => {
       const { result } = setup();
       act(() => result.current.toggle("analytics"));
       pointerDownOn(map);
       expect(result.current.activePanel).toBe("analytics");
+    });
+
+    it("closes analytics on Escape", () => {
+      const { result } = setup();
+      act(() => result.current.toggle("analytics"));
       pressKey("Escape");
-      expect(result.current.activePanel).toBe("analytics");
+      expect(result.current.activePanel).toBeNull();
     });
 
     it("stops listening once closed", () => {

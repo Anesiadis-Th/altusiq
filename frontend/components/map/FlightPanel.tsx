@@ -220,8 +220,8 @@ export default function FlightPanel({ aircraft, onClose }: FlightPanelProps) {
         ) : (
           <p className="text-gray-500 text-xs">
             {route
-              ? "Route unknown — the published route for this callsign doesn't match this aircraft's position"
-              : "Route unknown — no public route data for this callsign"}
+              ? "Route unknown. The published route for this callsign doesn't match this aircraft's position"
+              : "Route unknown. No public route data for this callsign"}
           </p>
         )}
       </div>
