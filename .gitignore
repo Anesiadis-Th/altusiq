@@ -1,6 +1,6 @@
-# .NET build artifacts
-backend/bin/
-backend/obj/
+# .NET build artifacts (globbed: the test project nests its own bin/obj)
+backend/**/bin/
+backend/**/obj/
 
 # Local config with secrets - never commit
 backend/appsettings.Development.json

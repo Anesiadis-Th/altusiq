@@ -78,6 +78,8 @@ builder.Services.AddSingleton<IOpenSkyAuthService>(sp =>
 
 builder.Services.Configure<IngestionSettings>(
     builder.Configuration.GetSection("Ingestion"));
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<IFlightWriter, EfFlightWriter>();
 builder.Services.AddSingleton<FlightIngestionService>();
 builder.Services.AddSingleton<LiveSnapshotStore>();
 

@@ -9,7 +9,7 @@ on:
 
 jobs:
   backend:
-    name: Backend build
+    name: Backend build and test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,12 +18,18 @@ jobs:
         with:
           dotnet-version: "8.0.x"
 
+      # Name the solution: backend/ holds both AltusIQ.sln and AltusIQ.Api.csproj,
+      # and a bare dotnet command there fails as ambiguous.
       - name: Restore
-        run: dotnet restore
+        run: dotnet restore AltusIQ.sln
         working-directory: backend
 
       - name: Build
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build AltusIQ.sln --configuration Release --no-restore
+        working-directory: backend
+
+      - name: Test
+        run: dotnet test AltusIQ.sln --configuration Release --no-build
         working-directory: backend
 
   frontend:

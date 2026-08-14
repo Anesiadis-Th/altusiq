@@ -3,7 +3,11 @@
 **/obj/
 **/out/
 
+# tests never ship in the runtime image
+AltusIQ.Api.Tests/
+
 # files
 fly.toml
 Dockerfile*
+*.sln
 **/*.md

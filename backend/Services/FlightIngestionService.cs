@@ -1,4 +1,3 @@
-using AltusIQ.Api.Data;
 using AltusIQ.Api.Models;
 using AltusIQ.Api.Models.Dtos;
 using Microsoft.Extensions.Options;
@@ -8,21 +7,24 @@ namespace AltusIQ.Api.Services;
 
 public class FlightIngestionService
 {
-    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly IFlightWriter _writer;
     private readonly IngestionSettings _settings;
     private readonly ILogger<FlightIngestionService> _logger;
+    private readonly TimeProvider _timeProvider;
     private readonly GeometryFactory _geometryFactory = new(new PrecisionModel(), 4326);
     private readonly Dictionary<string, ActiveFlight> _trails = new();
     private readonly SemaphoreSlim _lock = new(1, 1);
 
     public FlightIngestionService(
-        IServiceScopeFactory scopeFactory,
+        IFlightWriter writer,
         IOptions<IngestionSettings> settings,
-        ILogger<FlightIngestionService> logger)
+        ILogger<FlightIngestionService> logger,
+        TimeProvider timeProvider)
     {
-        _scopeFactory = scopeFactory;
+        _writer = writer;
         _settings = settings.Value;
         _logger = logger;
+        _timeProvider = timeProvider;
     }
 
     public async Task ProcessAsync(IReadOnlyList<Aircraft> aircraft, CancellationToken ct)
@@ -30,7 +32,7 @@ public class FlightIngestionService
         await _lock.WaitAsync(ct);
         try
         {
-            var now = DateTime.UtcNow;
+            var now = _timeProvider.GetUtcNow().UtcDateTime;
 
             // Close when the plane vanishes from the global feed, never on bbox exit.
             // Leaving the region isn't the end of a flight; closing there cuts the
@@ -149,10 +151,7 @@ public class FlightIngestionService
 
     private async Task CloseFlightsAsync(List<string> icaos, CancellationToken ct)
     {
-        using var scope = _scopeFactory.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<AltusIqDbContext>();
-
-        var persisted = 0;
+        var flights = new List<Flight>();
 
         foreach (var icao in icaos)
         {
@@ -172,7 +171,7 @@ public class FlightIngestionService
             var first = points[0];
             var last = points[^1];
 
-            db.Flights.Add(new Flight
+            flights.Add(new Flight
             {
                 Id = active.Id,
                 Icao24 = icao,
@@ -188,17 +187,17 @@ public class FlightIngestionService
                 MaxAltitude = active.TrackPoints.Max(p => p.Altitude),
                 TrackPoints = points
             });
-
-            persisted++;
         }
 
-        await db.SaveChangesAsync(ct);
+        // Persist before forgetting. A throw here propagates to ProcessAsync, which
+        // leaves the trails in place so the next poll retries them.
+        await _writer.WriteAsync(flights, ct);
 
         foreach (var icao in icaos)
             _trails.Remove(icao);
 
-        if (persisted > 0)
-            _logger.LogInformation("Persisted {Count} completed flights", persisted);
+        if (flights.Count > 0)
+            _logger.LogInformation("Persisted {Count} completed flights", flights.Count);
     }
 
     /// <summary>
