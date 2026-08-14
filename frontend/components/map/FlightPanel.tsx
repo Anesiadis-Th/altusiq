@@ -177,7 +177,6 @@ export default function FlightPanel({ aircraft, onClose }: FlightPanelProps) {
       >
         <div className="mx-auto h-1 w-10 rounded-full bg-gray-700" />
       </div>
-      {/* Header */}
       <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-line">
         <div className="min-w-0">
           <p className="text-white font-semibold text-base font-mono tabular-nums">
@@ -192,7 +191,6 @@ export default function FlightPanel({ aircraft, onClose }: FlightPanelProps) {
         </IconButton>
       </div>
 
-      {/* Route */}
       <div className="px-4 py-3 border-b border-line">
         {routeLoading ? (
           <p className="text-gray-500 text-xs">Looking up route…</p>
@@ -228,7 +226,6 @@ export default function FlightPanel({ aircraft, onClose }: FlightPanelProps) {
         )}
       </div>
 
-      {/* Body */}
       <div className="px-4 py-3">
         <Row
           label="Registered in"
@@ -247,7 +244,6 @@ export default function FlightPanel({ aircraft, onClose }: FlightPanelProps) {
         />
       </div>
 
-      {/* Footer */}
       <div className="px-4 py-2 border-t border-line">
         <p className="text-gray-600 text-xs">
           Last contact:{" "}

@@ -34,7 +34,7 @@ describe("searchAircraft", () => {
 
   it("translates an IATA flight number to its ICAO callsign", () => {
     const fleet = [plane({ icao24: "4ca1fa", callsign: "SAS4787" })];
-    // SK is Scandinavian; the boarding pass says SK4787, the radio says SAS4787.
+    // The boarding pass says SK4787, the radio says SAS4787.
     expect(labels(searchAircraft(fleet, "SK4787"))).toEqual(["SAS4787"]);
   });
 
@@ -68,8 +68,7 @@ describe("searchAircraft", () => {
     const fleet = [
       plane({ icao24: "4ca1fa", callsign: "SAS4787", on_ground: true }),
     ];
-    // The render loop does not draw grounded planes, so flying the camera
-    // to one would land on nothing.
+    // Grounded planes are not drawn, so the camera would land on nothing.
     expect(searchAircraft(fleet, "SAS4787")).toEqual([]);
   });
 
@@ -92,7 +91,7 @@ describe("searchAircraft", () => {
       plane({ icao24: "000001", callsign: "4CA1FA99" }),
     ];
     const results = searchAircraft(fleet, "4CA1FA");
-    // The callsign match outranks the hex match, which falls back to its hex label.
+    // The callsign match wins; the hex match falls back to its hex label.
     expect(labels(results)).toEqual(["4CA1FA99", "4CA1FA"]);
   });
 

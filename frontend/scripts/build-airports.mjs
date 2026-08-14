@@ -1,12 +1,11 @@
 #!/usr/bin/env node
-// Regenerates public/airports.geojson from the OurAirports dataset (public domain).
+// Regenerates public/airports.geojson from OurAirports (public domain).
 //
 //   node scripts/build-airports.mjs
 //
-// Scope is airports with an IATA code AND scheduled service. That drops ~4,900
-// IATA-coded grass strips and private fields, plus heliports and seaplane
-// bases, which are noise on a flight tracker. The `tier` property drives
-// zoom-based filtering in MapView so the world view is not a wall of dots.
+// Only airports with an IATA code and scheduled service, which drops the grass
+// strips, heliports and seaplane bases that are noise on a flight tracker.
+// The tier property drives the zoom filtering in MapView.
 
 import { writeFile, mkdir } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
@@ -103,8 +102,8 @@ const collection = {
   features: airports.map((a) => ({
     type: "Feature",
     geometry: { type: "Point", coordinates: [round(a.lon), round(a.lat)] },
-    // icao is the join key to the backend (which is ICAO-only); a handful of
-    // fields genuinely have no ICAO code, so the property is omitted there.
+    // icao is the join key to the ICAO-only backend. A few fields genuinely
+    // have no ICAO code, so the property is dropped for those.
     properties: {
       iata: a.iata,
       ...(a.icao ? { icao: a.icao } : {}),

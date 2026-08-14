@@ -4,8 +4,8 @@ import { Aircraft } from "@/types/aircraft";
 
 const METERS_PER_DEGREE_LAT = 111_320;
 
-// Mirrors the constants in deadReckoning.ts. Duplicated deliberately: if
-// someone changes them there, these tests should fail and force a decision.
+// Duplicated from deadReckoning.ts on purpose. Changing them there should
+// break these tests and force a deliberate decision.
 const CORRECTION_MS = 1_500;
 const MAX_EXTRAPOLATE_S = 150;
 
@@ -138,8 +138,7 @@ describe("DeadReckoningEngine", () => {
     }
 
     it("survives a single missed 120s poll", () => {
-      // The frontend mirror of the gap-vs-poll-interval rule: one absent
-      // poll must not flicker the aircraft off the map.
+      // One absent poll must not flicker the aircraft off the map.
       expect(engineWithOneTrack().sample(120_000)).toHaveLength(1);
     });
 

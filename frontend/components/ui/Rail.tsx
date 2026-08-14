@@ -1,9 +1,7 @@
 import { X } from "lucide-react";
 import { IconButton } from "./Button";
 
-// Docked left rail on sm+: flush to the viewport edge, full height, square,
-// no shadow — separated from the map by a single hairline on its right edge.
-// On mobile it stays the anchored overlay card it has always been.
+// Docked flush to the left edge on sm+, an anchored overlay card on mobile.
 export const RAIL_WIDTH_CLASS = "sm:w-80";
 
 export function Rail({

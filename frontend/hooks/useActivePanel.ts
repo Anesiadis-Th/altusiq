@@ -23,16 +23,16 @@ export function useActivePanel({
     setActivePanel(null);
   }
 
-  // Dismissal for the two anchored panels. Analytics is excluded: it is a
-  // full-screen overlay, so every click lands inside it anyway.
+  // Only the anchored panels dismiss this way. Analytics is full-screen, so
+  // every click lands inside it anyway.
   useEffect(() => {
     if (activePanel !== "search" && activePanel !== "history") return;
 
     function handlePointerDown(event: PointerEvent) {
       const target = event.target as Node;
 
-      // The TopBar is not "outside": its buttons toggle the panel themselves
-      // and closing here first would let the click immediately reopen it.
+      // The TopBar counts as inside. Its buttons toggle the panel themselves,
+      // so closing here would let the same click reopen it.
       if (panelRef.current?.contains(target)) return;
       if (topBarRef.current?.contains(target)) return;
 

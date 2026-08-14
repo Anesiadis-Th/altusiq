@@ -37,7 +37,6 @@ export function CardBody({
   return <div className={`p-5 ${className}`}>{children}</div>;
 }
 
-// A headerless card: micro-label, one big mono figure, optional hint.
 export function StatCard({
   label,
   value,

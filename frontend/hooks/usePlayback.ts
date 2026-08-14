@@ -1,9 +1,8 @@
 import { useMemo, useRef, useState, useEffect } from "react";
 import { FlightTrack, PlaybackPosition, TrackPoint } from "@/types/flight";
 
-// Replay every flight within the same wall-clock window regardless of its real
-// length, so playback is never frozen. speed is a multiplier of this baseline
-// (1x = ~30s, 2x = ~15s, 0.5x = ~60s).
+// Every flight replays in the same wall-clock window whatever its real length,
+// so nothing ever looks frozen. Speed multiplies this, not real time.
 const BASE_PLAYBACK_SECONDS = 30;
 
 export interface PlaybackState {
@@ -79,7 +78,8 @@ export function usePlayback(track: FlightTrack | null): PlaybackState {
   const reachedEndRef = useRef(false);
   const prevTrackIdRef = useRef<string | null>(null);
 
-  // Reset when track changes - during render, not in an effect
+  // Reset during render rather than in an effect, so the first frame of a new
+  // track never shows the old one's progress.
   const currentTrackId = track?.id ?? null;
   if (currentTrackId !== prevTrackIdRef.current) {
     prevTrackIdRef.current = currentTrackId;

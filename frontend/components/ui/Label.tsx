@@ -1,5 +1,4 @@
-// The one label voice in the app: uppercase, tracked, small, gray-500.
-// Every panel, card and data pill uses it so the UI reads as one system.
+// The one label style in the app. Use it everywhere so the UI reads as one system.
 export function MicroLabel({
   children,
   className = "",

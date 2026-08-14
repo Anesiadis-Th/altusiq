@@ -1,13 +1,12 @@
 import { Aircraft } from "@/types/aircraft";
 import airlineCodes from "@/data/airlineCodes.json";
 
-// IATA airline code → ICAO callsign prefixes (one-to-many: shared flight
-// numbers across AOCs, e.g. LH → DLH + GEC). Built from the OpenFlights
-// airline database (ODbL), active carriers with both codes.
+// IATA airline code to ICAO callsign prefixes. One-to-many because carriers
+// share flight numbers across AOCs, e.g. LH flies as both DLH and GEC.
 const AIRLINE_CODES: Record<string, string[]> = airlineCodes;
 
-// IATA flight number as typed on a boarding pass: 2-char airline code
-// (letters or digits, e.g. SK, U2, W6) + numeric part, possibly partial.
+// A flight number as printed on a boarding pass: 2-char code (SK, U2, W6)
+// plus a number that may still be half-typed.
 const IATA_FLIGHT = /^([A-Z0-9]{2})(\d[\dA-Z]*)?$/;
 const HEX_QUERY = /^[0-9A-F]{2,6}$/;
 
@@ -50,8 +49,7 @@ export function searchAircraft(
 
   const scored: { score: number; label: string; aircraft: Aircraft }[] = [];
   for (const a of aircraft) {
-    // Grounded aircraft are not rendered on the map, so searching them
-    // would fly the camera to an invisible target.
+    // Grounded planes are not drawn, so the camera would fly to nothing.
     if (a.on_ground) continue;
 
     const callsign = a.callsign?.trim().toUpperCase() ?? "";

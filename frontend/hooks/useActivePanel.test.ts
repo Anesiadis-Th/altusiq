@@ -2,8 +2,7 @@ import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { useActivePanel } from "./useActivePanel";
 
-// Stand-ins for the real DOM nodes: one for the open panel, one for the
-// TopBar, and one for the map behind them.
+// Stand-ins for the open panel, the TopBar, and the map behind them.
 let panel: HTMLDivElement;
 let topBar: HTMLDivElement;
 let map: HTMLDivElement;
@@ -60,8 +59,8 @@ describe("useActivePanel", () => {
     expect(result.current.activePanel).toBeNull();
   });
 
-  // The bug this hook exists to prevent: Search and History share an anchor
-  // and a z-index, so two open at once render on top of each other.
+  // The bug this hook exists to prevent: Search and History share an anchor and
+  // a z-index, so both open renders one on top of the other.
   it("replaces the open panel instead of stacking a second one", () => {
     const { result } = setup();
     act(() => result.current.toggle("search"));
@@ -113,8 +112,8 @@ describe("useActivePanel", () => {
       expect(result.current.activePanel).toBe("search");
     });
 
-    // Without this, clicking the Search button while Search is open would
-    // close it here and the button's own toggle would immediately reopen it.
+    // Otherwise clicking Search while it is open closes it here and the
+    // button's own toggle reopens it.
     it("treats the TopBar as inside so its buttons keep working", () => {
       const { result } = setup();
       act(() => result.current.toggle("search"));
@@ -136,8 +135,8 @@ describe("useActivePanel", () => {
       expect(result.current.activePanel).toBe("history");
     });
 
-    // Analytics covers the whole viewport, so an outside click cannot happen
-    // and Escape would fight its own close button.
+    // It covers the whole viewport, so there is no outside to click and
+    // Escape would fight its own close button.
     it("leaves analytics alone", () => {
       const { result } = setup();
       act(() => result.current.toggle("analytics"));

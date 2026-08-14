@@ -106,9 +106,8 @@ export class DeadReckoningEngine {
     const result: SampledAircraft[] = [];
     const expired: string[] = [];
     for (const track of this.tracks.values()) {
-      // Tolerate a missed poll: keep a track until it has been unseen longer
-      // than the extrapolation window, then evict it. A single skipped poll
-      // (120s) stays inside the window, so the plane never flickers out.
+      // Evict only once unseen longer than the extrapolation window. One
+      // skipped poll (120s) fits inside it, so planes never flicker out.
       if ((nowMs - track.baseTimeMs) / 1000 > MAX_EXTRAPOLATE_S) {
         expired.push(track.icao24);
         continue;

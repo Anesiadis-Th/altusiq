@@ -1,13 +1,10 @@
-// One control system: a single height (h-8), a single radius token, and real
-// hover / active / focus-visible states. Ghost is the default voice; the filled
-// treatment is reserved for the one primary action in a view.
+// One height, one radius, one set of states for every control in the app.
+// Ghost is the default; primary is for the single main action in a view.
 
-// Standalone controls draw the focus outline outside their box.
 export const focusRing =
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500";
 
-// Controls inside a clipped container (list rows, grouped buttons) draw it
-// inside, otherwise overflow-hidden eats it.
+// For controls inside a clipped container, otherwise overflow-hidden eats the ring.
 export const focusRingInset =
   "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-500";
 
@@ -40,7 +37,6 @@ export function Button({
   return <button {...props} className={buttonClasses(variant, className)} />;
 }
 
-// Square icon-only control — close buttons and compact chrome.
 export function IconButton({
   variant = "quiet",
   className = "",
@@ -54,8 +50,7 @@ export function IconButton({
   );
 }
 
-// A segmented toolbar: one surface, one border, hairline dividers between
-// items — instead of N identical free-floating pills.
+// Segmented toolbar: one surface with hairline dividers, not N floating pills.
 export function ControlGroup({
   children,
   className = "",

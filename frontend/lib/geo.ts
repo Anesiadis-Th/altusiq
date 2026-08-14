@@ -19,11 +19,9 @@ export function haversineKm(
   return 2 * EARTH_RADIUS_KM * Math.asin(Math.sqrt(a));
 }
 
-// adsbdb routes are a static callsign→route table and can be stale (airlines
-// reassign flight numbers seasonally). Reject a route when the aircraft's
-// observed position makes it geometrically absurd: flying origin→aircraft→
-// destination would have to be a huge detour vs the direct route. Generous
-// tolerance so SID turns, holds, and weather deviations never trip it.
+// adsbdb's callsign table goes stale when airlines reassign flight numbers, so
+// drop a route if the aircraft sits nowhere near the line between its airports.
+// The tolerance is generous on purpose: SID turns and holds must not trip it.
 export function isRoutePlausible(
   route: FlightRoute,
   aircraftLat: number,

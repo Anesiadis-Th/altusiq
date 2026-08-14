@@ -38,16 +38,13 @@ const rotateExpression: mapboxgl.ExpressionSpecification = [
   0,
 ];
 
-// 4,034 airports worldwide, fetched by Mapbox rather than imported, so the
-// ~590 KB never enters the map bundle (it is ~100 KB gzipped over the wire and
-// parses in Mapbox's GeoJSON worker, off the main thread).
+// Fetched by Mapbox, never imported. As an import the 590 KB would land in the
+// map bundle and parse on the main thread before the first plane shows up.
 const AIRPORTS_URL = "/airports.geojson";
 
-// Rendering every airport at world zoom buries the aircraft and makes the label
-// collider chew through 4k features per camera move. Reveal them by tier
-// instead: large hubs always, medium from z6, small from z8. Zoom expressions
-// in filters only evaluate at integer zooms, so tiers pop in on zoom-level
-// boundaries — fine here, since the layers are gated by minzoom anyway.
+// 4k dots at world zoom bury the aircraft and make the label collider crawl,
+// so reveal by tier: large hubs always, medium from z6, small from z8. Zoom
+// expressions in filters only evaluate at integer zooms, so tiers pop in.
 const airportTierFilter: mapboxgl.FilterSpecification = [
   "<=",
   ["get", "tier"],
@@ -148,9 +145,9 @@ export default function MapView({
   const [lastSelected, setLastSelected] = useState<Aircraft | null>(null);
   const { data: liveTrack } = useActiveTrack(selectedIcao);
 
-  // The selected plane can be absent from a single broadcast while its icon
-  // keeps dead-reckoning, so remember the last-known aircraft rather than
-  // flickering the panel closed until the next poll.
+  // A selected plane can miss a broadcast while its icon keeps dead-reckoning.
+  // Remembering the last one seen stops the panel flickering shut until the
+  // next poll.
   const live = selectedIcao
     ? (aircraft.find((a) => a.icao24 === selectedIcao) ?? null)
     : null;

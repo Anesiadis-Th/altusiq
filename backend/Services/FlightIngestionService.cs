@@ -32,10 +32,9 @@ public class FlightIngestionService
         {
             var now = DateTime.UtcNow;
 
-            // Close on disappearance from the global feed, never on bbox exit:
-            // leaving the region is not the end of the flight, and treating it as
-            // one truncates the track in mid-air and puts ClosedAt at the boundary
-            // crossing instead of the landing.
+            // Close when the plane vanishes from the global feed, never on bbox exit.
+            // Leaving the region isn't the end of a flight; closing there cuts the
+            // track off mid-air and dates ClosedAt to the crossing, not the landing.
             var timedOut = _trails
                 .Where(kvp => (now - kvp.Value.LastSeen).TotalSeconds > _settings.GapThresholdSeconds)
                 .Select(kvp => kvp.Key)
@@ -101,9 +100,8 @@ public class FlightIngestionService
         if (updatedPoints.Count > _settings.MaxTrackPoints)
             updatedPoints.RemoveRange(0, updatedPoints.Count - _settings.MaxTrackPoints);
 
-        // Sticky: trimming the oldest points must not erase the fact that this
-        // aircraft was over the region, or a long-haul departure would stop
-        // qualifying for persistence part-way through its own flight.
+        // Sticky on purpose: trimming old points must not erase that the aircraft
+        // was over the region, or a long-haul would stop qualifying mid-flight.
         var regionPointCount = active.RegionPointCount + (IsInRegion(point) ? 1 : 0);
 
         return active with
@@ -161,11 +159,9 @@ public class FlightIngestionService
             if (!_trails.TryGetValue(icao, out var active))
                 continue;
 
-            // Two in-region fixes is the same eligibility bar the bbox-filtered
-            // dictionary used to apply, so the persisted flight population (and the
-            // analytics built on it) stays comparable. Aircraft that only clipped a
-            // corner of the region are still dropped rather than persisted at full
-            // global length.
+            // Same bar the old bbox-filtered dictionary applied, so the persisted
+            // flight population stays comparable. Corner-clipping overflights are
+            // dropped rather than stored at full global length.
             if (active.RegionPointCount < 2)
                 continue;
 
@@ -187,8 +183,8 @@ public class FlightIngestionService
                 LastPosition = _geometryFactory.CreatePoint(
                     new Coordinate(last.Longitude, last.Latitude)),
                 LastAltitude = last.Altitude,
-                // Peak over the untrimmed track: LastAltitude is now a landing
-                // altitude for most flights, so it no longer works as a cruise proxy.
+                // LastAltitude reads as touchdown now that tracks run to landing,
+                // so it is no longer usable as a cruise proxy.
                 MaxAltitude = active.TrackPoints.Max(p => p.Altitude),
                 TrackPoints = points
             });
@@ -206,9 +202,8 @@ public class FlightIngestionService
     }
 
     /// <summary>
-    /// Keeps every in-region fix at full poll resolution and thins the rest to one
-    /// point per OutOfRegionPointIntervalSeconds. The out-of-region leg is a straight
-    /// line at cruise, so it draws identically at 5-minute spacing while costing a
+    /// Keeps in-region fixes at full poll resolution, thins the rest. The out-of-region
+    /// leg is a straight cruise line, so it draws the same at 5-minute spacing for a
     /// fraction of the jsonb.
     /// </summary>
     private List<TrackPoint> ThinOutOfRegionPoints(List<TrackPoint> points)
@@ -222,9 +217,8 @@ public class FlightIngestionService
         {
             var point = points[i];
 
-            // The neighbour checks keep the fixes on either side of a boundary
-            // crossing, so the line enters and leaves the region on the real track
-            // rather than cutting a chord across it.
+            // Keeping the neighbours means the line crosses the boundary on the
+            // real track instead of cutting a chord across it.
             if (IsInRegion(point) || IsInRegion(points[i - 1]) || IsInRegion(points[i + 1]))
             {
                 kept.Add(point);

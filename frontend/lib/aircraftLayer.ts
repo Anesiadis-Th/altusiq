@@ -27,9 +27,8 @@ export function toFeatureCollection(
   };
 }
 
-// Dead-reckoned aircraft move well under a pixel per frame, so rebuilding the
-// whole GeoJSON source at 60fps is wasted work that saturates the main thread.
-// Redraw at ~10fps instead — visually identical, far cheaper.
+// Aircraft move well under a pixel per frame, so rebuilding the whole GeoJSON
+// source at 60fps just saturates the main thread. 10fps looks the same.
 const RENDER_INTERVAL_MS = 100;
 
 export function startAircraftRenderLoop(

@@ -165,8 +165,8 @@ function TopBar({
   showHistory,
   onHistoryClick,
 }: TopBarProps) {
-  // The rail is docked flush to the left edge, so the toolbar steps aside for
-  // it on sm+ rather than sitting on top of it.
+  // The rail is flush to the left edge, so the toolbar steps aside on sm+
+  // instead of sitting on top of it.
   const railOpen = showSearch || showHistory;
 
   return (

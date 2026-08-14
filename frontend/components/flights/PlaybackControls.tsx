@@ -120,8 +120,8 @@ export default function PlaybackControls({
 
         <ControlGroup>
           {SPEEDS.map((s, i) => (
-            // Fragment, not a wrapper element: the group's first:/last: corner
-            // rounding needs the buttons to stay direct children.
+            // A wrapper div would break the group's first:/last: corner
+            // rounding, which needs the buttons as direct children.
             <Fragment key={s}>
               {i > 0 && <GroupDivider />}
               <GroupButton
