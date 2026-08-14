@@ -281,11 +281,6 @@ export default function MapView({
         },
       });
 
-      // The selected aircraft is redrawn here, above aircraft-layer, because every
-      // plane shares that one symbol layer — within it there is no way to raise one
-      // icon above the rest. It stays in aircraft-layer too; the duplicate is an
-      // exact overdraw at the same coordinates and rotation, so it is invisible and
-      // keeps the click/hover handlers bound to a single layer.
       instance.addLayer({
         id: "aircraft-highlight",
         type: "circle",
@@ -293,11 +288,11 @@ export default function MapView({
         filter: ["==", ["get", "icao24"], ""],
         paint: {
           "circle-radius": 18,
-          "circle-color": "#63b3ed",
-          "circle-opacity": 0.16,
-          "circle-stroke-color": "#63b3ed",
+          "circle-color": "#dd5347",
+          "circle-opacity": 0.55,
+          "circle-stroke-color": "#dd5347",
           "circle-stroke-width": 1.5,
-          "circle-stroke-opacity": 0.7,
+          "circle-stroke-opacity": 0.9,
         },
       });
 
