@@ -15,7 +15,7 @@ AltusIQ shows the world's airborne traffic live — roughly 10,000–12,000 airc
 - **Click any plane, worldwide** — its live trail so far, its route and airline resolved from the adsbdb callsign database, and an approximate great-circle ETA to the destination.
 - **Flight search** — by flight number (`SK4787`), callsign (`SAS4787`), or ICAO hex. IATA flight numbers are translated to ICAO callsign prefixes entirely client-side; searching costs zero API calls.
 - **Flight history and playback** — completed Scandinavian flights replay time-compressed (~30 s per flight) with interpolated altitude, speed, and heading.
-- **Analytics** — busiest airports, top routes, flights per day, flights per hour, and altitude distribution over the last 15 days, rendered as a frosted-glass overlay on the live map.
+- **Analytics** — busiest airports, top routes, flights per day and flights per hour over 14 complete UTC days, drawn as hand-written SVG charts in a frosted-glass overlay on the live map.
 - **Nightly enrichment** — departure and arrival airports are backfilled from OpenSky's next-day flight batch and shown as IATA codes with city names.
 - **Mobile-first responsive UI** — bottom-sheet flight panel, safe-area-aware layout, full feature parity with desktop.
 
@@ -89,7 +89,7 @@ graph TB
     subgraph Vercel["Vercel"]
         Frontend["📦 Frontend
         Next.js + TypeScript
-        Mapbox GL JS · Recharts
+        Mapbox GL JS
         Dead-reckons aircraft between polls"]
     end
 
@@ -166,9 +166,9 @@ graph TB
 
 ## Tech Stack
 
-**Frontend** — Next.js, TypeScript, TailwindCSS, TanStack Query, Mapbox GL JS, Recharts, Vitest
+**Frontend** — Next.js, TypeScript, TailwindCSS, TanStack Query, Mapbox GL JS, Vitest. Charts are hand-drawn SVG; there is no chart library.
 
-**Backend** — ASP.NET Core (.NET 8), SignalR, Entity Framework Core, NetTopologySuite, Serilog
+**Backend** — ASP.NET Core (.NET 8), SignalR, Entity Framework Core, NetTopologySuite, Serilog, xUnit
 
 **Infrastructure** — Fly.io, Vercel, GitHub Actions, Docker
 
@@ -231,26 +231,34 @@ Opens at `http://localhost:3000`.
 ## Tests
 
 ```bash
-cd frontend
-npm test          # run once
-npm run test:watch
+npm test --prefix frontend        # 45 Vitest tests
+dotnet test backend/AltusIQ.sln   # 37 xUnit tests
 ```
 
-44 Vitest tests cover the frontend's pure logic — the parts where a silent regression would be invisible on screen:
+82 tests cover the pure logic on both sides — the parts where a silent regression would be invisible on screen.
+
+**Backend (xUnit)** — the ingestion rules that decide what reaches the database:
+
+- **Flight segmentation** — the gap boundary separating one flight from the next (still open at exactly 360 s, closed one second later), tolerance of two consecutive missed polls, and a region exit and re-entry staying a single flight instead of splitting into two rows.
+- **Persistence eligibility** — the two-in-region-fixes bar that selects ~5,300 stored flights a day out of ~10,000 globally tracked aircraft, and the sticky counter that keeps a long-haul departure eligible after `MaxTrackPoints` has trimmed its Scandinavian leg out of the track.
+- **What gets written** — `OpenedAt` and `ClosedAt` taken from the track rather than the timeout instant, peak altitude versus touchdown altitude, and out-of-region thinning that preserves the fixes either side of the boundary crossing.
+- **OpenSky row tolerance** — short, malformed and identity-less rows skipped individually, so a single bad row cannot discard an entire ~10,000-aircraft poll.
+
+**Frontend (Vitest)** — the client-side logic with no visible failure mode:
 
 - **Flight search** — IATA→ICAO callsign translation (`SK0034` → `SAS34`, including the leading-zero strip airlines actually use), one-to-many airline codes (`LH` → `DLH` and `GEC`), result ranking (exact > prefix > substring > hex), and exclusion of grounded aircraft.
 - **Dead reckoning** — the correction blend that lerps onto each new fix instead of teleporting, tolerance of a single missed 120 s poll, eviction at exactly the 150 s extrapolation limit, and the on-ground freeze.
 - **Panel state** — the map's overlays are mutually exclusive, dismiss on outside click and Escape, and clean up their listeners.
 
-Deliberately untested: anything requiring Mapbox, SignalR, or the database. Those are verified by driving a real browser against the deployed backend, which is a better tool for the job than a wall of mocks. Where a UI invariant is worth locking down, the logic is extracted into a hook (`useActivePanel`) and tested directly.
+Deliberately untested: anything requiring Mapbox, SignalR, or a real database. Those are verified by driving a real browser against the deployed backend, which is a better tool for the job than a wall of mocks. Where a rule is worth locking down, a seam is extracted instead — a hook on the frontend (`useActivePanel`), an interface on the backend (`IFlightWriter`). See [ADR-014](docs/adr/014-backend-test-seams.md).
 
-The suite is mutation-checked — breaking the leading-zero strip, the grounded filter, the eviction TTL, the correction blend, or panel exclusivity each turns it red.
+Both suites are mutation-checked. Fourteen defects were injected into the backend one at a time — the gap boundary off by one, the region counter recomputed instead of accumulated, the boundary-neighbour rule dropped from thinning, `on_ground` read in a way that throws on null — and all fourteen turned the suite red. On the frontend, breaking the leading-zero strip, the grounded filter, the eviction TTL, the correction blend, or panel exclusivity does the same.
 
 ---
 
 ## Deployment
 
-Every push runs CI — `dotnet build` for the backend, `npm run lint`, `npm test` and `npm run build` for the frontend. The backend deploys to **Fly.io** via GitHub Actions on every push to `master`, gated on CI passing, so a commit that doesn't compile fails a check instead of a mid-deploy Docker build. The frontend deploys to **Vercel** automatically on push.
+Every push runs CI — `dotnet build` and `dotnet test` for the backend, `npm run lint`, `npm test` and `npm run build` for the frontend. The backend deploys to **Fly.io** via GitHub Actions on every push to `master`, gated on CI passing, so a commit that doesn't compile fails a check instead of a mid-deploy Docker build. The frontend deploys to **Vercel** automatically on push.
 
 The backend machine runs **always-on** (`min_machines_running = 1`) — a deliberate few-dollars-a-month cost so ingestion is continuous and the demo is always warm. Backend secrets are set via `fly secrets set` and never touch the repository. See [ADR-002](docs/adr/002-backend-hosting-provider.md) for why Fly.io was chosen.
 
@@ -280,3 +288,9 @@ Key technical decisions are documented as ADRs in [`docs/adr/`](docs/adr/).
 | [006](docs/adr/006-storage-strategy.md)          | Flight-as-track storage with regional scope   | Accepted |
 | [007](docs/adr/007-flight-segmentation.md)       | In-memory flight segmentation over Redis      | Accepted |
 | [008](docs/adr/008-flight-enrichment-strategy.md) | Flight enrichment as a nightly next-day batch | Accepted |
+| [009](docs/adr/009-aircraft-categorisation.md)   | Aircraft categorisation for map icons         | Rejected |
+| [010](docs/adr/010-poll-interval-and-dead-reckoning.md) | Always-on at ~120 s polling with client-side dead reckoning | Accepted |
+| [011](docs/adr/011-global-live-coverage.md)      | Global live coverage, bbox scoped to persistence | Accepted |
+| [012](docs/adr/012-live-route-lookup.md)         | adsbdb for live route lookup                  | Accepted |
+| [013](docs/adr/013-analytics-presentation.md)    | Analytics as an in-map overlay with hand-drawn charts | Accepted |
+| [014](docs/adr/014-backend-test-seams.md)        | Backend test seams over an in-memory database | Accepted |

@@ -19,3 +19,4 @@ ADRs document significant technical decisions, the context that led to them, and
 | [011](011-global-live-coverage.md)       | Global live coverage, bbox scoped to persistence | Accepted |
 | [012](012-live-route-lookup.md)          | adsbdb for live route lookup                  | Accepted |
 | [013](013-analytics-presentation.md)     | Analytics as an in-map overlay with hand-drawn charts | Accepted |
+| [014](014-backend-test-seams.md)         | Backend test seams over an in-memory database | Accepted |
