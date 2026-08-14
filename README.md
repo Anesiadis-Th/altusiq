@@ -4,11 +4,15 @@ A real-time aviation analytics platform inspired by FlightRadar24. Built as a pr
 
 **Live:** [altusiq.vercel.app](https://altusiq.vercel.app)
 
+![AltusIQ — live global traffic, flight search, and a selected flight's trail and route](docs/images/demo.gif)
+
+<sub>Real capture against the live deployment: 13,000+ aircraft streaming over SignalR, a callsign search, then the selected flight's trail, route and ETA as the camera flies to it.</sub>
+
 ---
 
 ## What it does
 
-AltusIQ shows the world's airborne traffic live — roughly 10,000–12,000 aircraft at peak — on a WebGL map, streamed to the browser over SignalR. Scandinavian traffic is additionally segmented into discrete flights and stored in PostGIS for history, playback, and analytics.
+AltusIQ shows the world's airborne traffic live — roughly 10,000–14,000 aircraft at peak — on a WebGL map, streamed to the browser over SignalR. Scandinavian traffic is additionally segmented into discrete flights and stored in PostGIS for history, playback, and analytics.
 
 - **Live global map** — every aircraft OpenSky can see, rendered as a GeoJSON symbol layer. New clients receive the latest snapshot on connect, so planes appear in under a second.
 - **Smooth motion from slow data** — OpenSky is polled once every ~120 seconds (see below). Between polls each aircraft is dead-reckoned client-side from its last velocity and heading, then blended smoothly onto the next real fix instead of teleporting.
@@ -18,6 +22,23 @@ AltusIQ shows the world's airborne traffic live — roughly 10,000–12,000 airc
 - **Analytics** — busiest airports, top routes, flights per day and flights per hour over 14 complete UTC days, drawn as hand-written SVG charts in a frosted-glass overlay on the live map.
 - **Nightly enrichment** — departure and arrival airports are backfilled from OpenSky's next-day flight batch and shown as IATA codes with city names.
 - **Mobile-first responsive UI** — bottom-sheet flight panel, safe-area-aware layout, full feature parity with desktop.
+
+<table>
+<tr>
+<td width="50%" valign="top">
+<img src="docs/images/flight-panel.png" alt="Selected flight showing its live trail, ARN to LLA route, and estimated arrival">
+<br><sub><b>Any aircraft, worldwide.</b> The live trail comes from the ingestion service's in-memory store, the route from adsbdb, and the ETA is computed great-circle from the last fix. Airport dots are tiered by zoom.</sub>
+</td>
+<td width="50%" valign="top">
+<img src="docs/images/analytics.png" alt="Analytics overlay: 73,738 flights over 14 complete UTC days, flights-per-day chart, busiest airports">
+<br><sub><b>Analytics over 14 complete UTC days.</b> All SQL <code>GROUP BY</code>, cached and warmed on a timer. Charts are hand-drawn SVG — the per-day axis is deliberately cropped, the hourly one is not (<a href="docs/adr/013-analytics-presentation.md">ADR-013</a>).</sub>
+</td>
+</tr>
+</table>
+
+<p align="center">
+<br><sub><b>Full parity on mobile</b> — the panel becomes a bottom sheet, the TopBar compacts to icons.</sub>
+</p>
 
 ---
 
@@ -266,8 +287,8 @@ The backend machine runs **always-on** (`min_machines_running = 1`) — a delibe
 
 ## Project Status
 
-| Phase | Description                                                                                                                                        | Status      |
-| ----- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| Phase | Description                                                                                                                                         | Status      |
+| ----- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
 | 1     | Live map with real-time aircraft positions                                                                                                          | ✅ Complete |
 | 2     | Historical flight storage and playback                                                                                                              | ✅ Complete |
 | 3     | Credit-budget rework (120 s polling + dead-reckoning), global live map, retention, enrichment, analytics dashboard, routes + ETA, search, mobile UI | ✅ Complete |
@@ -278,19 +299,19 @@ The backend machine runs **always-on** (`min_machines_running = 1`) — a delibe
 
 Key technical decisions are documented as ADRs in [`docs/adr/`](docs/adr/).
 
-| #                                                | Decision                                      | Status   |
-| ------------------------------------------------ | --------------------------------------------- | -------- |
-| [001](docs/adr/001-flight-data-provider.md)      | OpenSky Network as flight data provider       | Accepted |
-| [002](docs/adr/002-backend-hosting-provider.md)  | Fly.io as backend hosting provider            | Accepted |
-| [003](docs/adr/003-realtime-strategy.md)         | SignalR for real-time flight updates          | Accepted |
-| [004](docs/adr/004-map-rendering.md)             | Mapbox GL JS for map rendering                | Accepted |
-| [005](docs/adr/005-geojson-rendering.md)         | GeoJSON symbol layers over DOM markers        | Accepted |
-| [006](docs/adr/006-storage-strategy.md)          | Flight-as-track storage with regional scope   | Accepted |
-| [007](docs/adr/007-flight-segmentation.md)       | In-memory flight segmentation over Redis      | Accepted |
-| [008](docs/adr/008-flight-enrichment-strategy.md) | Flight enrichment as a nightly next-day batch | Accepted |
-| [009](docs/adr/009-aircraft-categorisation.md)   | Aircraft categorisation for map icons         | Rejected |
+| #                                                       | Decision                                                    | Status   |
+| ------------------------------------------------------- | ----------------------------------------------------------- | -------- |
+| [001](docs/adr/001-flight-data-provider.md)             | OpenSky Network as flight data provider                     | Accepted |
+| [002](docs/adr/002-backend-hosting-provider.md)         | Fly.io as backend hosting provider                          | Accepted |
+| [003](docs/adr/003-realtime-strategy.md)                | SignalR for real-time flight updates                        | Accepted |
+| [004](docs/adr/004-map-rendering.md)                    | Mapbox GL JS for map rendering                              | Accepted |
+| [005](docs/adr/005-geojson-rendering.md)                | GeoJSON symbol layers over DOM markers                      | Accepted |
+| [006](docs/adr/006-storage-strategy.md)                 | Flight-as-track storage with regional scope                 | Accepted |
+| [007](docs/adr/007-flight-segmentation.md)              | In-memory flight segmentation over Redis                    | Accepted |
+| [008](docs/adr/008-flight-enrichment-strategy.md)       | Flight enrichment as a nightly next-day batch               | Accepted |
+| [009](docs/adr/009-aircraft-categorisation.md)          | Aircraft categorisation for map icons                       | Rejected |
 | [010](docs/adr/010-poll-interval-and-dead-reckoning.md) | Always-on at ~120 s polling with client-side dead reckoning | Accepted |
-| [011](docs/adr/011-global-live-coverage.md)      | Global live coverage, bbox scoped to persistence | Accepted |
-| [012](docs/adr/012-live-route-lookup.md)         | adsbdb for live route lookup                  | Accepted |
-| [013](docs/adr/013-analytics-presentation.md)    | Analytics as an in-map overlay with hand-drawn charts | Accepted |
-| [014](docs/adr/014-backend-test-seams.md)        | Backend test seams over an in-memory database | Accepted |
+| [011](docs/adr/011-global-live-coverage.md)             | Global live coverage, bbox scoped to persistence            | Accepted |
+| [012](docs/adr/012-live-route-lookup.md)                | adsbdb for live route lookup                                | Accepted |
+| [013](docs/adr/013-analytics-presentation.md)           | Analytics as an in-map overlay with hand-drawn charts       | Accepted |
+| [014](docs/adr/014-backend-test-seams.md)               | Backend test seams over an in-memory database               | Accepted |
