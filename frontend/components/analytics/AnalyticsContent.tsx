@@ -52,7 +52,11 @@ function Dashboard({
     caption: airportName(codes, airport.icao),
     total: airport.total,
     segments: [
-      { keyClass: "bg-chart-1", label: "Departures", value: airport.departures },
+      {
+        keyClass: "bg-chart-1",
+        label: "Departures",
+        value: airport.departures,
+      },
       { keyClass: "bg-chart-2", label: "Arrivals", value: airport.arrivals },
     ],
   }));
@@ -67,20 +71,19 @@ function Dashboard({
   return (
     <>
       <section>
-        {/* Proportional, not the app's usual tabular mono. Equal-width digits
-            look loose this big. */}
-        <p className="text-white text-5xl font-semibold leading-none">
+        <p className="text-white text-5xl font-semibold font-mono tabular-nums tracking-tight leading-none">
           {formatCount(data.total_flights)}
         </p>
         <p className="mt-2.5 text-gray-300 text-sm">
           flights tracked through Scandinavian airspace
         </p>
         <p className="mt-1 text-gray-500 text-xs">
-          {data.range_days} complete UTC days
+          <Num>{data.range_days}</Num> complete UTC days
           {firstDay && lastDay && (
             <>
               <span className="mx-1.5">·</span>
-              {formatUtcDay(firstDay)} – {formatUtcDay(lastDay)}
+              <Num>{formatUtcDay(firstDay)}</Num> –{" "}
+              <Num>{formatUtcDay(lastDay)}</Num>
             </>
           )}
         </p>
@@ -90,7 +93,11 @@ function Dashboard({
         <Card>
           <CardHeader
             title="Flights per day"
-            subtitle={`Averaging ${formatCount(perDay)} a day`}
+            subtitle={
+              <>
+                Averaging <Num>{formatCount(perDay)}</Num> a day
+              </>
+            }
           />
           <CardBody>
             <DailyFlightsChart data={data.flights_per_day} />
@@ -101,7 +108,12 @@ function Dashboard({
           <Card>
             <CardHeader
               title="Busiest airports"
-              subtitle={`Top 10 of ${formatCount(data.distinct_airports)} seen`}
+              subtitle={
+                <>
+                  Top 10 of <Num>{formatCount(data.distinct_airports)}</Num>{" "}
+                  seen
+                </>
+              }
               right={
                 <Legend
                   items={[
@@ -113,7 +125,10 @@ function Dashboard({
             />
             <CardBody>
               {airportRows.length > 0 ? (
-                <RankedBars rows={airportRows} tableCaption="Busiest airports" />
+                <RankedBars
+                  rows={airportRows}
+                  tableCaption="Busiest airports"
+                />
               ) : (
                 <Empty />
               )}
@@ -123,7 +138,11 @@ function Dashboard({
           <Card>
             <CardHeader
               title="Top routes"
-              subtitle={`Top 10 of ${formatCount(data.distinct_routes)} flown`}
+              subtitle={
+                <>
+                  Top 10 of <Num>{formatCount(data.distinct_routes)}</Num> flown
+                </>
+              }
             />
             <CardBody>
               {routeRows.length > 0 ? (
@@ -135,12 +154,11 @@ function Dashboard({
           </Card>
         </div>
 
-        {/* Belongs with the cards it qualifies, not down in the footnotes. */}
         <p className="text-gray-500 text-xs leading-relaxed">
-          Airports and routes are known for the {enrichedPct}% of flights (
-          {formatCount(data.enriched_flights)}) that OpenSky&rsquo;s next-day
-          batch could resolve to a departure and an arrival. Real movement counts
-          are higher than the figures above.
+          Airports and routes are known for the <Num>{enrichedPct}%</Num> of
+          flights (<Num>{formatCount(data.enriched_flights)}</Num>) that
+          OpenSky&rsquo;s next-day batch could resolve to a departure and an
+          arrival. Real movement counts are higher than the figures above.
         </p>
 
         <Card>
@@ -157,9 +175,9 @@ function Dashboard({
       <div className="mt-6 flex flex-col gap-2 border-t border-line pt-4">
         <Footnote term="Scope">
           A flight is recorded when at least two of its position reports fall
-          inside 4–32°E, 54–72°N. The rest of its track is kept either way, so
-          airports well outside Scandinavia appear whenever a tracked flight
-          began or ended there.
+          inside <Num>4–32°E, 54–72°N</Num>. The rest of its track is kept
+          either way, so airports well outside Scandinavia appear whenever a
+          tracked flight began or ended there.
         </Footnote>
         <Footnote term="Timing">
           All times UTC. A flight counts on the day and hour its track ended,
@@ -169,6 +187,10 @@ function Dashboard({
       </div>
     </>
   );
+}
+
+function Num({ children }: { children: React.ReactNode }) {
+  return <span className="font-mono tabular-nums">{children}</span>;
 }
 
 function Footnote({

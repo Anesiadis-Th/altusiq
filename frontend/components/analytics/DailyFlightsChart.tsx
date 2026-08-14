@@ -8,7 +8,7 @@ import { ChartTooltip, DataTable, TooltipRow } from "./ChartParts";
 
 const PLOT_H = 168;
 const AXIS_H = 20;
-const PAD_L = 46;
+const PAD_L = 54;
 const PAD_R = 14;
 const PAD_T = 14;
 
@@ -73,7 +73,7 @@ export default function DailyFlightsChart({ data }: { data: FlightsPerDay[] }) {
                 y={y(tick)}
                 textAnchor="end"
                 dominantBaseline="middle"
-                className="fill-gray-500 text-[11px] tabular-nums"
+                className="fill-gray-500 text-[11px] font-mono tabular-nums"
               >
                 {formatCount(tick)}
               </text>
@@ -96,7 +96,7 @@ export default function DailyFlightsChart({ data }: { data: FlightsPerDay[] }) {
                 x={x(i)}
                 y={PAD_T + PLOT_H + 14}
                 textAnchor="middle"
-                className="fill-gray-500 text-[11px]"
+                className="fill-gray-500 text-[11px] font-mono tabular-nums"
               >
                 {formatUtcDay(d.date)}
               </text>

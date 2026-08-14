@@ -8,7 +8,7 @@ import { ChartTooltip, DataTable, TooltipRow } from "./ChartParts";
 
 const PLOT_H = 168;
 const AXIS_H = 20;
-const PAD_L = 46;
+const PAD_L = 54;
 const PAD_R = 14;
 const PAD_T = 20; // room for the peak column's cap label
 const MAX_COL_W = 24;
@@ -36,7 +36,10 @@ export default function HourlyFlightsChart({
   const colX = (i: number) => bandX(i) + (band - colW) / 2;
   const y = (value: number) => PAD_T + PLOT_H - (value / max) * PLOT_H;
 
-  const peak = data.reduce((best, d) => (d.count > best.count ? d : best), data[0]);
+  const peak = data.reduce(
+    (best, d) => (d.count > best.count ? d : best),
+    data[0],
+  );
   const point = hover === null ? null : data[hover];
 
   return (
@@ -64,7 +67,7 @@ export default function HourlyFlightsChart({
                 y={y(tick)}
                 textAnchor="end"
                 dominantBaseline="middle"
-                className="fill-gray-500 text-[11px] tabular-nums"
+                className="fill-gray-500 text-[11px] font-mono tabular-nums"
               >
                 {formatCount(tick)}
               </text>
@@ -90,7 +93,7 @@ export default function HourlyFlightsChart({
             x={colX(data.indexOf(peak)) + colW / 2}
             y={y(peak.count) - 7}
             textAnchor="middle"
-            className="fill-gray-300 text-[11px] font-medium tabular-nums"
+            className="fill-gray-300 text-[11px] font-medium font-mono tabular-nums"
           >
             {formatCount(peak.count)}
           </text>
@@ -102,7 +105,7 @@ export default function HourlyFlightsChart({
                 x={colX(i) + colW / 2}
                 y={PAD_T + PLOT_H + 14}
                 textAnchor="middle"
-                className="fill-gray-500 text-[11px] tabular-nums"
+                className="fill-gray-500 text-[11px] font-mono tabular-nums"
               >
                 {formatHour(d.hour)}
               </text>

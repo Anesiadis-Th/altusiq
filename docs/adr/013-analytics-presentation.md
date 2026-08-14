@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted. Supersedes the routed `/analytics` page introduced in `bccac70`, and revises the analytics half of [ADR-006](006-storage-strategy.md)'s reporting window.
+Accepted. Supersedes the routed `/analytics` page introduced in `bccac70`, and retires the altitude-band chart that [ADR-011](011-global-live-coverage.md) expected the `MaxAltitude` column to rescue.
 
 ## Context
 
@@ -38,6 +38,8 @@ The analytics dashboard was built as an in-map overlay, then moved to its own ro
 
 **Crop the per-day axis; never crop a bar axis.** Daily volume moves about ±9% around the mean, so a zero baseline draws a flat line and hides the weekly rhythm the chart exists to show. A line encodes slope and may be cropped when the ticks declare it; the hourly columns encode magnitude as length and stay anchored at zero. `niceRange` and `niceAxis` in `lib/chart.ts` are deliberately separate functions so the two cases cannot be confused.
 
+**Numbers wear the app's monospace, including the hero.** Every figure on the panel uses `font-mono tabular-nums` — the same treatment as the flight panel, the history list and the TopBar counter — with the surrounding prose left in the sans face. General dataviz advice is to set a large standalone number in proportional figures, because equal-width digits read loose at display size. It is overruled here: the app's numeric identity is monospace throughout, and an analytics panel that opted out would be the one screen that looked borrowed. `tracking-tight` on the hero absorbs most of the extra width.
+
 ## Alternatives Considered
 
 **Keeping recharts and only restyling.** Would have fixed the generic look but left the 220 KB and the chart set that was chosen for what was easy to aggregate rather than what was worth showing.
@@ -56,3 +58,4 @@ The analytics dashboard was built as an in-map overlay, then moved to its own ro
 - **The charts are ours to maintain.** Axis ticks, hover, tooltips and the accessible table twin are all hand-written in `components/analytics/`. That is a real cost, paid deliberately: these four shapes are simple and stable, and anything genuinely complex should reconsider a library rather than extend this code.
 - The hand-drawn SVG charts need a measured pixel width (`useElementWidth`), so they render nothing on the first frame. The skeleton covers it.
 - The chart palette is now two tokens in `globals.css` validated against the card surface. Changing either requires re-running the validator — the comment there says so.
+- **Monospace digits are wider, and the y-axis gutter had to grow to fit them.** Measured after the switch, the widest tick label sat 2.9 px from the SVG's left edge at 6.6 px per character, so a six-figure label (`10,000`) would have been clipped — reachable just by lengthening the window, since the hourly totals scale with it. `PAD_L` went from 46 to 54 in both charts.
