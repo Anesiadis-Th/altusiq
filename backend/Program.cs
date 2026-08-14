@@ -54,6 +54,7 @@ builder.Services.AddMemoryCache();
 
 builder.Services.AddScoped<FlightQueryService>();
 builder.Services.AddScoped<AnalyticsService>();
+builder.Services.AddHostedService<AnalyticsCacheWarmer>();
 
 builder.Services.AddHttpClient<IRouteLookupService, RouteLookupService>(client =>
 {

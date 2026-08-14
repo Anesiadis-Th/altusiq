@@ -7,16 +7,13 @@ namespace AltusIQ.Api.Services;
 
 public class AnalyticsService(AltusIqDbContext db, IMemoryCache cache)
 {
-    private const int WindowDays = 15;
+    // 14 and not 15: retention measures its window from the moment it runs, so
+    // the 15th day back is already partly purged. See ADR-013.
+    private const int WindowDays = 14;
     private const int TopN = 10;
     private const string CacheKey = "analytics";
-    private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(5);
 
-    // Display order. Labels must match the ones in GetAltitudeBandsAsync.
-    private static readonly string[] BandOrder =
-    [
-        "0–2 km", "2–4 km", "4–6 km", "6–8 km", "8–10 km", "10–12 km", "12 km+"
-    ];
+    public static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(5);
 
     public async Task<AnalyticsResponseDto> GetAnalyticsAsync(CancellationToken ct)
     {
@@ -28,25 +25,36 @@ public class AnalyticsService(AltusIqDbContext db, IMemoryCache cache)
         return result!;
     }
 
+    // The warmer calls this on a shorter period than the TTL, so the entry is
+    // replaced before it can expire and no reader pays for the aggregation.
+    public async Task<AnalyticsResponseDto> RefreshAsync(CancellationToken ct)
+    {
+        var result = await ComputeAnalyticsAsync(ct);
+        cache.Set(CacheKey, result, CacheTtl);
+        return result;
+    }
+
     private async Task<AnalyticsResponseDto> ComputeAnalyticsAsync(CancellationToken ct)
     {
-        var to = DateTime.UtcNow;
+        // Whole UTC days, `to` exclusive. A window ending at "now" leaves the
+        // first and last buckets partial and draws a cliff that isn't real.
+        var to = DateTime.UtcNow.Date;
         var from = to.AddDays(-WindowDays);
 
         // Every aggregation below builds on this. ClosedAt is indexed.
         var window = db.Flights.Where(f =>
-            f.ClosedAt != null && f.ClosedAt >= from && f.ClosedAt <= to);
+            f.ClosedAt != null && f.ClosedAt >= from && f.ClosedAt < to);
 
         var totalFlights = await window.CountAsync(ct);
 
         var enrichedFlights = await window
             .CountAsync(f => f.DepartureAirport != null || f.ArrivalAirport != null, ct);
 
-        var busiestAirports = await GetBusiestAirportsAsync(window, ct);
+        var airports = await GetAirportTrafficAsync(window, ct);
         var topRoutes = await GetTopRoutesAsync(window, ct);
+        var distinctRoutes = await GetDistinctRouteCountAsync(window, ct);
         var flightsPerDay = await GetFlightsPerDayAsync(window, from, to, ct);
         var flightsPerHour = await GetFlightsPerHourAsync(window, ct);
-        var altitudeBands = await GetAltitudeBandsAsync(window, ct);
 
         return new AnalyticsResponseDto(
             WindowDays,
@@ -54,15 +62,16 @@ public class AnalyticsService(AltusIqDbContext db, IMemoryCache cache)
             to,
             totalFlights,
             enrichedFlights,
-            busiestAirports,
+            airports.Total,
+            distinctRoutes,
+            airports.Top,
             topRoutes,
             flightsPerDay,
-            flightsPerHour,
-            altitudeBands);
+            flightsPerHour);
     }
 
-    private static async Task<IReadOnlyList<AirportTrafficDto>> GetBusiestAirportsAsync(
-        IQueryable<Models.Flight> window, CancellationToken ct)
+    private static async Task<(int Total, IReadOnlyList<AirportTrafficDto> Top)>
+        GetAirportTrafficAsync(IQueryable<Models.Flight> window, CancellationToken ct)
     {
         // An airport counts as busy either way, so group each column in SQL and
         // merge the two small result sets here instead of a UNION.
@@ -92,7 +101,7 @@ public class AnalyticsService(AltusIqDbContext db, IMemoryCache cache)
             byAirport[a.Icao] = (v.Departures, v.Arrivals + a.Count);
         }
 
-        return byAirport
+        var top = byAirport
             .Select(kvp => new AirportTrafficDto(
                 kvp.Key,
                 kvp.Value.Departures,
@@ -101,17 +110,25 @@ public class AnalyticsService(AltusIqDbContext db, IMemoryCache cache)
             .OrderByDescending(a => a.Total)
             .Take(TopN)
             .ToList();
+
+        // The dictionary already holds every airport, so the denominator is free.
+        return (byAirport.Count, top);
     }
+
+    // Same-airport pairs are training circuits, not routes. Shared so the top 10
+    // and the "of N" denominator agree on what counts.
+    private static IQueryable<Models.Flight> RoutedFlights(IQueryable<Models.Flight> window) =>
+        window.Where(f =>
+            f.DepartureAirport != null
+            && f.ArrivalAirport != null
+            && f.DepartureAirport != f.ArrivalAirport);
 
     private static async Task<IReadOnlyList<RouteDto>> GetTopRoutesAsync(
         IQueryable<Models.Flight> window, CancellationToken ct)
     {
         // EF can order an anonymous projection but not a record constructor, so
         // project first and map to the DTO afterwards.
-        var rows = await window
-            // Same-airport pairs are local GA and training circuits, not routes.
-            .Where(f => f.DepartureAirport != null && f.ArrivalAirport != null
-                && f.DepartureAirport != f.ArrivalAirport)
+        var rows = await RoutedFlights(window)
             .GroupBy(f => new { f.DepartureAirport, f.ArrivalAirport })
             .Select(g => new
             {
@@ -128,6 +145,13 @@ public class AnalyticsService(AltusIqDbContext db, IMemoryCache cache)
             .ToList();
     }
 
+    private static Task<int> GetDistinctRouteCountAsync(
+        IQueryable<Models.Flight> window, CancellationToken ct) =>
+        RoutedFlights(window)
+            .Select(f => new { f.DepartureAirport, f.ArrivalAirport })
+            .Distinct()
+            .CountAsync(ct);
+
     private static async Task<IReadOnlyList<FlightsPerDayDto>> GetFlightsPerDayAsync(
         IQueryable<Models.Flight> window, DateTime from, DateTime to, CancellationToken ct)
     {
@@ -140,7 +164,7 @@ public class AnalyticsService(AltusIqDbContext db, IMemoryCache cache)
 
         // Gap-fill so a quiet day is a zero, not a hole in the line.
         var days = new List<FlightsPerDayDto>();
-        for (var day = DateOnly.FromDateTime(from); day <= DateOnly.FromDateTime(to); day = day.AddDays(1))
+        for (var day = DateOnly.FromDateTime(from); day < DateOnly.FromDateTime(to); day = day.AddDays(1))
             days.Add(new FlightsPerDayDto(day, counts.GetValueOrDefault(day)));
 
         return days;
@@ -158,33 +182,6 @@ public class AnalyticsService(AltusIqDbContext db, IMemoryCache cache)
 
         return Enumerable.Range(0, 24)
             .Select(h => new FlightsPerHourDto(h, counts.GetValueOrDefault(h)))
-            .ToList();
-    }
-
-    private static async Task<IReadOnlyList<AltitudeBandDto>> GetAltitudeBandsAsync(
-        IQueryable<Models.Flight> window, CancellationToken ct)
-    {
-        // Tracks run to landing now, so LastAltitude reports touchdown and dumps
-        // everything in the bottom band. Only older rows still fall back to it.
-        // The nested ternary becomes a SQL CASE, so bucketing stays server-side.
-        var rows = await window
-            .Select(f => new { Altitude = f.MaxAltitude ?? f.LastAltitude })
-            .Where(f => f.Altitude != null)
-            .GroupBy(f =>
-                f.Altitude < 2000 ? "0–2 km" :
-                f.Altitude < 4000 ? "2–4 km" :
-                f.Altitude < 6000 ? "4–6 km" :
-                f.Altitude < 8000 ? "6–8 km" :
-                f.Altitude < 10000 ? "8–10 km" :
-                f.Altitude < 12000 ? "10–12 km" : "12 km+")
-            .Select(g => new { Band = g.Key, Count = g.Count() })
-            .ToListAsync(ct);
-
-        var counts = rows.ToDictionary(r => r.Band, r => r.Count);
-
-        // Empty bands still get a zero so the chart stays continuous.
-        return BandOrder
-            .Select(label => new AltitudeBandDto(label, counts.GetValueOrDefault(label)))
             .ToList();
     }
 }
