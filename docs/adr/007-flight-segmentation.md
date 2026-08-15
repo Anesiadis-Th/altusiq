@@ -2,7 +2,13 @@
 
 ## Status
 
-Accepted
+Accepted, amended by [ADR-010](010-poll-interval-and-dead-reckoning.md) and [ADR-014](014-backend-test-seams.md).
+
+The decision — in-memory segmentation rather than Redis — stands, and the credit arithmetic below is unchanged. Three details in the body no longer describe the code:
+
+- **`FlightIngestionService` receives `IFlightWriter`, not `IServiceScopeFactory`.** The scope-per-write pattern described here is intact but moved one layer down into `EfFlightWriter`, so the segmentation logic is testable without a database (ADR-014).
+- **`GapThresholdSeconds` is 360, not 120.** The "more than 2 minutes" figure in Consequences became six minutes when polling dropped to ~120 s; at a 120 s interval a 120 s threshold would close a flight on a single missed poll (ADR-010).
+- **Redis/Upstash never took on the token-cache role described here.** `OpenSkyAuthService` caches the bearer token in a private field guarded by a `SemaphoreSlim`; no code references Upstash and no Redis client is installed. Unlike the two points above this was never superseded — it was an intention at the time of writing that was not implemented.
 
 ## Context
 
