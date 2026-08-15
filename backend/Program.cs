@@ -120,7 +120,6 @@ var app = builder.Build();
 app.UseSerilogRequestLogging();
 
 app.UseCors("Frontend");
-app.UseAuthorization();
 
 app.MapControllers();
 app.MapHealthChecks("/health", new HealthCheckOptions

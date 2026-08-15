@@ -1,5 +1,4 @@
 // One height, one radius, one set of states for every control in the app.
-// Ghost is the default; primary is for the single main action in a view.
 
 export const focusRing =
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500";
@@ -7,8 +6,6 @@ export const focusRing =
 // For controls inside a clipped container, otherwise overflow-hidden eats the ring.
 export const focusRingInset =
   "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-500";
-
-const control = `inline-flex h-8 items-center justify-center gap-1.5 rounded-control px-3 text-[13px] font-medium whitespace-nowrap transition-colors ${focusRing}`;
 
 const variants = {
   ghost: "bg-surface text-gray-300 hover:bg-raised hover:text-white",
@@ -18,23 +15,8 @@ const variants = {
 
 export type ButtonVariant = keyof typeof variants;
 
-export function buttonClasses(
-  variant: ButtonVariant = "ghost",
-  className = "",
-): string {
-  return `${control} ${variants[variant]} ${className}`;
-}
-
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
-}
-
-export function Button({
-  variant = "ghost",
-  className = "",
-  ...props
-}: ButtonProps) {
-  return <button {...props} className={buttonClasses(variant, className)} />;
 }
 
 export function IconButton({
