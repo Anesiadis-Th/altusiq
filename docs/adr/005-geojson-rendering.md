@@ -2,7 +2,9 @@
 
 ## Status
 
-Accepted
+Accepted, amended by [ADR-016](016-mercator-projection.md).
+
+One detail below no longer describes the code: the selection highlight was added *beneath* the symbol layer and now sits **above** it (`b1af0e5`). At Scandinavian traffic density a ring drawn under the fleet is occluded by its neighbours' icons, so `aircraft-highlight` and `aircraft-selected` were lifted above `aircraft-layer`, along with both trail layers. The `feature-state` reasoning that chose a filtered circle layer in the first place is unchanged. ADR-016 covers the projection constraint that keeps the trail layers where they are put.
 
 ## Context
 
@@ -16,7 +18,7 @@ I migrated to a **Mapbox GeoJSON source with a symbol layer**.
 
 All aircraft positions are serialised into a single `GeoJSON.FeatureCollection` on each poll and pushed to Mapbox via `source.setData()`. Mapbox renders the entire fleet in WebGL via a single `symbol` layer, with heading-based rotation driven by a data expression (`icon-rotate: ['coalesce', ['get', 'heading'], 0]`).
 
-The selected aircraft highlight was implemented as a **filtered circle layer** sitting beneath the symbol layer, rather than a feature-state expression. This was required because `feature-state` is restricted to paint properties in Mapbox GL JS — it cannot drive layout properties like `icon-size`. The circle layer is filtered to the selected `icao24` via `map.setFilter()`, which is a GPU-side operation and does not require re-uploading the feature data.
+The selected aircraft highlight was implemented as a **filtered circle layer** rather than a feature-state expression. This was required because `feature-state` is restricted to paint properties in Mapbox GL JS — it cannot drive layout properties like `icon-size`. The circle layer is filtered to the selected `icao24` via `map.setFilter()`, which is a GPU-side operation and does not require re-uploading the feature data. It was originally added beneath the symbol layer and now sits above it (see Status).
 
 ## Alternatives Considered
 

@@ -36,10 +36,6 @@ AltusIQ shows the world's airborne traffic live — roughly 10,000–14,000 airc
 </tr>
 </table>
 
-<p align="center">
-<br><sub><b>Full parity on mobile</b> — the panel becomes a bottom sheet, the TopBar compacts to icons.</sub>
-</p>
-
 ---
 
 ## The core constraint: OpenSky's credit budget
@@ -315,3 +311,6 @@ Key technical decisions are documented as ADRs in [`docs/adr/`](docs/adr/).
 | [012](docs/adr/012-live-route-lookup.md)                | adsbdb for live route lookup                                | Accepted |
 | [013](docs/adr/013-analytics-presentation.md)           | Analytics as an in-map overlay with hand-drawn charts       | Accepted |
 | [014](docs/adr/014-backend-test-seams.md)               | Backend test seams over an in-memory database               | Accepted |
+| [015](docs/adr/015-airport-dataset-delivery.md)         | Airport datasets as fetched assets, revealed by zoom tier   | Accepted |
+| [016](docs/adr/016-mercator-projection.md)              | Mercator projection, because globe drapes line layers       | Accepted |
+| [017](docs/adr/017-poller-liveness-health-check.md)     | A health check reporting poller liveness, wired to nothing  | Accepted |

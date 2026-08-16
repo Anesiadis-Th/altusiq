@@ -2,7 +2,9 @@
 
 ## Status
 
-Accepted (supersedes initial Railway selection)
+Accepted (supersedes initial Railway selection), amended by [ADR-010](010-poll-interval-and-dead-reckoning.md).
+
+The provider choice stands. The consequence "machine auto-stop/start keeps costs minimal when no users are connected" no longer describes the deployment: `fly.toml` now sets `auto_stop_machines = 'off'` with `min_machines_running = 1`, because auto-stopping breaks continuous flight segmentation and empties the in-memory trails on every stop. The cost floor quoted below is what the project actually pays.
 
 ## Context
 
@@ -45,7 +47,7 @@ Fly.io operates on its own infrastructure outside the major cloud providers. Aft
 - OpenSky API responds reliably from Fly.io's infrastructure
 - Deployment via GitHub Actions provides proper CI/CD
 - Frankfurt region (`fra`) provides low latency to OpenSky's European servers
-- Machine auto-stop/start keeps costs minimal when no users are connected
+- Machine auto-stop/start keeps costs minimal when no users are connected (later traded away for always-on ingestion, see [ADR-010](010-poll-interval-and-dead-reckoning.md))
 
 ### Negative
 

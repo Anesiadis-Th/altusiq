@@ -6,7 +6,7 @@ Accepted. Amends [ADR-007](007-flight-segmentation.md), which had `FlightIngesti
 
 ## Context
 
-The frontend had 44 tests and the backend had none. That split was never a judgement about where the risk lived — it was a reflection of what was cheap to test. The rules most likely to break quietly are all on the backend:
+The frontend had 45 tests and the backend had none. That split was never a judgement about where the risk lived — it was a reflection of what was cheap to test. The rules most likely to break quietly are all on the backend:
 
 - **The gap boundary** in `FlightIngestionService` decides where one flight ends and the next begins. Wrong in one direction and a real flight fragments into several rows; wrong in the other and separate flights merge into one.
 - **The `RegionPointCount >= 2` eligibility bar** decides which of the ~10,000 aircraft in each global poll get persisted. Loosening it is the difference between ~5,300 rows a day and exhausting the Supabase free tier.
@@ -45,7 +45,7 @@ Two obstacles were structural rather than a matter of effort. **`FlightIngestion
 
 ## Consequences
 
-- **37 backend tests running in 13 ms**, 81 across the project. `dotnet test` runs in CI between build and deploy, so a broken segmentation rule now fails a check rather than shipping.
+- **37 backend tests running in 13 ms**, 82 across the project. `dotnet test` runs in CI between build and deploy, so a broken segmentation rule now fails a check rather than shipping.
 - **`backend/` now holds a `.sln` beside a `.csproj`**, which makes bare `dotnet build` and `dotnet publish` fail as ambiguous. The Dockerfile and CI name their target explicitly. This is a genuine trap for anyone running a bare `dotnet` command in that directory.
 - **The API csproj globs every `.cs` beneath it**, so the test project is excluded via `Compile`/`Content`/`EmbeddedResource`/`None` `Remove` items, and from the Docker build context via `.dockerignore`. Verified by replicating the build context and publishing from it: no test assemblies in the image.
 - **`TimeProvider` is registered but consumed only by `FlightIngestionService`.** Other time-dependent workers (retention, enrichment, the poll heartbeat) still read the system clock directly. They can adopt it when they are tested.

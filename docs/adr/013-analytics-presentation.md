@@ -26,7 +26,7 @@ The analytics dashboard was built as an in-map overlay, then moved to its own ro
 
 **Draw the charts by hand and drop recharts.** Four shapes — a line, a column histogram and two ranked bar lists — do not justify 220 KB gzipped, and the library's default chrome (grid on every chart, a legend for two obvious series, rounded caps, gradient fills) is most of what made the dashboard look generic. The two rank charts became ranked lists with inline bars, which is a better form for named categories anyway: the order is the message and every value is printed rather than read off an axis.
 
-**Serve the airport code table from `public/`, not a static import.** Same rule and same reason as `airports.geojson` in [ADR-005](005-geojson-rendering.md): a static JSON import becomes a JS module parsed by the JS parser inside a content-hashed chunk, re-downloaded on every deploy. As a public asset it is `JSON.parse`d, cached across deploys, and fetched alongside the analytics request rather than gating it.
+**Serve the airport code table from `public/`, not a static import.** Same rule and same reason as `airports.geojson`, now recorded in [ADR-015](015-airport-dataset-delivery.md): a static JSON import becomes a JS module parsed by the JS parser inside a content-hashed chunk, re-downloaded on every deploy. As a public asset it is `JSON.parse`d, cached across deploys, and fetched alongside the analytics request rather than gating it.
 
 **Warm the server cache on a timer.** `AnalyticsCacheWarmer` recomputes every 4 minutes against a 5-minute TTL, so the entry is always replaced before it can expire. Measured: 969 ms cold, 0.3 ms warm. With low traffic and a 5-minute TTL, nearly every visitor used to be the one who paid the cold compute.
 
@@ -44,7 +44,7 @@ The analytics dashboard was built as an in-map overlay, then moved to its own ro
 
 **Keeping recharts and only restyling.** Would have fixed the generic look but left the 220 KB and the chart set that was chosen for what was easy to aggregate rather than what was worth showing.
 
-**Trimming the airport code table to scheduled-service airports** (~4,000 of 8,252, roughly halving it). Rejected: it saves ~50 KB on an asset that is now cached across deploys, and costs names for any airfield outside that filter that does appear in the data.
+**Trimming the airport code table to scheduled-service airports** (~4,000 of 8,252, roughly halving it). Rejected: it saves ~50 KB on an asset that is now cached across deploys, and costs names for any airfield outside that filter that does appear in the data. Note this is the exact filter [ADR-015](015-airport-dataset-delivery.md) *does* apply to the map's `airports.geojson` — a dot the map omits is fine, a flight whose airport has no name is not.
 
 **Repairing the altitude chart with finer bands above 8 km.** The binning was the smaller problem; the metric itself was two different measurements concatenated at a migration boundary.
 

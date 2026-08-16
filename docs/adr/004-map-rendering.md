@@ -2,7 +2,9 @@
 
 ## Status
 
-Accepted
+Accepted, amended by [ADR-005](005-geojson-rendering.md) and [ADR-016](016-mercator-projection.md).
+
+The library choice stands. Two things below are now history rather than description: the DOM-marker implementation and the "future optimisation" it points at were completed in ADR-005, and the map is pinned to `projection: "mercator"` because GL JS v3's globe default breaks line-layer z-order (ADR-016).
 
 ## Context
 
@@ -54,8 +56,8 @@ I chose **Mapbox GL JS**.
 
 - Requires a `NEXT_PUBLIC_MAPBOX_TOKEN` environment variable, adding a signup dependency
 - Mapbox GL JS accesses the browser `window` object, which crashes during Next.js server-side rendering. This requires wrapping the map component in a `dynamic()` import with `ssr: false` — a non-obvious requirement that causes a confusing error if missed
-- The current implementation uses individual Mapbox Markers (DOM elements), which causes noticeable lag at 11,000 aircraft. Migration to a GeoJSON symbol layer is required for production-grade performance (tracked as a known optimisation)
+- The Phase 1 implementation used individual Mapbox Markers (DOM elements), which caused noticeable lag at 11,000 aircraft. Migration to a GeoJSON symbol layer was required for production-grade performance, and was carried out in [ADR-005](005-geojson-rendering.md)
 
 ### Future Optimisation
 
-The marker-to-layer migration is a prerequisite for Phase 2 (historical playback), where smooth animation of aircraft positions will require the GPU-accelerated rendering path.
+The marker-to-layer migration was a prerequisite for Phase 2 (historical playback), where smooth animation of aircraft positions requires the GPU-accelerated rendering path. It has since been done — see [ADR-005](005-geojson-rendering.md).

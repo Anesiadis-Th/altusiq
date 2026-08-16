@@ -1,36 +1,50 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AltusIQ — Frontend
 
-## Getting Started
+Next.js + TypeScript client for AltusIQ. Renders the live global map, flight history and playback, search, and the analytics overlay.
 
-First, run the development server:
+For what the project is, the architecture, and the constraints behind it, see the [root README](../README.md) and the [ADRs](../docs/adr/).
+
+## Setup
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.local.example .env.local   # set NEXT_PUBLIC_MAPBOX_TOKEN and NEXT_PUBLIC_API_URL
+npm install
+npm run dev                        # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The backend must be running for anything beyond an empty map. `NEXT_PUBLIC_API_URL` points at it (`http://localhost:8080` locally); in production it lives in Vercel's environment, not in the repo.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Command                 | What it does                                                             |
+| ----------------------- | ------------------------------------------------------------------------ |
+| `npm run dev`           | Dev server                                                               |
+| `npm run build`         | Production build. Does not need a Mapbox token — the map is client-only  |
+| `npm run lint`          | ESLint                                                                   |
+| `npm test`              | Vitest, run once (45 tests)                                              |
+| `npm run test:watch`    | Vitest, watch mode                                                       |
+| `npm run build:airports`| Regenerates `public/airports.geojson` from OurAirports ([ADR-015](../docs/adr/015-airport-dataset-delivery.md)) |
 
-## Learn More
+## Layout
 
-To learn more about Next.js, take a look at the following resources:
+```
+app/          Next.js app router — one page, the map
+components/
+  map/        FlightMap (state owner), MapView (all Mapbox), FlightPanel, FlightSearch
+  flights/    History panel, playback controls
+  analytics/  Overlay shell, lazy content, and the hand-drawn SVG charts
+  ui/         Button, Card, Label, Rail
+hooks/        TanStack Query hooks, playback loop, panel state
+lib/          Pure logic: dead reckoning, flight search, chart maths, geo, aircraft layer
+public/       airports.geojson (map dots), airportCodes.json (ICAO→IATA lookup)
+data/         airlineCodes.json (IATA→ICAO callsign prefixes, bundled)
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Things that will bite you
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Mapbox is client-only.** `FlightMap` is imported with `dynamic(ssr: false)`; GL JS touches `window` and crashes during SSR otherwise.
+- **The map projection is pinned to mercator on purpose.** Removing it restores GL JS v3's globe default, which drapes `line` layers below every symbol and silently breaks flight trails. See [ADR-016](../docs/adr/016-mercator-projection.md).
+- **`airports.geojson` and `airportCodes.json` are fetched, not imported.** A static import moves them into a JS chunk on the critical path. See [ADR-015](../docs/adr/015-airport-dataset-delivery.md).
+- **API responses are snake_case**, matching the backend's global serialisation. The types in `types/` mirror it exactly.
+- **Panels are one `activePanel` value, never a boolean each** (`hooks/useActivePanel.ts`). A fourth panel extends the union.
+- **Tests cover pure logic only.** Nothing mocks Mapbox, SignalR, or TanStack Query — that is what the `frontend/verify` skill does against a real browser and the live backend.
