@@ -46,7 +46,7 @@ Three design decisions fall out of this:
 
 1. **The gap is bridged client-side.** A dead-reckoning engine advances every aircraft between polls and lerps onto each new fix over a short correction window, so the map moves like a 60 fps feed while the data arrives at 1/120 Hz.
 2. **The live map is global for free.** A worldwide poll costs the same 4 credits as the Scandinavia-only box, so the map shows everything.
-3. **Storage stays regional.** Persisting global tracks would be ~100× the volume and blow Supabase's 500 MB free tier, so flight history and analytics are scoped to Scandinavia (~5,000 flights/day, ~150 MB at the 15-day retention window).
+3. **Storage stays regional.** Persisting global tracks would be ~100× the volume and blow Supabase's 500 MB free tier, so flight history and analytics are scoped to Scandinavia (~5,000 flights/day, projected ~270–320 MB at the 15-day retention window).
 
 ---
 
@@ -174,7 +174,7 @@ graph TB
 ### Data lifecycle
 
 1. **Poll** — `/states/all` every 120 s; the parsed snapshot is broadcast to all SignalR clients and cached for instant delivery to new connections.
-2. **Ingest** — airborne aircraft inside the Scandinavia box (lon 4–32, lat 54–72) accumulate in-memory track points (30 s minimum spacing, 300-point cap). All aircraft worldwide additionally keep a lightweight in-memory trail for the click-to-see-trail feature — never persisted.
+2. **Ingest** — every airborne aircraft worldwide accumulates track points in one in-memory store (30 s minimum spacing, 300-point cap), which is also what the click-to-see-trail feature reads. The Scandinavia box (lon 4–32, lat 54–72) decides which flights get *saved*, not which points get recorded: a flight qualifies once two of its fixes fall inside the box, and is then stored in full, including the legs flown outside it. Recording only in-region points used to cut long-haul departures off at the boundary in mid-air.
 3. **Close** — an aircraft unseen for 360 s (three missed polls) closes its flight; the completed track is flushed to Postgres as JSONB.
 4. **Enrich** — nightly at 04:00 UTC, departure and arrival airports are backfilled from OpenSky's next-day `/flights/all` batch (a separate credit bucket, so enrichment never competes with live polling).
 5. **Purge** — at 06:00 UTC, flights closed more than 15 days ago are deleted in batches. The two-hour stagger guarantees flights are enriched before they can ever be purged.
@@ -275,7 +275,9 @@ Both suites are mutation-checked. Fourteen defects were injected into the backen
 
 ## Deployment
 
-Every push runs CI — `dotnet build` and `dotnet test` for the backend, `npm run lint`, `npm test` and `npm run build` for the frontend. The backend deploys to **Fly.io** via GitHub Actions on every push to `master`, gated on CI passing, so a commit that doesn't compile fails a check instead of a mid-deploy Docker build. The frontend deploys to **Vercel** automatically on push.
+CI runs `dotnet build` and `dotnet test` for the backend, plus `npm run lint`, `npm test` and `npm run build` for the frontend. The backend deploys to **Fly.io** via GitHub Actions on push to `master`, gated on CI passing, so a commit that doesn't compile fails a check instead of a mid-deploy Docker build. The frontend deploys to **Vercel** automatically on push.
+
+Two path gates keep needless deploys out: a docs-only push starts nothing at all, and a frontend-only push runs CI without redeploying the backend. This is not about CI minutes. A deploy restarts the machine, and in-progress tracks live only in memory ([ADR-007](docs/adr/007-flight-segmentation.md)), so every unnecessary deploy splits every airborne flight into two database rows.
 
 The backend machine runs **always-on** (`min_machines_running = 1`) — a deliberate few-dollars-a-month cost so ingestion is continuous and the demo is always warm. Backend secrets are set via `fly secrets set` and never touch the repository. See [ADR-002](docs/adr/002-backend-hosting-provider.md) for why Fly.io was chosen.
 
