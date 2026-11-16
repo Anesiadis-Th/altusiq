@@ -181,6 +181,37 @@ graph TB
 
 ---
 
+## Emergency squawk events and the investigation pipeline
+
+Every OpenSky state row carries the transponder code, and three codes have a fixed meaning: 7500, 7600 and 7700. The parser now reads it, keeps it **off the SignalR wire**, and turns codes that hold across two consecutive polls into stored events with their evidence frozen in. Events are not a safety feature and are not framed as one; the data cannot carry that weight. They are a record of what was observed and a short, labelled reading of it.
+
+**Detection.** One poll on a code is a candidate; the same code on the next poll opens an event. The event closes when the code clears or the aircraft is unseen for 360 s. Ids are deterministic from `icao24` and the confirm second, so a retried write hits the same row. The live trail is snapshotted into the event at confirm and at close, thinned to 120 points, with no foreign key to `Flights`, because most of the globe never gets a flight row. 7500 events are stored but hidden from the public API unless `Events:ExposeSensitive` is on, and are never investigated.
+
+**Investigation.** A closed event, or one still open after 30 minutes, is queued on a channel and picked up by a background consumer with concurrency 1, never on the poll path. The agent has five tools, each capped at 8 KB: the trail, nearest airports from a backend copy of the OurAirports set, the latest METAR, the callsign's route from adsbdb, and earlier stored flights for the airframe. It runs at most six tool rounds, must answer in one validated JSON shape with no `cause` and no `confidence` field, and is checked in code for groundedness: every four-letter code and every number of 100 or more in the brief has to appear in what the model was shown. Ungrounded briefs are stored with the flag, not hidden.
+
+**Zero cost, two providers, a budget.** Groq and OpenRouter free plans, no card on file, tried in order; a 429, 5xx, timeout or invalid output after one retry moves to the next, and a model without tool calling gets single-shot mode. Forty model calls a day across both, counted per UTC day. When the budget is spent, every provider fails, or `Llm:Enabled` is false, code assembles a brief from the tool outputs and stores it as `uninvestigated`. Every event gets a brief; only the model is optional.
+
+**What the data cannot show.** Positions arrive every 120 s and coverage has gaps, so a brief can describe a descent but not a go-around. The reason a crew set a code is almost never visible in ADS-B, and every brief lists it under `unknowns`. The Events rail shows briefs under an **AI-generated, unverified** label with the model name. How many events the feed actually produces is unmeasured; one log line per poll counts them, and that number decides whether anything more is built.
+
+**Eval harness.** `backend/AltusIQ.Evals` runs the production agent over eight recorded cases, a 7700 in fog at Arlanda, a 7600 in cruise, a turn-back, an empty trail, an aircraft far from any airport, a failed METAR fetch, a regression fixture whose recorded response names an airport the evidence never mentioned, and a 7500 that must be skipped. Replay mode, the default, never leaves the process; live mode is capped at 20 calls. A nightly workflow uploads the results and fails only on harness errors. From a replay run of `investigate.v1`:
+
+| metric | value |
+| --- | ---: |
+| cases | 8 (7 investigated, 1 skipped) |
+| schema-valid rate | 100 % |
+| grounded rate | 86 % |
+| tool-selection accuracy | 100 % |
+| speculation rate | 0 % |
+| expectation failures | 0 |
+
+The one ungrounded case is the regression fixture, which is the point of it. In replay mode these numbers measure the code, not a model: they prove the validator, the groundedness check and the tool loop do what the fixtures say. Live numbers come from `dotnet run --project backend/AltusIQ.Evals` with `LLM_API_KEY` and `LLM_PROVIDER` set, and there is no accuracy metric because there is no ground truth for why a code was set. See [ADR-018](docs/adr/018-emergency-squawk-events-and-investigation.md).
+
+```bash
+dotnet run --project backend/AltusIQ.Evals -- --results backend/AltusIQ.Evals/results
+```
+
+---
+
 ## Tech Stack
 
 **Frontend** — Next.js, TypeScript, TailwindCSS, TanStack Query, Mapbox GL JS, Vitest. Charts are hand-drawn SVG; there is no chart library.
@@ -202,6 +233,7 @@ graph TB
 - An [OpenSky Network](https://opensky-network.org) account with API client credentials
 - A [Mapbox](https://mapbox.com) access token
 - A [Supabase](https://supabase.com) project with PostGIS enabled
+- Optional: a [Groq](https://console.groq.com) or [OpenRouter](https://openrouter.ai) free-plan key for investigation briefs. Without one, events still get a data-only brief.
 
 ### Backend
 
@@ -211,6 +243,8 @@ dotnet user-secrets set "OpenSky:ClientId" "your_client_id"
 dotnet user-secrets set "OpenSky:ClientSecret" "your_client_secret"
 dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=...;Database=postgres;Username=...;Password=...;SSL Mode=Require;Trust Server Certificate=true"
 dotnet ef database update
+# Optional, for model-written briefs; see backend/.env.example
+export GROQ_API_KEY=... OPENROUTER_API_KEY=...
 dotnet run
 ```
 
@@ -248,11 +282,11 @@ Opens at `http://localhost:3000`.
 ## Tests
 
 ```bash
-npm test --prefix frontend        # 45 Vitest tests
-dotnet test backend/AltusIQ.sln   # 37 xUnit tests
+npm test --prefix frontend        # 47 Vitest tests
+dotnet test backend/AltusIQ.sln   # 98 xUnit tests
 ```
 
-82 tests cover the pure logic on both sides — the parts where a silent regression would be invisible on screen.
+145 tests cover the pure logic on both sides — the parts where a silent regression would be invisible on screen.
 
 **Backend (xUnit)** — the ingestion rules that decide what reaches the database:
 
@@ -260,6 +294,8 @@ dotnet test backend/AltusIQ.sln   # 37 xUnit tests
 - **Persistence eligibility** — the two-in-region-fixes bar that selects ~5,300 stored flights a day out of ~10,000 globally tracked aircraft, and the sticky counter that keeps a long-haul departure eligible after `MaxTrackPoints` has trimmed its Scandinavian leg out of the track.
 - **What gets written** — `OpenedAt` and `ClosedAt` taken from the track rather than the timeout instant, peak altitude versus touchdown altitude, and out-of-region thinning that preserves the fixes either side of the boundary crossing.
 - **OpenSky row tolerance** — short, malformed and identity-less rows skipped individually, so a single bad row cannot discard an entire ~10,000-aircraft poll.
+- **Squawk detection** — one poll is a candidate and two confirm, 1200 and 2000 never flag, the close rule in both its forms, the deterministic id under replay, a failed write retried next poll, and 7500 marked sensitive and hidden by default.
+- **Investigation agent** — a scripted fake model client and recorded tool outputs drive the valid path, the retry-then-`invalid_output` path, 429 fallback to the next provider, the deterministic brief when every provider fails, the six-step cap, the 8 KB tool cap, the groundedness flag on an airport absent from the evidence, the 40-call budget resetting on the UTC day with a fake clock, the 7500 skip, and the consumer running off the poll path.
 
 **Frontend (Vitest)** — the client-side logic with no visible failure mode:
 
@@ -269,7 +305,7 @@ dotnet test backend/AltusIQ.sln   # 37 xUnit tests
 
 Deliberately untested: anything requiring Mapbox, SignalR, or a real database. Those are verified by driving a real browser against the deployed backend, which is a better tool for the job than a wall of mocks. Where a rule is worth locking down, a seam is extracted instead — a hook on the frontend (`useActivePanel`), an interface on the backend (`IFlightWriter`). See [ADR-014](docs/adr/014-backend-test-seams.md).
 
-Both suites are mutation-checked. Fourteen defects were injected into the backend one at a time — the gap boundary off by one, the region counter recomputed instead of accumulated, the boundary-neighbour rule dropped from thinning, `on_ground` read in a way that throws on null — and all fourteen turned the suite red. On the frontend, breaking the leading-zero strip, the grounded filter, the eviction TTL, the correction blend, or panel exclusivity does the same.
+Both suites are mutation-checked. Seventeen defects were injected into the backend one at a time — the gap boundary off by one, the region counter recomputed instead of accumulated, the boundary-neighbour rule dropped from thinning, `on_ground` read in a way that throws on null, the squawk persistence rule reduced to one poll, the groundedness check disabled, the provider fallback skipped — and all seventeen turned the suite red. On the frontend, breaking the leading-zero strip, the grounded filter, the eviction TTL, the correction blend, or panel exclusivity does the same.
 
 ---
 
@@ -290,6 +326,7 @@ The backend machine runs **always-on** (`min_machines_running = 1`) — a delibe
 | 1     | Live map with real-time aircraft positions                                                                                                          | ✅ Complete |
 | 2     | Historical flight storage and playback                                                                                                              | ✅ Complete |
 | 3     | Credit-budget rework (120 s polling + dead-reckoning), global live map, retention, enrichment, analytics dashboard, routes + ETA, search, mobile UI | ✅ Complete |
+| 4     | Emergency squawk events, grounded investigation briefs on free-tier models, eval harness                                                             | ✅ Complete |
 
 ---
 
@@ -316,3 +353,4 @@ Key technical decisions are documented as ADRs in [`docs/adr/`](docs/adr/).
 | [015](docs/adr/015-airport-dataset-delivery.md)         | Airport datasets as fetched assets, revealed by zoom tier   | Accepted |
 | [016](docs/adr/016-mercator-projection.md)              | Mercator projection, because globe drapes line layers       | Accepted |
 | [017](docs/adr/017-poller-liveness-health-check.md)     | A health check reporting poller liveness, wired to nothing  | Accepted |
+| [018](docs/adr/018-emergency-squawk-events-and-investigation.md) | Emergency squawk events with a grounded investigation pipeline | Accepted |

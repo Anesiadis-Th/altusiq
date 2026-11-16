@@ -23,3 +23,4 @@ ADRs document significant technical decisions, the context that led to them, and
 | [015](015-airport-dataset-delivery.md)         | Airport datasets as fetched assets, revealed by zoom tier  | Accepted |
 | [016](016-mercator-projection.md)              | Mercator projection, because globe drapes line layers      | Accepted |
 | [017](017-poller-liveness-health-check.md)     | A health check reporting poller liveness, wired to nothing | Accepted |
+| [018](018-emergency-squawk-events-and-investigation.md) | Emergency squawk events with a grounded investigation pipeline | Accepted |
