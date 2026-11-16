@@ -4,6 +4,8 @@ using AltusIQ.Api.Services;
 using AltusIQ.Api.Health;
 using AltusIQ.Api.Hubs;
 using AltusIQ.Api.Data;
+using AltusIQ.Api.Investigation;
+using AltusIQ.Api.Llm;
 using AltusIQ.Api.Models;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
@@ -89,6 +91,31 @@ builder.Services.Configure<EventsSettings>(
     builder.Configuration.GetSection("Events"));
 builder.Services.AddSingleton<IAnomalyEventWriter, EfAnomalyEventWriter>();
 builder.Services.AddSingleton<EmergencySquawkDetector>();
+
+// Investigation: queue fed by the detector, drained by one background consumer.
+// Model calls never happen on the poll path (ADR-018).
+builder.Services.Configure<LlmSettings>(
+    builder.Configuration.GetSection("Llm"));
+builder.Services.AddSingleton<IInvestigationQueue, InvestigationQueue>();
+builder.Services.AddSingleton<IAnomalyEventStore, EfAnomalyEventStore>();
+builder.Services.AddSingleton<LlmCallBudget>();
+builder.Services.AddSingleton<PromptStore>();
+builder.Services.AddSingleton(_ => AirportIndex.LoadEmbedded());
+builder.Services.AddHttpClient<MetarClient>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(10);
+    client.DefaultRequestHeaders.UserAgent.ParseAdd("AltusIQ/1.0 (aviation analytics portfolio project)");
+});
+builder.Services.AddSingleton<IInvestigationToolSource, LiveToolSource>();
+builder.Services.AddHttpClient<OpenAiCompatibleChatClient>((sp, client) =>
+{
+    var llm = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<LlmSettings>>().Value;
+    client.Timeout = TimeSpan.FromSeconds(llm.TimeoutSeconds);
+});
+builder.Services.AddSingleton<ILlmClient>(sp =>
+    sp.GetRequiredService<OpenAiCompatibleChatClient>());
+builder.Services.AddSingleton<InvestigationAgent>();
+builder.Services.AddHostedService<InvestigationService>();
 builder.Services.AddSingleton<LiveSnapshotStore>();
 
 builder.Services.AddHttpClient<FlightPollingService>(client =>

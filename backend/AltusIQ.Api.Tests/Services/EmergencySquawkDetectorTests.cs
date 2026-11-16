@@ -1,4 +1,5 @@
 using System.Text.Json;
+using AltusIQ.Api.Investigation;
 using AltusIQ.Api.Models;
 using AltusIQ.Api.Services;
 using AltusIQ.Api.Tests.Fakes;
@@ -18,7 +19,8 @@ public class EmergencySquawkDetectorTests
         public FakeActiveTrackSource Tracks { get; } = new();
         public FakeTimeProvider Clock { get; } = new(new DateTimeOffset(2026, 8, 1, 12, 0, 0, TimeSpan.Zero));
         public IngestionSettings Ingestion { get; } = new() { PollIntervalSeconds = 120, GapThresholdSeconds = 360 };
-        public EventsSettings Events { get; } = new() { MaxEvidencePoints = 120 };
+        public EventsSettings Events { get; } = new() { MaxEvidencePoints = 120, InvestigateOpenAfterMinutes = 30 };
+        public InvestigationQueue Queue { get; } = new();
         public EmergencySquawkDetector Detector { get; }
 
         public Harness()
@@ -29,6 +31,7 @@ public class EmergencySquawkDetectorTests
                 Options.Create(Ingestion),
                 Options.Create(Events),
                 Clock,
+                Queue,
                 NullLogger<EmergencySquawkDetector>.Instance);
         }
 
@@ -43,6 +46,13 @@ public class EmergencySquawkDetectorTests
 
         public Task<IReadOnlyList<AnomalyEvent>> Open() =>
             Detector.GetOpenEventsAsync(CancellationToken.None);
+
+        public List<Guid> Queued()
+        {
+            var ids = new List<Guid>();
+            while (Queue.Reader.TryRead(out var id)) ids.Add(id);
+            return ids;
+        }
     }
 
     private static Aircraft Plane(string? squawk, string icao = Icao, double lat = 60, double? altitude = 10_000) => new()
@@ -310,6 +320,56 @@ public class EmergencySquawkDetectorTests
         Assert.Equal("unlawful_interference", h.Writer.Rows.Values.Single(e => e.Squawk == "7500").Kind);
         Assert.False(h.Writer.Rows.Values.Single(e => e.Squawk == "7600").Sensitive);
         Assert.False(h.Writer.Rows.Values.Single(e => e.Squawk == "7700").Sensitive);
+    }
+
+    // ---- hand-off to the investigator ----
+
+    [Fact]
+    public async Task Closing_enqueues_the_event_once_the_row_is_written()
+    {
+        var h = new Harness();
+        await h.Poll(Plane("7700"));
+        await h.PollAfter(120, Plane("7700"));
+        Assert.Empty(h.Queued());
+
+        await h.PollAfter(120, Plane("1200"));
+
+        Assert.Equal([h.Writer.Single().Id], h.Queued());
+    }
+
+    [Fact]
+    public async Task An_event_open_for_30_minutes_is_enqueued_while_still_open_and_not_again_at_close()
+    {
+        var h = new Harness();
+        await h.Poll(Plane("7700"));
+        await h.PollAfter(120, Plane("7700"));
+
+        for (var i = 0; i < 14; i++)
+            await h.PollAfter(120, Plane("7700"));
+        Assert.Empty(h.Queued());
+
+        await h.PollAfter(120, Plane("7700"));
+        var id = Assert.Single(h.Queued());
+        Assert.Equal(AnomalyEventStatus.Open, h.Writer.Rows[id].Status);
+
+        await h.PollAfter(120, Plane("1200"));
+        Assert.Empty(h.Queued());
+    }
+
+    [Fact]
+    public async Task A_close_whose_write_failed_is_enqueued_only_after_the_retry_succeeds()
+    {
+        var h = new Harness();
+        await h.Poll(Plane("7700"));
+        await h.PollAfter(120, Plane("7700"));
+
+        h.Writer.FailWith = new InvalidOperationException("database unavailable");
+        await h.PollAfter(120, Plane("1200"));
+        Assert.Empty(h.Queued());
+
+        h.Writer.FailWith = null;
+        await h.PollAfter(120);
+        Assert.Single(h.Queued());
     }
 
     private static JsonElement ParseEvidence(AnomalyEvent evt)

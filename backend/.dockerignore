@@ -11,3 +11,5 @@ fly.toml
 Dockerfile*
 *.sln
 **/*.md
+# ...except the prompt files the investigator loads at runtime
+!Prompts/*.md

@@ -28,8 +28,26 @@
     <None Remove="AltusIQ.Api.Tests/**" />
   </ItemGroup>
 
+  <!-- Same isolation for the eval console project (ADR-018). -->
+  <ItemGroup>
+    <Compile Remove="AltusIQ.Evals/**" />
+    <Content Remove="AltusIQ.Evals/**" />
+    <EmbeddedResource Remove="AltusIQ.Evals/**" />
+    <None Remove="AltusIQ.Evals/**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Backend copy of frontend/public/airports.geojson (OurAirports, public domain)
+         for the nearest_airports tool. Embedded so the Docker image needs no extra files. -->
+    <EmbeddedResource Include="Data/airports.geojson" LogicalName="airports.geojson" />
+    <!-- Prompts are read at runtime by version; copied next to the binary, and
+         flow to the test and eval outputs through the project reference. -->
+    <None Include="Prompts/*.md" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <ItemGroup>
     <InternalsVisibleTo Include="AltusIQ.Api.Tests" />
+    <InternalsVisibleTo Include="AltusIQ.Evals" />
   </ItemGroup>
 
 </Project>

@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using AltusIQ.Api.Investigation;
 using AltusIQ.Api.Models;
 using AltusIQ.Api.Models.Dtos;
 using Microsoft.Extensions.Options;
@@ -44,10 +45,12 @@ public sealed class EmergencySquawkDetector
     private readonly IngestionSettings _ingestion;
     private readonly EventsSettings _events;
     private readonly TimeProvider _clock;
+    private readonly IInvestigationQueue _queue;
     private readonly ILogger<EmergencySquawkDetector> _logger;
 
     private readonly Dictionary<string, SquawkState> _states = new();
     private readonly List<AnomalyEvent> _pendingClosedWrites = [];
+    private readonly HashSet<Guid> _queuedBeforeClose = [];
     private readonly SemaphoreSlim _lock = new(1, 1);
 
     public EmergencySquawkDetector(
@@ -56,6 +59,7 @@ public sealed class EmergencySquawkDetector
         IOptions<IngestionSettings> ingestion,
         IOptions<EventsSettings> events,
         TimeProvider clock,
+        IInvestigationQueue queue,
         ILogger<EmergencySquawkDetector> logger)
     {
         _writer = writer;
@@ -63,6 +67,7 @@ public sealed class EmergencySquawkDetector
         _ingestion = ingestion.Value;
         _events = events.Value;
         _clock = clock;
+        _queue = queue;
         _logger = logger;
     }
 
@@ -118,6 +123,7 @@ public sealed class EmergencySquawkDetector
                     else
                         UpdateLastFix(state.Event, state);
 
+                    EnqueueIfLongOpen(state, now);
                     continue;
                 }
 
@@ -140,6 +146,10 @@ public sealed class EmergencySquawkDetector
                 else if ((now - state.LastSeenAt).TotalSeconds > _ingestion.GapThresholdSeconds)
                 {
                     await CloseAsync(key, state, now, "unseen past gap threshold", ct);
+                }
+                else
+                {
+                    EnqueueIfLongOpen(state, now);
                 }
             }
 
@@ -225,12 +235,14 @@ public sealed class EmergencySquawkDetector
         try
         {
             await _writer.UpsertAsync(evt, ct);
-            OnEventClosed(evt);
+            OnEventClosed(evt, state.InvestigationQueued);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Failed to persist closed event {EventId}, retrying next poll", evt.Id);
             _pendingClosedWrites.Add(evt);
+            if (state.InvestigationQueued)
+                _queuedBeforeClose.Add(evt.Id);
         }
     }
 
@@ -260,7 +272,7 @@ public sealed class EmergencySquawkDetector
             {
                 await _writer.UpsertAsync(evt, ct);
                 _pendingClosedWrites.Remove(evt);
-                OnEventClosed(evt);
+                OnEventClosed(evt, _queuedBeforeClose.Remove(evt.Id));
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
@@ -269,9 +281,24 @@ public sealed class EmergencySquawkDetector
         }
     }
 
-    /// <summary>Hook for the investigation scheduler; nothing on the poll path waits on it.</summary>
-    private void OnEventClosed(AnomalyEvent evt)
+    /// <summary>Hands the id to the investigator once the row exists. Nothing on the poll path waits on it.</summary>
+    private void OnEventClosed(AnomalyEvent evt, bool alreadyQueued)
     {
+        if (!alreadyQueued)
+            _queue.Enqueue(evt.Id);
+    }
+
+    /// <summary>An event still open after Events:InvestigateOpenAfterMinutes is investigated as it stands.</summary>
+    private void EnqueueIfLongOpen(SquawkState state, DateTime now)
+    {
+        if (state.Event is null || state.InvestigationQueued || state.PendingWrite)
+            return;
+
+        if ((now - state.Event.ConfirmedAt).TotalMinutes < _events.InvestigateOpenAfterMinutes)
+            return;
+
+        state.InvestigationQueued = true;
+        _queue.Enqueue(state.Event.Id);
     }
 
     private static void UpdateLastFix(AnomalyEvent evt, SquawkState state)
@@ -344,5 +371,6 @@ public sealed class EmergencySquawkDetector
         public required Aircraft LastFix { get; set; }
         public AnomalyEvent? Event { get; set; }
         public bool PendingWrite { get; set; }
+        public bool InvestigationQueued { get; set; }
     }
 }
