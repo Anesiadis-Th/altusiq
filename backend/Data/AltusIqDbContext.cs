@@ -6,6 +6,7 @@ namespace AltusIQ.Api.Data;
 public class AltusIqDbContext(DbContextOptions<AltusIqDbContext> options) : DbContext(options)
 {
     public DbSet<Flight> Flights => Set<Flight>();
+    public DbSet<AnomalyEvent> AnomalyEvents => Set<AnomalyEvent>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -59,6 +60,39 @@ public class AltusIqDbContext(DbContextOptions<AltusIqDbContext> options) : DbCo
 
             builder.HasIndex(f => f.LastPosition)
                 .HasMethod("gist");
+        });
+
+        modelBuilder.Entity<AnomalyEvent>(builder =>
+        {
+            builder.HasKey(e => e.Id);
+
+            // No default: the detector derives the id from icao24 + confirm time
+            // so a retried write hits the same row. Never FK'd to Flights, since
+            // a global event usually has no Flights row at all.
+            builder.Property(e => e.Icao24).HasMaxLength(6).IsRequired();
+            builder.Property(e => e.Callsign).HasMaxLength(8);
+            builder.Property(e => e.OriginCountry).HasMaxLength(64);
+            builder.Property(e => e.Squawk).HasMaxLength(4).IsRequired();
+            builder.Property(e => e.Kind).HasMaxLength(32).IsRequired();
+            builder.Property(e => e.Status).HasMaxLength(16).IsRequired();
+
+            builder.Property(e => e.FirstSeenAt).HasColumnType("timestamp with time zone");
+            builder.Property(e => e.ConfirmedAt).HasColumnType("timestamp with time zone");
+            builder.Property(e => e.LastSeenAt).HasColumnType("timestamp with time zone");
+            builder.Property(e => e.ClosedAt).HasColumnType("timestamp with time zone");
+            builder.Property(e => e.CreatedAt).HasColumnType("timestamp with time zone");
+
+            builder.Property(e => e.EvidenceJson).HasColumnType("jsonb");
+            builder.Property(e => e.InvestigationJson).HasColumnType("jsonb");
+
+            builder.Property(e => e.InvestigationStatus).HasMaxLength(24).IsRequired();
+            builder.Property(e => e.PromptVersion).HasMaxLength(32);
+            builder.Property(e => e.Provider).HasMaxLength(32);
+            builder.Property(e => e.Model).HasMaxLength(96);
+
+            builder.HasIndex(e => e.ConfirmedAt);
+            builder.HasIndex(e => e.Icao24);
+            builder.HasIndex(e => e.Status);
         });
     }
 }

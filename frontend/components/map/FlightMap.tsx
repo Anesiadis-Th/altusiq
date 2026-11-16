@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useQueryClient } from "@tanstack/react-query";
-import { BarChart3, History, Plane, Search } from "lucide-react";
+import { BarChart3, History, Plane, Search, TriangleAlert } from "lucide-react";
 import { useFlightData } from "@/hooks/useFlightData";
 import { useFlightTrack } from "@/hooks/useFlights";
 import { usePlayback } from "@/hooks/usePlayback";
@@ -14,6 +14,8 @@ import { Aircraft } from "@/types/aircraft";
 import MapView, { FocusTarget } from "./MapView";
 import FlightSearch from "./FlightSearch";
 import FlightHistoryPanel from "@/components/flights/FlightHistoryPanel";
+import EventsPanel from "@/components/events/EventsPanel";
+import { AnomalyEventSummary } from "@/types/event";
 import PlaybackControls from "@/components/flights/PlaybackControls";
 import AnalyticsShell from "@/components/analytics/AnalyticsShell";
 import AnalyticsSkeleton from "@/components/analytics/AnalyticsSkeleton";
@@ -49,6 +51,7 @@ export default function FlightMap() {
   const { aircraft, connected } = useFlightData();
   const [selectedFlightId, setSelectedFlightId] = useState<string | null>(null);
   const [selectedIcao, setSelectedIcao] = useState<string | null>(null);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [focusTarget, setFocusTarget] = useState<FocusTarget | null>(null);
   const focusSeq = useRef(0);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -92,6 +95,20 @@ export default function FlightMap() {
     closePanel();
   }
 
+  // Fly to the event's last known position. The engine wins if the aircraft is
+  // still on the live map, otherwise MapView falls back to the given fix.
+  function handleSelectEvent(event: AnomalyEventSummary) {
+    setSelectedEventId(event.id);
+    if (event.last_longitude == null || event.last_latitude == null) return;
+    focusSeq.current += 1;
+    setFocusTarget({
+      icao24: event.icao24,
+      longitude: event.last_longitude,
+      latitude: event.last_latitude,
+      seq: focusSeq.current,
+    });
+  }
+
   function handleClosePlayback() {
     playback.pause();
     setSelectedFlightId(null);
@@ -125,6 +142,8 @@ export default function FlightMap() {
         onSearchClick={() => togglePanel("search")}
         showHistory={activePanel === "history"}
         onHistoryClick={() => togglePanel("history")}
+        showEvents={activePanel === "events"}
+        onEventsClick={() => togglePanel("events")}
         showAnalytics={activePanel === "analytics"}
         onAnalyticsClick={() => togglePanel("analytics")}
         onAnalyticsHover={handleAnalyticsHover}
@@ -143,6 +162,14 @@ export default function FlightMap() {
           <FlightHistoryPanel
             selectedId={selectedFlightId}
             onSelect={handleSelectFlight}
+            onClose={() => closePanel()}
+          />
+        )}
+
+        {activePanel === "events" && (
+          <EventsPanel
+            selectedId={selectedEventId}
+            onSelect={handleSelectEvent}
             onClose={() => closePanel()}
           />
         )}
@@ -178,6 +205,8 @@ interface TopBarProps {
   onSearchClick: () => void;
   showHistory: boolean;
   onHistoryClick: () => void;
+  showEvents: boolean;
+  onEventsClick: () => void;
   showAnalytics: boolean;
   onAnalyticsClick: () => void;
   onAnalyticsHover: () => void;
@@ -192,13 +221,15 @@ function TopBar({
   onSearchClick,
   showHistory,
   onHistoryClick,
+  showEvents,
+  onEventsClick,
   showAnalytics,
   onAnalyticsClick,
   onAnalyticsHover,
 }: TopBarProps) {
   // The rail is flush to the left edge, so the toolbar steps aside on sm+
   // instead of sitting on top of it.
-  const railOpen = showSearch || showHistory;
+  const railOpen = showSearch || showHistory || showEvents;
 
   return (
     <div
@@ -253,6 +284,15 @@ function TopBar({
         >
           <History size={16} />
           <span className="hidden sm:inline">History</span>
+        </GroupButton>
+        <GroupDivider />
+        <GroupButton
+          active={showEvents}
+          onClick={onEventsClick}
+          aria-label="Emergency squawk events"
+        >
+          <TriangleAlert size={16} />
+          <span className="hidden sm:inline">Events</span>
         </GroupButton>
         <GroupDivider />
         <GroupButton

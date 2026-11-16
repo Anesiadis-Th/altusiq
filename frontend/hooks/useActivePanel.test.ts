@@ -69,7 +69,7 @@ describe("useActivePanel", () => {
   });
 
   it("never leaves two panels open across every ordering", () => {
-    const panels = ["search", "history", "analytics"] as const;
+    const panels = ["search", "history", "events", "analytics"] as const;
     for (const first of panels) {
       for (const second of panels) {
         const { result } = setup();
@@ -119,6 +119,22 @@ describe("useActivePanel", () => {
       act(() => result.current.toggle("search"));
       pointerDownOn(topBar);
       expect(result.current.activePanel).toBe("search");
+    });
+
+    // Events is a third rail on the same anchor as Search and History, so it
+    // must dismiss the same way or it would sit under the next one opened.
+    it("closes the events rail when the click lands outside", () => {
+      const { result } = setup();
+      act(() => result.current.toggle("events"));
+      pointerDownOn(map);
+      expect(result.current.activePanel).toBeNull();
+    });
+
+    it("keeps the events rail open when the click lands inside it", () => {
+      const { result } = setup();
+      act(() => result.current.toggle("events"));
+      pointerDownOn(panel);
+      expect(result.current.activePanel).toBe("events");
     });
 
     it("closes on Escape", () => {

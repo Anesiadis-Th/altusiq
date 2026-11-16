@@ -17,6 +17,7 @@ public class FlightPollingService : BackgroundService
     private readonly ILogger<FlightPollingService> _logger;
     private readonly IHubContext<FlightHub> _hubContext;
     private readonly FlightIngestionService _ingestionService;
+    private readonly EmergencySquawkDetector _squawkDetector;
     private readonly LiveSnapshotStore _snapshotStore;
     private readonly PollHeartbeat _heartbeat;
     private readonly IngestionSettings _settings;
@@ -28,6 +29,7 @@ public class FlightPollingService : BackgroundService
         ILogger<FlightPollingService> logger,
         IHubContext<FlightHub> hubContext,
         FlightIngestionService ingestionService,
+        EmergencySquawkDetector squawkDetector,
         LiveSnapshotStore snapshotStore,
         PollHeartbeat heartbeat,
         IOptions<IngestionSettings> settings)
@@ -38,6 +40,7 @@ public class FlightPollingService : BackgroundService
         _logger = logger;
         _hubContext = hubContext;
         _ingestionService = ingestionService;
+        _squawkDetector = squawkDetector;
         _snapshotStore = snapshotStore;
         _heartbeat = heartbeat;
         _settings = settings.Value;
@@ -131,6 +134,17 @@ public class FlightPollingService : BackgroundService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Flight ingestion failed");
+        }
+
+        // After ingestion so the trail it snapshots includes this poll's fix.
+        // Own try/catch: the detector is a side feature and must never cost a poll.
+        try
+        {
+            await _squawkDetector.ProcessAsync(aircraft, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Emergency squawk detection failed");
         }
     }
 

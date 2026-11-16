@@ -5,7 +5,7 @@ using NetTopologySuite.Geometries;
 
 namespace AltusIQ.Api.Services;
 
-public class FlightIngestionService
+public class FlightIngestionService : IActiveTrackSource
 {
     private readonly IFlightWriter _writer;
     private readonly IngestionSettings _settings;

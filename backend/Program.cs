@@ -53,6 +53,7 @@ builder.Services.AddHealthChecks()
 builder.Services.AddMemoryCache();
 
 builder.Services.AddScoped<FlightQueryService>();
+builder.Services.AddScoped<EventQueryService>();
 builder.Services.AddScoped<AnalyticsService>();
 builder.Services.AddHostedService<AnalyticsCacheWarmer>();
 
@@ -81,6 +82,13 @@ builder.Services.Configure<IngestionSettings>(
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<IFlightWriter, EfFlightWriter>();
 builder.Services.AddSingleton<FlightIngestionService>();
+builder.Services.AddSingleton<IActiveTrackSource>(sp =>
+    sp.GetRequiredService<FlightIngestionService>());
+
+builder.Services.Configure<EventsSettings>(
+    builder.Configuration.GetSection("Events"));
+builder.Services.AddSingleton<IAnomalyEventWriter, EfAnomalyEventWriter>();
+builder.Services.AddSingleton<EmergencySquawkDetector>();
 builder.Services.AddSingleton<LiveSnapshotStore>();
 
 builder.Services.AddHttpClient<FlightPollingService>(client =>

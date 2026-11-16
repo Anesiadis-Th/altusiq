@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type RefObject } from "react";
 
-export type Panel = "search" | "history" | "analytics";
+export type Panel = "search" | "history" | "events" | "analytics";
 
 interface UseActivePanelOptions {
   panelRef: RefObject<HTMLElement | null>;
@@ -43,7 +43,10 @@ export function useActivePanel({
 
     // Escape closes anything. Outside-click is only for the anchored rails, since
     // the analytics overlay covers the viewport and would close on its own content.
-    const anchored = activePanel === "search" || activePanel === "history";
+    const anchored =
+      activePanel === "search" ||
+      activePanel === "history" ||
+      activePanel === "events";
 
     document.addEventListener("keydown", handleKeyDown);
     if (anchored) document.addEventListener("pointerdown", handlePointerDown);

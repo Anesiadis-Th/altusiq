@@ -129,5 +129,23 @@ public class RetentionService : BackgroundService
             "Retention purge complete: {Total} flight(s) older than {Days}d " +
             "removed in {Batches} batch(es)",
             totalDeleted, _settings.RetentionDays, batches);
+
+        await PurgeEventsAsync(db, ct);
+    }
+
+    private async Task PurgeEventsAsync(AltusIqDbContext db, CancellationToken ct)
+    {
+        if (_settings.EventRetentionDays <= 0)
+            return;
+
+        // Events are rare enough that one statement is fine; no batching.
+        var cutoff = DateTime.UtcNow.AddDays(-_settings.EventRetentionDays);
+        var deleted = await db.AnomalyEvents
+            .Where(e => e.ConfirmedAt < cutoff)
+            .ExecuteDeleteAsync(ct);
+
+        _logger.LogInformation(
+            "Retention purge: {Deleted} anomaly event(s) older than {Days}d removed",
+            deleted, _settings.EventRetentionDays);
     }
 }
