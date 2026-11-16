@@ -107,6 +107,42 @@ public class OpenSkyStateParserTests
         Assert.Equal(0, result.Skipped);
     }
 
+    // ---- squawk: index 14, read only when the row reaches that far ----
+
+    [Fact]
+    public void Squawk_is_parsed_from_index_14()
+    {
+        // Full 17-field row. OpenSky's layout past the fields the parser needs:
+        // 12 sensors, 13 geo_altitude, 14 squawk, 15 spi, 16 position_source.
+        var result = OpenSkyStateParser.Parse(StatesJson(
+            """["4b1806","SWR123","Switzerland",1754000000,1754000000,8.5,47.4,11000.5,false,240.3,180.1,0.0,null,11200.0,"7700",false,0]"""));
+
+        Assert.Equal("7700", Assert.Single(result.Aircraft).Squawk);
+    }
+
+    [Fact]
+    public void Null_squawk_is_tolerated()
+    {
+        var result = OpenSkyStateParser.Parse(StatesJson(
+            """["4b1806","SWR123","Switzerland",1754000000,1754000000,8.5,47.4,11000.5,false,240.3,180.1,0.0,null,11200.0,null,false,0]"""));
+
+        var aircraft = Assert.Single(result.Aircraft);
+        Assert.Null(aircraft.Squawk);
+        Assert.Equal(0, result.Skipped);
+    }
+
+    [Fact]
+    public void A_12_field_row_is_still_accepted_with_a_null_squawk()
+    {
+        // The squawk must never raise the bar for a usable row: a short row that
+        // parsed before this field existed has to keep parsing.
+        var result = OpenSkyStateParser.Parse(StatesJson(ValidRow));
+
+        var aircraft = Assert.Single(result.Aircraft);
+        Assert.Null(aircraft.Squawk);
+        Assert.Equal(0, result.Skipped);
+    }
+
     [Fact]
     public void Null_states_yields_no_aircraft()
     {

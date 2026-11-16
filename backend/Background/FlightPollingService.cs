@@ -110,6 +110,14 @@ public class FlightPollingService : BackgroundService
         _logger.LogInformation(
             "Received {Count} aircraft from OpenSky", aircraft.Count);
 
+        // Volume gauge for ADR-018: how many emergency codes a poll actually
+        // carries decides whether a second trigger type is ever worth building.
+        _logger.LogInformation(
+            "Emergency squawks this poll: 7500={Hijack} 7600={RadioFailure} 7700={Emergency}",
+            aircraft.Count(a => a.Squawk == "7500"),
+            aircraft.Count(a => a.Squawk == "7600"),
+            aircraft.Count(a => a.Squawk == "7700"));
+
         _snapshotStore.Update(aircraft);
         _heartbeat.RecordSuccess();
 

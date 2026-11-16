@@ -11,8 +11,12 @@ internal record ParsedStates(IReadOnlyList<Aircraft> Aircraft, int Skipped);
 /// </summary>
 internal static class OpenSkyStateParser
 {
-    // Highest index read is 11 (vertical_rate), so anything shorter is unusable.
+    // Highest required index is 11 (vertical_rate), so anything shorter is unusable.
     private const int RequiredStateFields = 12;
+
+    // squawk sits at index 14. Older or trimmed rows stop at 12 and still parse,
+    // with a null squawk.
+    private const int SquawkIndex = 14;
 
     internal static ParsedStates Parse(string json)
     {
@@ -72,7 +76,10 @@ internal static class OpenSkyStateParser
             Velocity           = ReadDouble(state[9]),
             Heading            = ReadDouble(state[10]),
             VerticalRate       = ReadDouble(state[11]),
-            LastContact        = state[4].GetInt64()
+            LastContact        = state[4].GetInt64(),
+            Squawk             = state.GetArrayLength() > SquawkIndex
+                ? ReadString(state[SquawkIndex])?.Trim()
+                : null
         };
     }
 
