@@ -1,0 +1,174 @@
+{
+  "name": "08-7500-skipped",
+  "description": "A 7500 is sensitive: never investigated, no tool call, no model call, status skipped. The recorded tools and response exist only to prove they are never touched.",
+  "event": {
+    "icao24": "484b2c",
+    "callsign": "KLM1023",
+    "origin_country": "Netherlands",
+    "squawk": "7500",
+    "first_seen_at": "2026-08-01T11:56:00Z",
+    "confirmed_at": "2026-08-01T11:58:00Z",
+    "last_seen_at": "2026-08-01T12:08:00Z",
+    "closed_at": "2026-08-01T12:10:00Z",
+    "first_longitude": 5.5,
+    "first_latitude": 52.2,
+    "first_altitude": 10972,
+    "last_longitude": 5.75,
+    "last_latitude": 52.2,
+    "last_altitude": 10972,
+    "evidence": {
+      "at_confirm": {
+        "snapshot_at": "2026-08-01T11:52:00Z",
+        "source_point_count": 6,
+        "track_points": [
+          {
+            "timestamp": 1753999800,
+            "longitude": 5.5,
+            "latitude": 52.2,
+            "altitude": 10972,
+            "heading": 90,
+            "velocity": 230
+          },
+          {
+            "timestamp": 1753999920,
+            "longitude": 5.55,
+            "latitude": 52.2,
+            "altitude": 10972,
+            "heading": 90,
+            "velocity": 230
+          },
+          {
+            "timestamp": 1754000040,
+            "longitude": 5.6,
+            "latitude": 52.2,
+            "altitude": 10972,
+            "heading": 90,
+            "velocity": 230
+          },
+          {
+            "timestamp": 1754000160,
+            "longitude": 5.65,
+            "latitude": 52.2,
+            "altitude": 10972,
+            "heading": 90,
+            "velocity": 230
+          },
+          {
+            "timestamp": 1754000280,
+            "longitude": 5.7,
+            "latitude": 52.2,
+            "altitude": 10972,
+            "heading": 90,
+            "velocity": 230
+          },
+          {
+            "timestamp": 1754000400,
+            "longitude": 5.75,
+            "latitude": 52.2,
+            "altitude": 10972,
+            "heading": 90,
+            "velocity": 230
+          }
+        ]
+      },
+      "at_close": null
+    }
+  },
+  "tools": {
+    "get_trail": {
+      "icao24": "484b2c",
+      "callsign": "KLM1023",
+      "point_count": 6,
+      "returned": 6,
+      "columns": [
+        "unix_ts",
+        "lon",
+        "lat",
+        "alt_m",
+        "heading",
+        "velocity_ms"
+      ],
+      "points": [
+        [
+          1753999800,
+          5.5,
+          52.2,
+          10972,
+          90,
+          230
+        ],
+        [
+          1753999920,
+          5.55,
+          52.2,
+          10972,
+          90,
+          230
+        ],
+        [
+          1754000040,
+          5.6,
+          52.2,
+          10972,
+          90,
+          230
+        ],
+        [
+          1754000160,
+          5.65,
+          52.2,
+          10972,
+          90,
+          230
+        ],
+        [
+          1754000280,
+          5.7,
+          52.2,
+          10972,
+          90,
+          230
+        ],
+        [
+          1754000400,
+          5.75,
+          52.2,
+          10972,
+          90,
+          230
+        ]
+      ]
+    },
+    "nearest_airports": [
+      {
+        "icao": "EHAM",
+        "iata": "AMS",
+        "name": "Amsterdam Schiphol",
+        "distance_km": 60.0,
+        "bearing_deg": 270
+      }
+    ],
+    "get_metar": null,
+    "get_route": null,
+    "recent_flights": null
+  },
+  "expect": {
+    "status": "skipped",
+    "tools_called": [],
+    "must_not_contain": []
+  },
+  "replay": {
+    "steps": [
+      {
+        "content": {
+          "summary": "must never be used",
+          "observations": [],
+          "explanations": [],
+          "unknowns": [],
+          "evidence_quality": "poor",
+          "recommended_follow_up": "none"
+        }
+      }
+    ]
+  }
+}

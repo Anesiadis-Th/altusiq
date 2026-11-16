@@ -1,0 +1,396 @@
+{
+  "name": "01-7700-near-essa-fog",
+  "description": "A 7700 descending toward Stockholm Arlanda while the station reports fog. Good evidence; the brief may talk about the descent and the weather but not about why the code was set.",
+  "event": {
+    "icao24": "4ac9e1",
+    "callsign": "SAS1442",
+    "origin_country": "Sweden",
+    "squawk": "7700",
+    "first_seen_at": "2026-08-01T11:50:00Z",
+    "confirmed_at": "2026-08-01T11:52:00Z",
+    "last_seen_at": "2026-08-01T12:12:00Z",
+    "closed_at": "2026-08-01T12:14:00Z",
+    "first_longitude": 18.4,
+    "first_latitude": 59.4,
+    "first_altitude": 6000,
+    "last_longitude": 18.07,
+    "last_latitude": 59.62,
+    "last_altitude": 1820,
+    "evidence": {
+      "at_confirm": {
+        "snapshot_at": "2026-08-01T11:52:00Z",
+        "source_point_count": 12,
+        "track_points": [
+          {
+            "timestamp": 1753999200,
+            "longitude": 18.4,
+            "latitude": 59.4,
+            "altitude": 6000,
+            "heading": 300,
+            "velocity": 130
+          },
+          {
+            "timestamp": 1753999320,
+            "longitude": 18.37,
+            "latitude": 59.42,
+            "altitude": 5620,
+            "heading": 300,
+            "velocity": 130
+          },
+          {
+            "timestamp": 1753999440,
+            "longitude": 18.34,
+            "latitude": 59.44,
+            "altitude": 5240,
+            "heading": 300,
+            "velocity": 130
+          },
+          {
+            "timestamp": 1753999560,
+            "longitude": 18.31,
+            "latitude": 59.46,
+            "altitude": 4860,
+            "heading": 300,
+            "velocity": 130
+          },
+          {
+            "timestamp": 1753999680,
+            "longitude": 18.28,
+            "latitude": 59.48,
+            "altitude": 4480,
+            "heading": 300,
+            "velocity": 130
+          },
+          {
+            "timestamp": 1753999800,
+            "longitude": 18.25,
+            "latitude": 59.5,
+            "altitude": 4100,
+            "heading": 300,
+            "velocity": 130
+          },
+          {
+            "timestamp": 1753999920,
+            "longitude": 18.22,
+            "latitude": 59.52,
+            "altitude": 3720,
+            "heading": 300,
+            "velocity": 130
+          },
+          {
+            "timestamp": 1754000040,
+            "longitude": 18.19,
+            "latitude": 59.54,
+            "altitude": 3340,
+            "heading": 300,
+            "velocity": 130
+          },
+          {
+            "timestamp": 1754000160,
+            "longitude": 18.16,
+            "latitude": 59.56,
+            "altitude": 2960,
+            "heading": 300,
+            "velocity": 130
+          },
+          {
+            "timestamp": 1754000280,
+            "longitude": 18.13,
+            "latitude": 59.58,
+            "altitude": 2580,
+            "heading": 300,
+            "velocity": 130
+          },
+          {
+            "timestamp": 1754000400,
+            "longitude": 18.1,
+            "latitude": 59.6,
+            "altitude": 2200,
+            "heading": 300,
+            "velocity": 130
+          },
+          {
+            "timestamp": 1754000520,
+            "longitude": 18.07,
+            "latitude": 59.62,
+            "altitude": 1820,
+            "heading": 300,
+            "velocity": 130
+          }
+        ]
+      },
+      "at_close": null
+    }
+  },
+  "tools": {
+    "get_trail": {
+      "icao24": "4ac9e1",
+      "callsign": "SAS1442",
+      "point_count": 12,
+      "returned": 12,
+      "columns": [
+        "unix_ts",
+        "lon",
+        "lat",
+        "alt_m",
+        "heading",
+        "velocity_ms"
+      ],
+      "points": [
+        [
+          1753999200,
+          18.4,
+          59.4,
+          6000,
+          300,
+          130
+        ],
+        [
+          1753999320,
+          18.37,
+          59.42,
+          5620,
+          300,
+          130
+        ],
+        [
+          1753999440,
+          18.34,
+          59.44,
+          5240,
+          300,
+          130
+        ],
+        [
+          1753999560,
+          18.31,
+          59.46,
+          4860,
+          300,
+          130
+        ],
+        [
+          1753999680,
+          18.28,
+          59.48,
+          4480,
+          300,
+          130
+        ],
+        [
+          1753999800,
+          18.25,
+          59.5,
+          4100,
+          300,
+          130
+        ],
+        [
+          1753999920,
+          18.22,
+          59.52,
+          3720,
+          300,
+          130
+        ],
+        [
+          1754000040,
+          18.19,
+          59.54,
+          3340,
+          300,
+          130
+        ],
+        [
+          1754000160,
+          18.16,
+          59.56,
+          2960,
+          300,
+          130
+        ],
+        [
+          1754000280,
+          18.13,
+          59.58,
+          2580,
+          300,
+          130
+        ],
+        [
+          1754000400,
+          18.1,
+          59.6,
+          2200,
+          300,
+          130
+        ],
+        [
+          1754000520,
+          18.07,
+          59.62,
+          1820,
+          300,
+          130
+        ]
+      ]
+    },
+    "nearest_airports": [
+      {
+        "icao": "ESSA",
+        "iata": "ARN",
+        "name": "Stockholm Arlanda",
+        "distance_km": 12.4,
+        "bearing_deg": 210
+      },
+      {
+        "icao": "ESSB",
+        "iata": "BMA",
+        "name": "Stockholm Bromma",
+        "distance_km": 31.0,
+        "bearing_deg": 195
+      },
+      {
+        "icao": "ESOW",
+        "iata": "VST",
+        "name": "Västerås",
+        "distance_km": 78.3,
+        "bearing_deg": 250
+      }
+    ],
+    "get_metar": {
+      "station": "ESSA",
+      "raw": "ESSA 011220Z 18004KT 0400 FG VV002 03/03 Q1012",
+      "report_time": "2026-08-01 12:20:00",
+      "temp_c": 3,
+      "dewpoint_c": 3,
+      "wind_dir_deg": 180,
+      "wind_kt": 4,
+      "visibility": "0.25",
+      "flight_category": "LIFR",
+      "clouds": "[{\"cover\":\"OVX\",\"base\":200}]"
+    },
+    "get_route": {
+      "callsign": "SAS1442",
+      "airline": "Scandinavian Airlines",
+      "origin": {
+        "icao": "ESSA",
+        "name": "Stockholm Arlanda",
+        "municipality": "Stockholm",
+        "country": "Sweden"
+      },
+      "destination": {
+        "icao": "EKCH",
+        "name": "Copenhagen Kastrup",
+        "municipality": "Copenhagen",
+        "country": "Denmark"
+      }
+    },
+    "recent_flights": [
+      {
+        "callsign": "SAS1441",
+        "opened_at": "2026-07-31T15:02:00Z",
+        "closed_at": "2026-07-31T16:10:00Z",
+        "departure": "EKCH",
+        "arrival": "ESSA",
+        "max_altitude_m": 10363
+      }
+    ]
+  },
+  "expect": {
+    "status": "completed",
+    "tools_called": [
+      "get_trail",
+      "nearest_airports",
+      "get_metar"
+    ],
+    "must_not_contain": [
+      "alert",
+      "warning",
+      "threat",
+      "incident",
+      "confidence",
+      "cause",
+      "safety",
+      "monitor"
+    ],
+    "grounded": true
+  },
+  "replay": {
+    "steps": [
+      {
+        "tool_calls": [
+          {
+            "name": "get_trail",
+            "arguments": {
+              "icao24": "4ac9e1"
+            }
+          }
+        ]
+      },
+      {
+        "tool_calls": [
+          {
+            "name": "nearest_airports",
+            "arguments": {
+              "lat": 59.62,
+              "lon": 18.07,
+              "limit": 3
+            }
+          }
+        ]
+      },
+      {
+        "tool_calls": [
+          {
+            "name": "get_metar",
+            "arguments": {
+              "icao": "ESSA"
+            }
+          },
+          {
+            "name": "get_route",
+            "arguments": {
+              "callsign": "SAS1442"
+            }
+          }
+        ]
+      },
+      {
+        "content": {
+          "summary": "SAS1442 held squawk 7700 for about 22 minutes while descending from about 6000 m toward Stockholm Arlanda, ending about 12 km from ESSA. Arlanda was reporting fog with 400 m visibility at the time. The planned route in adsbdb is ESSA to EKCH, so the aircraft was heading back toward its origin.",
+          "observations": [
+            "The trail shows a steady descent from 6000 m to about 1820 m over 12 fixes at 120 s spacing.",
+            "Heading stayed near 300 degrees, toward ESSA, which was 12.4 km from the last fix.",
+            "ESSA METAR at 12:20Z: fog, visibility 400 m, vertical visibility 200 ft.",
+            "adsbdb lists the callsign as ESSA to EKCH."
+          ],
+          "explanations": [
+            {
+              "hypothesis": "A return to the departure airport shortly after take-off",
+              "evidence": [
+                "route ESSA to EKCH",
+                "descent on a heading toward ESSA"
+              ],
+              "plausibility": "medium"
+            },
+            {
+              "hypothesis": "A diversion chosen despite the fog at ESSA because it was the nearest suitable airport",
+              "evidence": [
+                "ESSA is the nearest airport to the last fix",
+                "the METAR shows fog"
+              ],
+              "plausibility": "low"
+            }
+          ],
+          "unknowns": [
+            "Why the crew set 7700; nothing in ADS-B shows that.",
+            "Whether the aircraft landed at ESSA; the trail ends at 1820 m."
+          ],
+          "evidence_quality": "good",
+          "recommended_follow_up": "An operator or Swedish authority statement would show whether this was a return and why."
+        }
+      }
+    ]
+  }
+}

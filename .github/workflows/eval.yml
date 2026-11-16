@@ -1,0 +1,46 @@
+name: Investigation eval
+
+# Replays the recorded cases through the production agent every night and on
+# demand. Fails only when the harness itself breaks or a replay expectation
+# (a deterministic code check) regresses; live model quality never fails it.
+# Live mode runs only if LLM_API_KEY and LLM_PROVIDER are configured, and is
+# capped at 20 calls so it stays inside the free tiers (ADR-018).
+
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  eval:
+    name: Replay and score
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore
+        run: dotnet restore AltusIQ.sln
+        working-directory: backend
+
+      - name: Build
+        run: dotnet build AltusIQ.sln --configuration Release --no-restore
+        working-directory: backend
+
+      - name: Run eval
+        run: dotnet run --project AltusIQ.Evals --configuration Release --no-build -- --results results
+        working-directory: backend
+        env:
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          LLM_PROVIDER: ${{ vars.LLM_PROVIDER }}
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-results
+          path: backend/results/*.json
+          if-no-files-found: error

@@ -1,0 +1,140 @@
+{
+  "name": "04-empty-trail",
+  "description": "The event confirmed on the aircraft's first two polls, so there is no trail at all. The brief must say the evidence is poor and offer no high-plausibility explanation.",
+  "event": {
+    "icao24": "46a2c3",
+    "callsign": "FIN4KT",
+    "origin_country": "Finland",
+    "squawk": "7700",
+    "first_seen_at": "2026-08-01T11:58:00Z",
+    "confirmed_at": "2026-08-01T12:00:00Z",
+    "last_seen_at": "2026-08-01T12:00:00Z",
+    "closed_at": "2026-08-01T12:02:00Z",
+    "first_longitude": 25.3,
+    "first_latitude": 65.1,
+    "first_altitude": 9144,
+    "last_longitude": 25.3,
+    "last_latitude": 65.1,
+    "last_altitude": 9144,
+    "evidence": {
+      "at_confirm": null,
+      "at_close": null
+    }
+  },
+  "tools": {
+    "get_trail": null,
+    "nearest_airports": [
+      {
+        "icao": "EFOU",
+        "iata": "OUL",
+        "name": "Oulu",
+        "distance_km": 21.7,
+        "bearing_deg": 230
+      },
+      {
+        "icao": "EFKE",
+        "iata": "KEM",
+        "name": "Kemi-Tornio",
+        "distance_km": 95.4,
+        "bearing_deg": 330
+      },
+      {
+        "icao": "EFKK",
+        "iata": "KOK",
+        "name": "Kokkola-Pietarsaari",
+        "distance_km": 160.8,
+        "bearing_deg": 210
+      }
+    ],
+    "get_metar": {
+      "station": "EFOU",
+      "raw": "EFOU 011150Z 20006KT 9999 BKN025 14/08 Q1013",
+      "report_time": "2026-08-01 11:50:00",
+      "temp_c": 14,
+      "dewpoint_c": 8,
+      "wind_dir_deg": 200,
+      "wind_kt": 6,
+      "visibility": "6+",
+      "flight_category": "MVFR",
+      "clouds": "[{\"cover\":\"BKN\",\"base\":2500}]"
+    },
+    "get_route": null,
+    "recent_flights": null
+  },
+  "expect": {
+    "status": "completed",
+    "tools_called": [
+      "get_trail"
+    ],
+    "must_not_contain": [
+      "alert",
+      "warning",
+      "threat",
+      "incident",
+      "confidence",
+      "cause",
+      "safety",
+      "monitor"
+    ],
+    "grounded": true
+  },
+  "replay": {
+    "steps": [
+      {
+        "tool_calls": [
+          {
+            "name": "get_trail",
+            "arguments": {
+              "icao24": "46a2c3"
+            }
+          },
+          {
+            "name": "get_route",
+            "arguments": {
+              "callsign": "FIN4KT"
+            }
+          }
+        ]
+      },
+      {
+        "tool_calls": [
+          {
+            "name": "nearest_airports",
+            "arguments": {
+              "lat": 65.1,
+              "lon": 25.3,
+              "limit": 3
+            }
+          }
+        ]
+      },
+      {
+        "content": {
+          "summary": "FIN4KT was seen on 7700 for two consecutive polls at about 9144 m near Oulu, then the code cleared. No trail was available and adsbdb has no route for the callsign, so the only facts are two fixes four minutes apart.",
+          "observations": [
+            "Two fixes on the code, both near 65.1 N 25.3 E at 9144 m.",
+            "EFOU is the nearest airport at 21.7 km.",
+            "No trail, no route and no earlier stored flights for this airframe."
+          ],
+          "explanations": [
+            {
+              "hypothesis": "A brief code entry that was corrected, rather than a sustained emergency",
+              "evidence": [
+                "the code lasted two polls",
+                "altitude stayed at cruise"
+              ],
+              "plausibility": "low"
+            }
+          ],
+          "unknowns": [
+            "Where the aircraft came from or went.",
+            "Whether altitude or heading changed; two fixes cannot show that.",
+            "Why the code was set."
+          ],
+          "evidence_quality": "poor",
+          "recommended_follow_up": "Finnair or Fintraffic would be the only sources for what happened."
+        }
+      }
+    ]
+  }
+}

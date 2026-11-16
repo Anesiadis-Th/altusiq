@@ -4,6 +4,10 @@ backend/**/obj/
 
 # Local config with secrets - never commit
 backend/appsettings.Development.json
+backend/.env
+
+# Eval harness output; nightly runs upload it as a workflow artifact instead
+backend/AltusIQ.Evals/results/
 
 # macOS
 .DS_Store

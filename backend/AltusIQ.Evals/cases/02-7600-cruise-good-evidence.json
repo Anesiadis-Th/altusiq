@@ -1,0 +1,828 @@
+{
+  "name": "02-7600-cruise-good-evidence",
+  "description": "A 7600 in level cruise with a long trail, a listed route and a benign METAR. The brief should describe a steady cruise and keep the explanations modest.",
+  "event": {
+    "icao24": "3c6444",
+    "callsign": "DLH8KA",
+    "origin_country": "Germany",
+    "squawk": "7600",
+    "first_seen_at": "2026-08-01T11:10:00Z",
+    "confirmed_at": "2026-08-01T11:12:00Z",
+    "last_seen_at": "2026-08-01T12:28:00Z",
+    "closed_at": "2026-08-01T12:30:00Z",
+    "first_longitude": 12.0,
+    "first_latitude": 57.0,
+    "first_altitude": 11277,
+    "last_longitude": 13.56,
+    "last_latitude": 58.17,
+    "last_altitude": 11277,
+    "evidence": {
+      "at_confirm": {
+        "snapshot_at": "2026-08-01T11:52:00Z",
+        "source_point_count": 40,
+        "track_points": [
+          {
+            "timestamp": 1753996800,
+            "longitude": 12.0,
+            "latitude": 57.0,
+            "altitude": 11277,
+            "heading": 40,
+            "velocity": 240
+          },
+          {
+            "timestamp": 1753996920,
+            "longitude": 12.04,
+            "latitude": 57.03,
+            "altitude": 11277,
+            "heading": 40,
+            "velocity": 240
+          },
+          {
+            "timestamp": 1753997040,
+            "longitude": 12.08,
+            "latitude": 57.06,
+            "altitude": 11277,
+            "heading": 40,
+            "velocity": 240
+          },
+          {
+            "timestamp": 1753997160,
+            "longitude": 12.12,
+            "latitude": 57.09,
+            "altitude": 11277,
+            "heading": 40,
+            "velocity": 240
+          },
+          {
+            "timestamp": 1753997280,
+            "longitude": 12.16,
+            "latitude": 57.12,
+            "altitude": 11277,
+            "heading": 40,
+            "velocity": 240
+          },
+          {
+            "timestamp": 1753997400,
+            "longitude": 12.2,
+            "latitude": 57.15,
+            "altitude": 11277,
+            "heading": 40,
+            "velocity": 240
+          },
+          {
+            "timestamp": 1753997520,
+            "longitude": 12.24,
+            "latitude": 57.18,
+            "altitude": 11277,
+            "heading": 40,
+            "velocity": 240
+          },
+          {
+            "timestamp": 1753997640,
+            "longitude": 12.28,
+            "latitude": 57.21,
+            "altitude": 11277,
+            "heading": 40,
+            "velocity": 240
+          },
+          {
+            "timestamp": 1753997760,
+            "longitude": 12.32,
+            "latitude": 57.24,
+            "altitude": 11277,
+            "heading": 40,
+            "velocity": 240
+          },
+          {
+            "timestamp": 1753997880,
+            "longitude": 12.36,
+            "latitude": 57.27,
+            "altitude": 11277,
+            "heading": 40,
+            "velocity": 240
+          },
+          {
+            "timestamp": 1753998000,
+            "longitude": 12.4,
+            "latitude": 57.3,
+            "altitude": 11277,
+            "heading": 40,
+            "velocity": 240
+          },
+          {
+            "timestamp": 1753998120,
+            "longitude": 12.44,
+            "latitude": 57.33,
+            "altitude": 11277,
+            "heading": 40,
+            "velocity": 240
+          },
+          {
+            "timestamp": 1753998240,
+            "longitude": 12.48,
+            "latitude": 57.36,
+            "altitude": 11277,
+            "heading": 40,
+            "velocity": 240
+          },
+          {
+            "timestamp": 1753998360,
+            "longitude": 12.52,
+            "latitude": 57.39,
+            "altitude": 11277,
+            "heading": 40,
+            "velocity": 240
+          },
+          {
+            "timestamp": 1753998480,
+            "longitude": 12.56,
+            "latitude": 57.42,
+            "altitude": 11277,
+            "heading": 40,
+            "velocity": 240
+          },
+          {
+            "timestamp": 1753998600,
+            "longitude": 12.6,
+            "latitude": 57.45,
+            "altitude": 11277,
+            "heading": 40,
+            "velocity": 240
+          },
+          {
+            "timestamp": 1753998720,
+            "longitude": 12.64,
+            "latitude": 57.48,
+            "altitude": 11277,
+            "heading": 40,
+            "velocity": 240
+          },
+          {
+            "timestamp": 1753998840,
+            "longitude": 12.68,
+            "latitude": 57.51,
+            "altitude": 11277,
+            "heading": 40,
+            "velocity": 240
+          },
+          {
+            "timestamp": 1753998960,
+            "longitude": 12.72,
+            "latitude": 57.54,
+            "altitude": 11277,
+            "heading": 40,
+            "velocity": 240
+          },
+          {
+            "timestamp": 1753999080,
+            "longitude": 12.76,
+            "latitude": 57.57,
+            "altitude": 11277,
+            "heading": 40,
+            "velocity": 240
+          },
+          {
+            "timestamp": 1753999200,
+            "longitude": 12.8,
+            "latitude": 57.6,
+            "altitude": 11277,
+            "heading": 40,
+            "velocity": 240
+          },
+          {
+            "timestamp": 1753999320,
+            "longitude": 12.84,
+            "latitude": 57.63,
+            "altitude": 11277,
+            "heading": 40,
+            "velocity": 240
+          },
+          {
+            "timestamp": 1753999440,
+            "longitude": 12.88,
+            "latitude": 57.66,
+            "altitude": 11277,
+            "heading": 40,
+            "velocity": 240
+          },
+          {
+            "timestamp": 1753999560,
+            "longitude": 12.92,
+            "latitude": 57.69,
+            "altitude": 11277,
+            "heading": 40,
+            "velocity": 240
+          },
+          {
+            "timestamp": 1753999680,
+            "longitude": 12.96,
+            "latitude": 57.72,
+            "altitude": 11277,
+            "heading": 40,
+            "velocity": 240
+          },
+          {
+            "timestamp": 1753999800,
+            "longitude": 13.0,
+            "latitude": 57.75,
+            "altitude": 11277,
+            "heading": 40,
+            "velocity": 240
+          },
+          {
+            "timestamp": 1753999920,
+            "longitude": 13.04,
+            "latitude": 57.78,
+            "altitude": 11277,
+            "heading": 40,
+            "velocity": 240
+          },
+          {
+            "timestamp": 1754000040,
+            "longitude": 13.08,
+            "latitude": 57.81,
+            "altitude": 11277,
+            "heading": 40,
+            "velocity": 240
+          },
+          {
+            "timestamp": 1754000160,
+            "longitude": 13.12,
+            "latitude": 57.84,
+            "altitude": 11277,
+            "heading": 40,
+            "velocity": 240
+          },
+          {
+            "timestamp": 1754000280,
+            "longitude": 13.16,
+            "latitude": 57.87,
+            "altitude": 11277,
+            "heading": 40,
+            "velocity": 240
+          },
+          {
+            "timestamp": 1754000400,
+            "longitude": 13.2,
+            "latitude": 57.9,
+            "altitude": 11277,
+            "heading": 40,
+            "velocity": 240
+          },
+          {
+            "timestamp": 1754000520,
+            "longitude": 13.24,
+            "latitude": 57.93,
+            "altitude": 11277,
+            "heading": 40,
+            "velocity": 240
+          },
+          {
+            "timestamp": 1754000640,
+            "longitude": 13.28,
+            "latitude": 57.96,
+            "altitude": 11277,
+            "heading": 40,
+            "velocity": 240
+          },
+          {
+            "timestamp": 1754000760,
+            "longitude": 13.32,
+            "latitude": 57.99,
+            "altitude": 11277,
+            "heading": 40,
+            "velocity": 240
+          },
+          {
+            "timestamp": 1754000880,
+            "longitude": 13.36,
+            "latitude": 58.02,
+            "altitude": 11277,
+            "heading": 40,
+            "velocity": 240
+          },
+          {
+            "timestamp": 1754001000,
+            "longitude": 13.4,
+            "latitude": 58.05,
+            "altitude": 11277,
+            "heading": 40,
+            "velocity": 240
+          },
+          {
+            "timestamp": 1754001120,
+            "longitude": 13.44,
+            "latitude": 58.08,
+            "altitude": 11277,
+            "heading": 40,
+            "velocity": 240
+          },
+          {
+            "timestamp": 1754001240,
+            "longitude": 13.48,
+            "latitude": 58.11,
+            "altitude": 11277,
+            "heading": 40,
+            "velocity": 240
+          },
+          {
+            "timestamp": 1754001360,
+            "longitude": 13.52,
+            "latitude": 58.14,
+            "altitude": 11277,
+            "heading": 40,
+            "velocity": 240
+          },
+          {
+            "timestamp": 1754001480,
+            "longitude": 13.56,
+            "latitude": 58.17,
+            "altitude": 11277,
+            "heading": 40,
+            "velocity": 240
+          }
+        ]
+      },
+      "at_close": null
+    }
+  },
+  "tools": {
+    "get_trail": {
+      "icao24": "3c6444",
+      "callsign": "DLH8KA",
+      "point_count": 40,
+      "returned": 40,
+      "columns": [
+        "unix_ts",
+        "lon",
+        "lat",
+        "alt_m",
+        "heading",
+        "velocity_ms"
+      ],
+      "points": [
+        [
+          1753996800,
+          12.0,
+          57.0,
+          11277,
+          40,
+          240
+        ],
+        [
+          1753996920,
+          12.04,
+          57.03,
+          11277,
+          40,
+          240
+        ],
+        [
+          1753997040,
+          12.08,
+          57.06,
+          11277,
+          40,
+          240
+        ],
+        [
+          1753997160,
+          12.12,
+          57.09,
+          11277,
+          40,
+          240
+        ],
+        [
+          1753997280,
+          12.16,
+          57.12,
+          11277,
+          40,
+          240
+        ],
+        [
+          1753997400,
+          12.2,
+          57.15,
+          11277,
+          40,
+          240
+        ],
+        [
+          1753997520,
+          12.24,
+          57.18,
+          11277,
+          40,
+          240
+        ],
+        [
+          1753997640,
+          12.28,
+          57.21,
+          11277,
+          40,
+          240
+        ],
+        [
+          1753997760,
+          12.32,
+          57.24,
+          11277,
+          40,
+          240
+        ],
+        [
+          1753997880,
+          12.36,
+          57.27,
+          11277,
+          40,
+          240
+        ],
+        [
+          1753998000,
+          12.4,
+          57.3,
+          11277,
+          40,
+          240
+        ],
+        [
+          1753998120,
+          12.44,
+          57.33,
+          11277,
+          40,
+          240
+        ],
+        [
+          1753998240,
+          12.48,
+          57.36,
+          11277,
+          40,
+          240
+        ],
+        [
+          1753998360,
+          12.52,
+          57.39,
+          11277,
+          40,
+          240
+        ],
+        [
+          1753998480,
+          12.56,
+          57.42,
+          11277,
+          40,
+          240
+        ],
+        [
+          1753998600,
+          12.6,
+          57.45,
+          11277,
+          40,
+          240
+        ],
+        [
+          1753998720,
+          12.64,
+          57.48,
+          11277,
+          40,
+          240
+        ],
+        [
+          1753998840,
+          12.68,
+          57.51,
+          11277,
+          40,
+          240
+        ],
+        [
+          1753998960,
+          12.72,
+          57.54,
+          11277,
+          40,
+          240
+        ],
+        [
+          1753999080,
+          12.76,
+          57.57,
+          11277,
+          40,
+          240
+        ],
+        [
+          1753999200,
+          12.8,
+          57.6,
+          11277,
+          40,
+          240
+        ],
+        [
+          1753999320,
+          12.84,
+          57.63,
+          11277,
+          40,
+          240
+        ],
+        [
+          1753999440,
+          12.88,
+          57.66,
+          11277,
+          40,
+          240
+        ],
+        [
+          1753999560,
+          12.92,
+          57.69,
+          11277,
+          40,
+          240
+        ],
+        [
+          1753999680,
+          12.96,
+          57.72,
+          11277,
+          40,
+          240
+        ],
+        [
+          1753999800,
+          13.0,
+          57.75,
+          11277,
+          40,
+          240
+        ],
+        [
+          1753999920,
+          13.04,
+          57.78,
+          11277,
+          40,
+          240
+        ],
+        [
+          1754000040,
+          13.08,
+          57.81,
+          11277,
+          40,
+          240
+        ],
+        [
+          1754000160,
+          13.12,
+          57.84,
+          11277,
+          40,
+          240
+        ],
+        [
+          1754000280,
+          13.16,
+          57.87,
+          11277,
+          40,
+          240
+        ],
+        [
+          1754000400,
+          13.2,
+          57.9,
+          11277,
+          40,
+          240
+        ],
+        [
+          1754000520,
+          13.24,
+          57.93,
+          11277,
+          40,
+          240
+        ],
+        [
+          1754000640,
+          13.28,
+          57.96,
+          11277,
+          40,
+          240
+        ],
+        [
+          1754000760,
+          13.32,
+          57.99,
+          11277,
+          40,
+          240
+        ],
+        [
+          1754000880,
+          13.36,
+          58.02,
+          11277,
+          40,
+          240
+        ],
+        [
+          1754001000,
+          13.4,
+          58.05,
+          11277,
+          40,
+          240
+        ],
+        [
+          1754001120,
+          13.44,
+          58.08,
+          11277,
+          40,
+          240
+        ],
+        [
+          1754001240,
+          13.48,
+          58.11,
+          11277,
+          40,
+          240
+        ],
+        [
+          1754001360,
+          13.52,
+          58.14,
+          11277,
+          40,
+          240
+        ],
+        [
+          1754001480,
+          13.56,
+          58.17,
+          11277,
+          40,
+          240
+        ]
+      ]
+    },
+    "nearest_airports": [
+      {
+        "icao": "ESGG",
+        "iata": "GOT",
+        "name": "Göteborg Landvetter",
+        "distance_km": 88.1,
+        "bearing_deg": 140
+      },
+      {
+        "icao": "ESGP",
+        "iata": "GSE",
+        "name": "Göteborg City",
+        "distance_km": 97.5,
+        "bearing_deg": 150
+      },
+      {
+        "icao": "ESGJ",
+        "iata": "JKG",
+        "name": "Jönköping",
+        "distance_km": 120.2,
+        "bearing_deg": 110
+      }
+    ],
+    "get_metar": {
+      "station": "ESGG",
+      "raw": "ESGG 011220Z 24008KT 9999 FEW040 18/09 Q1018",
+      "report_time": "2026-08-01 12:20:00",
+      "temp_c": 18,
+      "dewpoint_c": 9,
+      "wind_dir_deg": 240,
+      "wind_kt": 8,
+      "visibility": "6+",
+      "flight_category": "VFR",
+      "clouds": "[{\"cover\":\"FEW\",\"base\":4000}]"
+    },
+    "get_route": {
+      "callsign": "DLH8KA",
+      "airline": "Lufthansa",
+      "origin": {
+        "icao": "EDDF",
+        "name": "Frankfurt",
+        "municipality": "Frankfurt",
+        "country": "Germany"
+      },
+      "destination": {
+        "icao": "ENGM",
+        "name": "Oslo Gardermoen",
+        "municipality": "Oslo",
+        "country": "Norway"
+      }
+    },
+    "recent_flights": null
+  },
+  "expect": {
+    "status": "completed",
+    "tools_called": [
+      "get_trail",
+      "get_route"
+    ],
+    "must_not_contain": [
+      "alert",
+      "warning",
+      "threat",
+      "incident",
+      "confidence",
+      "cause",
+      "safety",
+      "monitor"
+    ],
+    "grounded": true
+  },
+  "replay": {
+    "steps": [
+      {
+        "tool_calls": [
+          {
+            "name": "get_trail",
+            "arguments": {
+              "icao24": "3c6444"
+            }
+          },
+          {
+            "name": "get_route",
+            "arguments": {
+              "callsign": "DLH8KA"
+            }
+          }
+        ]
+      },
+      {
+        "tool_calls": [
+          {
+            "name": "nearest_airports",
+            "arguments": {
+              "lat": 58.17,
+              "lon": 13.56,
+              "limit": 3
+            }
+          },
+          {
+            "name": "get_metar",
+            "arguments": {
+              "icao": "ESGG"
+            }
+          }
+        ]
+      },
+      {
+        "content": {
+          "summary": "DLH8KA squawked 7600 for about 78 minutes in level cruise at 11277 m on a steady north-easterly heading, consistent with the adsbdb route from EDDF to ENGM. The track shows no deviation, descent or turn while the code was set.",
+          "observations": [
+            "40 fixes at 120 s spacing, all at 11277 m with heading 40 and 240 m/s.",
+            "The nearest airport to the last fix was ESGG at 88 km; weather there was VFR with few clouds.",
+            "adsbdb lists EDDF to ENGM for this callsign."
+          ],
+          "explanations": [
+            {
+              "hypothesis": "A loss of two-way radio with the flight continuing as planned",
+              "evidence": [
+                "7600 held for over an hour",
+                "no change in level, heading or speed"
+              ],
+              "plausibility": "medium"
+            },
+            {
+              "hypothesis": "A transponder or code entry fault rather than a real radio failure",
+              "evidence": [
+                "the flight profile is entirely normal"
+              ],
+              "plausibility": "low"
+            }
+          ],
+          "unknowns": [
+            "Whether radio contact was actually lost or later restored.",
+            "Whether the flight landed at ENGM; the trail ends in cruise."
+          ],
+          "evidence_quality": "good",
+          "recommended_follow_up": "A Norwegian or German ATC notice would show whether radio contact was lost."
+        }
+      }
+    ]
+  }
+}

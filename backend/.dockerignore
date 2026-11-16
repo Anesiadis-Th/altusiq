@@ -3,8 +3,9 @@
 **/obj/
 **/out/
 
-# tests never ship in the runtime image
+# tests and the eval harness never ship in the runtime image
 AltusIQ.Api.Tests/
+AltusIQ.Evals/
 
 # files
 fly.toml

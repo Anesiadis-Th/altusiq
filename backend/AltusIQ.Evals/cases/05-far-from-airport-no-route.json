@@ -1,0 +1,561 @@
+{
+  "name": "05-far-from-airport-no-route",
+  "description": "A 7700 over the North Atlantic, 612 km from the nearest listed airport, with no adsbdb route. The brief should stay with the cruise facts.",
+  "event": {
+    "icao24": "a1b2c3",
+    "callsign": "N421XQ",
+    "origin_country": "United States",
+    "squawk": "7700",
+    "first_seen_at": "2026-08-01T11:20:00Z",
+    "confirmed_at": "2026-08-01T11:22:00Z",
+    "last_seen_at": "2026-08-01T12:08:00Z",
+    "closed_at": "2026-08-01T12:14:00Z",
+    "first_longitude": -28.0,
+    "first_latitude": 58.5,
+    "first_altitude": 10668,
+    "last_longitude": -30.88,
+    "last_latitude": 58.5,
+    "last_altitude": 10668,
+    "evidence": {
+      "at_confirm": {
+        "snapshot_at": "2026-08-01T11:52:00Z",
+        "source_point_count": 25,
+        "track_points": [
+          {
+            "timestamp": 1753995600,
+            "longitude": -28.0,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1753995720,
+            "longitude": -28.12,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1753995840,
+            "longitude": -28.24,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1753995960,
+            "longitude": -28.36,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1753996080,
+            "longitude": -28.48,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1753996200,
+            "longitude": -28.6,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1753996320,
+            "longitude": -28.72,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1753996440,
+            "longitude": -28.84,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1753996560,
+            "longitude": -28.96,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1753996680,
+            "longitude": -29.08,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1753996800,
+            "longitude": -29.2,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1753996920,
+            "longitude": -29.32,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1753997040,
+            "longitude": -29.44,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1753997160,
+            "longitude": -29.56,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1753997280,
+            "longitude": -29.68,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1753997400,
+            "longitude": -29.8,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1753997520,
+            "longitude": -29.92,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1753997640,
+            "longitude": -30.04,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1753997760,
+            "longitude": -30.16,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1753997880,
+            "longitude": -30.28,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1753998000,
+            "longitude": -30.4,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1753998120,
+            "longitude": -30.52,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1753998240,
+            "longitude": -30.64,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1753998360,
+            "longitude": -30.76,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1753998480,
+            "longitude": -30.88,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          }
+        ]
+      },
+      "at_close": null
+    }
+  },
+  "tools": {
+    "get_trail": {
+      "icao24": "a1b2c3",
+      "callsign": "N421XQ",
+      "point_count": 25,
+      "returned": 25,
+      "columns": [
+        "unix_ts",
+        "lon",
+        "lat",
+        "alt_m",
+        "heading",
+        "velocity_ms"
+      ],
+      "points": [
+        [
+          1753995600,
+          -28.0,
+          58.5,
+          10668,
+          270,
+          235
+        ],
+        [
+          1753995720,
+          -28.12,
+          58.5,
+          10668,
+          270,
+          235
+        ],
+        [
+          1753995840,
+          -28.24,
+          58.5,
+          10668,
+          270,
+          235
+        ],
+        [
+          1753995960,
+          -28.36,
+          58.5,
+          10668,
+          270,
+          235
+        ],
+        [
+          1753996080,
+          -28.48,
+          58.5,
+          10668,
+          270,
+          235
+        ],
+        [
+          1753996200,
+          -28.6,
+          58.5,
+          10668,
+          270,
+          235
+        ],
+        [
+          1753996320,
+          -28.72,
+          58.5,
+          10668,
+          270,
+          235
+        ],
+        [
+          1753996440,
+          -28.84,
+          58.5,
+          10668,
+          270,
+          235
+        ],
+        [
+          1753996560,
+          -28.96,
+          58.5,
+          10668,
+          270,
+          235
+        ],
+        [
+          1753996680,
+          -29.08,
+          58.5,
+          10668,
+          270,
+          235
+        ],
+        [
+          1753996800,
+          -29.2,
+          58.5,
+          10668,
+          270,
+          235
+        ],
+        [
+          1753996920,
+          -29.32,
+          58.5,
+          10668,
+          270,
+          235
+        ],
+        [
+          1753997040,
+          -29.44,
+          58.5,
+          10668,
+          270,
+          235
+        ],
+        [
+          1753997160,
+          -29.56,
+          58.5,
+          10668,
+          270,
+          235
+        ],
+        [
+          1753997280,
+          -29.68,
+          58.5,
+          10668,
+          270,
+          235
+        ],
+        [
+          1753997400,
+          -29.8,
+          58.5,
+          10668,
+          270,
+          235
+        ],
+        [
+          1753997520,
+          -29.92,
+          58.5,
+          10668,
+          270,
+          235
+        ],
+        [
+          1753997640,
+          -30.04,
+          58.5,
+          10668,
+          270,
+          235
+        ],
+        [
+          1753997760,
+          -30.16,
+          58.5,
+          10668,
+          270,
+          235
+        ],
+        [
+          1753997880,
+          -30.28,
+          58.5,
+          10668,
+          270,
+          235
+        ],
+        [
+          1753998000,
+          -30.4,
+          58.5,
+          10668,
+          270,
+          235
+        ],
+        [
+          1753998120,
+          -30.52,
+          58.5,
+          10668,
+          270,
+          235
+        ],
+        [
+          1753998240,
+          -30.64,
+          58.5,
+          10668,
+          270,
+          235
+        ],
+        [
+          1753998360,
+          -30.76,
+          58.5,
+          10668,
+          270,
+          235
+        ],
+        [
+          1753998480,
+          -30.88,
+          58.5,
+          10668,
+          270,
+          235
+        ]
+      ]
+    },
+    "nearest_airports": [
+      {
+        "icao": "BIKF",
+        "iata": "KEF",
+        "name": "Keflavík",
+        "distance_km": 612.3,
+        "bearing_deg": 30
+      },
+      {
+        "icao": "BIRK",
+        "iata": "RKV",
+        "name": "Reykjavík",
+        "distance_km": 640.9,
+        "bearing_deg": 30
+      },
+      {
+        "icao": "EGPO",
+        "iata": "SYY",
+        "name": "Stornoway",
+        "distance_km": 1180.2,
+        "bearing_deg": 110
+      }
+    ],
+    "get_metar": {
+      "station": "BIKF",
+      "raw": "BIKF 011200Z 12018KT 9999 BKN012 11/09 Q1001",
+      "report_time": "2026-08-01 12:00:00",
+      "temp_c": 11,
+      "dewpoint_c": 9,
+      "wind_dir_deg": 120,
+      "wind_kt": 18,
+      "visibility": "6+",
+      "flight_category": "MVFR",
+      "clouds": "[{\"cover\":\"BKN\",\"base\":1200}]"
+    },
+    "get_route": null,
+    "recent_flights": null
+  },
+  "expect": {
+    "status": "completed",
+    "tools_called": [
+      "get_trail",
+      "nearest_airports"
+    ],
+    "must_not_contain": [
+      "alert",
+      "warning",
+      "threat",
+      "incident",
+      "confidence",
+      "cause",
+      "safety",
+      "monitor"
+    ],
+    "grounded": true
+  },
+  "replay": {
+    "steps": [
+      {
+        "tool_calls": [
+          {
+            "name": "get_trail",
+            "arguments": {
+              "icao24": "a1b2c3"
+            }
+          },
+          {
+            "name": "get_route",
+            "arguments": {
+              "callsign": "N421XQ"
+            }
+          }
+        ]
+      },
+      {
+        "tool_calls": [
+          {
+            "name": "nearest_airports",
+            "arguments": {
+              "lat": 58.5,
+              "lon": -30.88,
+              "limit": 3
+            }
+          }
+        ]
+      },
+      {
+        "content": {
+          "summary": "N421XQ held 7700 for about 46 minutes in level westbound cruise at 10668 m over the North Atlantic, 612 km from the nearest listed airport, BIKF. There is no adsbdb route for the callsign and no earlier stored flight.",
+          "observations": [
+            "25 fixes at 120 s spacing, all at 10668 m, heading 270, about 235 m/s.",
+            "BIKF was 612 km away at the last fix; nothing closer is listed.",
+            "The METAR fetched was for BIKF, not for any airport near the aircraft."
+          ],
+          "explanations": [
+            {
+              "hypothesis": "An emergency declared in cruise with the flight continuing on track",
+              "evidence": [
+                "7700 held for 46 minutes",
+                "no change in level or heading"
+              ],
+              "plausibility": "low"
+            }
+          ],
+          "unknowns": [
+            "The departure, destination and operator.",
+            "Any weather near the aircraft; the nearest report is 612 km away.",
+            "Why the code was set."
+          ],
+          "evidence_quality": "fair",
+          "recommended_follow_up": "Oceanic control notices or the operator would be the only sources for this flight."
+        }
+      }
+    ]
+  }
+}

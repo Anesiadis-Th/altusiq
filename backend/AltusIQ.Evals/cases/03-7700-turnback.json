@@ -1,0 +1,453 @@
+{
+  "name": "03-7700-turnback",
+  "description": "A 7700 set a few minutes after departure from Copenhagen; the trail climbs out, reverses heading and descends back toward EKCH. Route and trail agree.",
+  "event": {
+    "icao24": "45ac2b",
+    "callsign": "SAS592",
+    "origin_country": "Denmark",
+    "squawk": "7700",
+    "first_seen_at": "2026-08-01T11:34:00Z",
+    "confirmed_at": "2026-08-01T11:36:00Z",
+    "last_seen_at": "2026-08-01T12:04:00Z",
+    "closed_at": "2026-08-01T12:06:00Z",
+    "first_longitude": 12.65,
+    "first_latitude": 55.62,
+    "first_altitude": 1500,
+    "last_longitude": 12.65,
+    "last_latitude": 55.62,
+    "last_altitude": 1850,
+    "evidence": {
+      "at_confirm": {
+        "snapshot_at": "2026-08-01T11:52:00Z",
+        "source_point_count": 16,
+        "track_points": [
+          {
+            "timestamp": 1753998000,
+            "longitude": 12.65,
+            "latitude": 55.62,
+            "altitude": 1500,
+            "heading": 140,
+            "velocity": 180
+          },
+          {
+            "timestamp": 1753998120,
+            "longitude": 12.7,
+            "latitude": 55.59,
+            "altitude": 2000,
+            "heading": 140,
+            "velocity": 180
+          },
+          {
+            "timestamp": 1753998240,
+            "longitude": 12.75,
+            "latitude": 55.56,
+            "altitude": 2500,
+            "heading": 140,
+            "velocity": 180
+          },
+          {
+            "timestamp": 1753998360,
+            "longitude": 12.8,
+            "latitude": 55.53,
+            "altitude": 3000,
+            "heading": 140,
+            "velocity": 180
+          },
+          {
+            "timestamp": 1753998480,
+            "longitude": 12.85,
+            "latitude": 55.5,
+            "altitude": 3500,
+            "heading": 140,
+            "velocity": 180
+          },
+          {
+            "timestamp": 1753998600,
+            "longitude": 12.9,
+            "latitude": 55.47,
+            "altitude": 4000,
+            "heading": 140,
+            "velocity": 180
+          },
+          {
+            "timestamp": 1753998720,
+            "longitude": 12.95,
+            "latitude": 55.44,
+            "altitude": 4500,
+            "heading": 140,
+            "velocity": 180
+          },
+          {
+            "timestamp": 1753998840,
+            "longitude": 13.0,
+            "latitude": 55.41,
+            "altitude": 5000,
+            "heading": 140,
+            "velocity": 180
+          },
+          {
+            "timestamp": 1753998960,
+            "longitude": 13.0,
+            "latitude": 55.41,
+            "altitude": 5000,
+            "heading": 320,
+            "velocity": 160
+          },
+          {
+            "timestamp": 1753999080,
+            "longitude": 12.95,
+            "latitude": 55.44,
+            "altitude": 4550,
+            "heading": 320,
+            "velocity": 160
+          },
+          {
+            "timestamp": 1753999200,
+            "longitude": 12.9,
+            "latitude": 55.47,
+            "altitude": 4100,
+            "heading": 320,
+            "velocity": 160
+          },
+          {
+            "timestamp": 1753999320,
+            "longitude": 12.85,
+            "latitude": 55.5,
+            "altitude": 3650,
+            "heading": 320,
+            "velocity": 160
+          },
+          {
+            "timestamp": 1753999440,
+            "longitude": 12.8,
+            "latitude": 55.53,
+            "altitude": 3200,
+            "heading": 320,
+            "velocity": 160
+          },
+          {
+            "timestamp": 1753999560,
+            "longitude": 12.75,
+            "latitude": 55.56,
+            "altitude": 2750,
+            "heading": 320,
+            "velocity": 160
+          },
+          {
+            "timestamp": 1753999680,
+            "longitude": 12.7,
+            "latitude": 55.59,
+            "altitude": 2300,
+            "heading": 320,
+            "velocity": 160
+          },
+          {
+            "timestamp": 1753999800,
+            "longitude": 12.65,
+            "latitude": 55.62,
+            "altitude": 1850,
+            "heading": 320,
+            "velocity": 160
+          }
+        ]
+      },
+      "at_close": null
+    }
+  },
+  "tools": {
+    "get_trail": {
+      "icao24": "45ac2b",
+      "callsign": "SAS592",
+      "point_count": 16,
+      "returned": 16,
+      "columns": [
+        "unix_ts",
+        "lon",
+        "lat",
+        "alt_m",
+        "heading",
+        "velocity_ms"
+      ],
+      "points": [
+        [
+          1753998000,
+          12.65,
+          55.62,
+          1500,
+          140,
+          180
+        ],
+        [
+          1753998120,
+          12.7,
+          55.59,
+          2000,
+          140,
+          180
+        ],
+        [
+          1753998240,
+          12.75,
+          55.56,
+          2500,
+          140,
+          180
+        ],
+        [
+          1753998360,
+          12.8,
+          55.53,
+          3000,
+          140,
+          180
+        ],
+        [
+          1753998480,
+          12.85,
+          55.5,
+          3500,
+          140,
+          180
+        ],
+        [
+          1753998600,
+          12.9,
+          55.47,
+          4000,
+          140,
+          180
+        ],
+        [
+          1753998720,
+          12.95,
+          55.44,
+          4500,
+          140,
+          180
+        ],
+        [
+          1753998840,
+          13.0,
+          55.41,
+          5000,
+          140,
+          180
+        ],
+        [
+          1753998960,
+          13.0,
+          55.41,
+          5000,
+          320,
+          160
+        ],
+        [
+          1753999080,
+          12.95,
+          55.44,
+          4550,
+          320,
+          160
+        ],
+        [
+          1753999200,
+          12.9,
+          55.47,
+          4100,
+          320,
+          160
+        ],
+        [
+          1753999320,
+          12.85,
+          55.5,
+          3650,
+          320,
+          160
+        ],
+        [
+          1753999440,
+          12.8,
+          55.53,
+          3200,
+          320,
+          160
+        ],
+        [
+          1753999560,
+          12.75,
+          55.56,
+          2750,
+          320,
+          160
+        ],
+        [
+          1753999680,
+          12.7,
+          55.59,
+          2300,
+          320,
+          160
+        ],
+        [
+          1753999800,
+          12.65,
+          55.62,
+          1850,
+          320,
+          160
+        ]
+      ]
+    },
+    "nearest_airports": [
+      {
+        "icao": "EKCH",
+        "iata": "CPH",
+        "name": "Copenhagen Kastrup",
+        "distance_km": 9.8,
+        "bearing_deg": 315
+      },
+      {
+        "icao": "EKRK",
+        "iata": "RKE",
+        "name": "Roskilde",
+        "distance_km": 38.5,
+        "bearing_deg": 280
+      },
+      {
+        "icao": "ESMS",
+        "iata": "MMX",
+        "name": "Malmö",
+        "distance_km": 41.2,
+        "bearing_deg": 80
+      }
+    ],
+    "get_metar": {
+      "station": "EKCH",
+      "raw": "EKCH 011150Z 27012KT 9999 SCT030 17/10 Q1015",
+      "report_time": "2026-08-01 11:50:00",
+      "temp_c": 17,
+      "dewpoint_c": 10,
+      "wind_dir_deg": 270,
+      "wind_kt": 12,
+      "visibility": "6+",
+      "flight_category": "VFR",
+      "clouds": "[{\"cover\":\"SCT\",\"base\":3000}]"
+    },
+    "get_route": {
+      "callsign": "SAS592",
+      "airline": "Scandinavian Airlines",
+      "origin": {
+        "icao": "EKCH",
+        "name": "Copenhagen Kastrup",
+        "municipality": "Copenhagen",
+        "country": "Denmark"
+      },
+      "destination": {
+        "icao": "LIRF",
+        "name": "Rome Fiumicino",
+        "municipality": "Rome",
+        "country": "Italy"
+      }
+    },
+    "recent_flights": [
+      {
+        "callsign": "SAS593",
+        "opened_at": "2026-07-31T18:40:00Z",
+        "closed_at": "2026-07-31T21:05:00Z",
+        "departure": "LIRF",
+        "arrival": "EKCH",
+        "max_altitude_m": 11582
+      }
+    ]
+  },
+  "expect": {
+    "status": "completed",
+    "tools_called": [
+      "get_trail",
+      "get_route",
+      "nearest_airports"
+    ],
+    "must_not_contain": [
+      "alert",
+      "warning",
+      "threat",
+      "incident",
+      "confidence",
+      "cause",
+      "safety",
+      "monitor"
+    ],
+    "grounded": true
+  },
+  "replay": {
+    "steps": [
+      {
+        "tool_calls": [
+          {
+            "name": "get_trail",
+            "arguments": {
+              "icao24": "45ac2b"
+            }
+          }
+        ]
+      },
+      {
+        "tool_calls": [
+          {
+            "name": "get_route",
+            "arguments": {
+              "callsign": "SAS592"
+            }
+          },
+          {
+            "name": "nearest_airports",
+            "arguments": {
+              "lat": 55.62,
+              "lon": 12.65,
+              "limit": 3
+            }
+          }
+        ]
+      },
+      {
+        "tool_calls": [
+          {
+            "name": "get_metar",
+            "arguments": {
+              "icao": "EKCH"
+            }
+          }
+        ]
+      },
+      {
+        "content": {
+          "summary": "SAS592 set 7700 about two minutes after leaving EKCH on an adsbdb route to LIRF. The trail climbs south-east for 8 fixes, then reverses to a heading of 320 and descends back toward Copenhagen, ending about 10 km from EKCH. The pattern matches a return to the departure airport.",
+          "observations": [
+            "Outbound: 8 fixes climbing from 1500 m on heading 140.",
+            "Inbound: 8 fixes on heading 320 descending toward EKCH, the nearest airport at 9.8 km from the last fix.",
+            "EKCH weather at 11:50Z: wind 270 at 12 kt, visibility over 10 km, scattered cloud at 3000 ft.",
+            "The previous stored flight for this airframe was LIRF to EKCH the evening before."
+          ],
+          "explanations": [
+            {
+              "hypothesis": "A return to EKCH soon after departure",
+              "evidence": [
+                "heading reversal from 140 to 320",
+                "descent toward the departure airport",
+                "route lists EKCH as origin"
+              ],
+              "plausibility": "high"
+            }
+          ],
+          "unknowns": [
+            "What prompted the return; ADS-B carries no reason.",
+            "Whether the aircraft landed; the last fix is still airborne."
+          ],
+          "evidence_quality": "good",
+          "recommended_follow_up": "A Scandinavian Airlines or Danish authority statement would give the reason for the return."
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,163 @@
+using System.Diagnostics;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using AltusIQ.Api.Investigation;
+using AltusIQ.Api.Llm;
+using AltusIQ.Api.Models;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
+
+namespace AltusIQ.Evals;
+
+public sealed record CaseResult(
+    [property: JsonPropertyName("name")] string Name,
+    [property: JsonPropertyName("status")] string Status,
+    [property: JsonPropertyName("schema_valid")] bool SchemaValid,
+    [property: JsonPropertyName("grounded")] bool Grounded,
+    [property: JsonPropertyName("unsupported_tokens")] IReadOnlyList<string> UnsupportedTokens,
+    [property: JsonPropertyName("tools_called")] IReadOnlyList<string> ToolsCalled,
+    [property: JsonPropertyName("tool_selection_ok")] bool ToolSelectionOk,
+    [property: JsonPropertyName("speculative")] bool Speculative,
+    [property: JsonPropertyName("latency_ms")] int LatencyMs,
+    [property: JsonPropertyName("tokens")] int Tokens,
+    [property: JsonPropertyName("model_calls")] int ModelCalls,
+    [property: JsonPropertyName("expectation_failures")] IReadOnlyList<string> ExpectationFailures,
+    [property: JsonPropertyName("brief")] InvestigationBrief? Brief,
+    [property: JsonPropertyName("error")] string? Error);
+
+public sealed record Summary(
+    [property: JsonPropertyName("cases")] int Cases,
+    [property: JsonPropertyName("investigated")] int Investigated,
+    [property: JsonPropertyName("skipped")] int Skipped,
+    [property: JsonPropertyName("schema_valid_rate")] double SchemaValidRate,
+    [property: JsonPropertyName("grounded_rate")] double GroundedRate,
+    [property: JsonPropertyName("tool_selection_accuracy")] double ToolSelectionAccuracy,
+    [property: JsonPropertyName("speculation_rate")] double SpeculationRate,
+    [property: JsonPropertyName("mean_latency_ms")] double MeanLatencyMs,
+    [property: JsonPropertyName("mean_tokens")] double MeanTokens,
+    [property: JsonPropertyName("expectation_failures")] int ExpectationFailures);
+
+public sealed record RunReport(
+    [property: JsonPropertyName("run_at")] DateTime RunAt,
+    [property: JsonPropertyName("prompt_version")] string PromptVersion,
+    [property: JsonPropertyName("mode")] string Mode,
+    [property: JsonPropertyName("provider")] string? Provider,
+    [property: JsonPropertyName("model")] string? Model,
+    [property: JsonPropertyName("summary")] Summary Summary,
+    [property: JsonPropertyName("cases")] IReadOnlyList<CaseResult> Cases);
+
+/// <summary>Runs every case through the production InvestigationAgent and scores the output.</summary>
+public sealed class EvalRunner
+{
+    public const int LiveCallCap = 20;
+
+    private readonly LlmProviderSettings? _live;
+    private readonly PromptStore _prompts = new();
+
+    public EvalRunner(LlmProviderSettings? live)
+    {
+        _live = live;
+    }
+
+    public string Mode => _live is null ? "replay" : "live";
+
+    public async Task<RunReport> RunAsync(IReadOnlyList<EvalCase> cases, CancellationToken ct)
+    {
+        var settings = new LlmSettings
+        {
+            Enabled = true,
+            MaxCallsPerDay = _live is null ? int.MaxValue : LiveCallCap,
+            MinSecondsBetweenCalls = _live is null ? 0 : 3,
+            MaxToolSteps = 6,
+            Providers = _live is null
+                ? [new LlmProviderSettings { Name = "replay", BaseUrl = "replay://", Model = "recorded", ApiKeyEnv = "UNUSED" }]
+                : [_live]
+        };
+
+        // One budget across the run so the live cap holds over all cases.
+        var budget = new LlmCallBudget(Options.Create(settings), TimeProvider.System);
+        ILlmClient? liveClient = _live is null
+            ? null
+            : new OpenAiCompatibleChatClient(new HttpClient { Timeout = TimeSpan.FromSeconds(60) }, NullLogger<OpenAiCompatibleChatClient>.Instance);
+
+        var results = new List<CaseResult>();
+
+        foreach (var c in cases)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var llm = liveClient ?? new ReplayLlmClient(c.ReplayScript);
+            var agent = new InvestigationAgent(
+                llm, Options.Create(settings), _prompts, budget, TimeProvider.System,
+                NullLogger<InvestigationAgent>.Instance);
+            var tools = new RecordedToolSource(c.Tools);
+
+            var sw = Stopwatch.StartNew();
+            var result = await agent.InvestigateAsync(c.ToEvent(), tools, ct);
+            sw.Stop();
+
+            results.Add(Score(c, result, _live is null ? result.LatencyMs : (int)sw.ElapsedMilliseconds));
+        }
+
+        var investigated = results.Where(r => r.Status != InvestigationStatus.Skipped).ToList();
+        double Rate(Func<CaseResult, bool> pred) => investigated.Count == 0 ? 0 : investigated.Count(pred) / (double)investigated.Count;
+
+        var summary = new Summary(
+            results.Count,
+            investigated.Count,
+            results.Count - investigated.Count,
+            Rate(r => r.SchemaValid),
+            Rate(r => r.Grounded),
+            Rate(r => r.ToolSelectionOk),
+            Rate(r => r.Speculative),
+            investigated.Count == 0 ? 0 : investigated.Average(r => r.LatencyMs),
+            investigated.Count == 0 ? 0 : investigated.Average(r => r.Tokens),
+            results.Sum(r => r.ExpectationFailures.Count));
+
+        return new RunReport(DateTime.UtcNow, _prompts.Version, Mode, _live?.Name, _live?.Model, summary, results);
+    }
+
+    private static CaseResult Score(EvalCase c, InvestigationResult r, int latencyMs)
+    {
+        var failures = new List<string>();
+
+        if (c.Expect.Status is { } status && r.Status != status)
+            failures.Add($"status: expected {status}, got {r.Status}");
+
+        var missingTools = c.Expect.ToolsCalled.Except(r.ToolsCalled).ToList();
+        var toolSelectionOk = missingTools.Count == 0;
+        if (!toolSelectionOk)
+            failures.Add($"tools not called: {string.Join(", ", missingTools)}");
+
+        if (c.Expect.Grounded is { } grounded && r.Status != InvestigationStatus.Skipped && r.Grounded != grounded)
+            failures.Add($"grounded: expected {grounded}, got {r.Grounded}");
+
+        // Whole words, case-insensitive: "because" must not trip "cause".
+        var text = r.Brief?.ToJson() ?? r.RawOutput ?? string.Empty;
+        foreach (var banned in c.Expect.MustNotContain)
+        {
+            if (System.Text.RegularExpressions.Regex.IsMatch(text, $@"\b{System.Text.RegularExpressions.Regex.Escape(banned)}\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+                failures.Add($"brief contains \"{banned}\"");
+        }
+
+        // Schema-valid means the model's own output parsed. A deterministic brief
+        // is always valid by construction and must not inflate the rate.
+        var schemaValid = r.Status == InvestigationStatus.Completed;
+
+        return new CaseResult(
+            c.Name,
+            r.Status,
+            schemaValid,
+            r.Grounded,
+            r.UnsupportedTokens,
+            r.ToolsCalled,
+            toolSelectionOk,
+            r.Brief?.IsSpeculative ?? false,
+            latencyMs,
+            r.InputTokens + r.OutputTokens,
+            r.ModelCalls,
+            failures,
+            r.Brief,
+            r.Error);
+    }
+}

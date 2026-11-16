@@ -1,0 +1,335 @@
+{
+  "name": "06-metar-fetch-failed",
+  "description": "A 7600 descending toward Oslo Gardermoen while the METAR fetch fails. The brief must note the weather is unknown rather than guess it.",
+  "event": {
+    "icao24": "47c1a0",
+    "callsign": "NAX51K",
+    "origin_country": "Norway",
+    "squawk": "7600",
+    "first_seen_at": "2026-08-01T11:44:00Z",
+    "confirmed_at": "2026-08-01T11:46:00Z",
+    "last_seen_at": "2026-08-01T12:04:00Z",
+    "closed_at": "2026-08-01T12:06:00Z",
+    "first_longitude": 10.9,
+    "first_latitude": 59.9,
+    "first_altitude": 2400,
+    "last_longitude": 10.9,
+    "last_latitude": 60.035,
+    "last_altitude": 1050,
+    "evidence": {
+      "at_confirm": {
+        "snapshot_at": "2026-08-01T11:52:00Z",
+        "source_point_count": 10,
+        "track_points": [
+          {
+            "timestamp": 1753998600,
+            "longitude": 10.9,
+            "latitude": 59.9,
+            "altitude": 2400,
+            "heading": 10,
+            "velocity": 110
+          },
+          {
+            "timestamp": 1753998720,
+            "longitude": 10.9,
+            "latitude": 59.915,
+            "altitude": 2250,
+            "heading": 10,
+            "velocity": 110
+          },
+          {
+            "timestamp": 1753998840,
+            "longitude": 10.9,
+            "latitude": 59.93,
+            "altitude": 2100,
+            "heading": 10,
+            "velocity": 110
+          },
+          {
+            "timestamp": 1753998960,
+            "longitude": 10.9,
+            "latitude": 59.945,
+            "altitude": 1950,
+            "heading": 10,
+            "velocity": 110
+          },
+          {
+            "timestamp": 1753999080,
+            "longitude": 10.9,
+            "latitude": 59.96,
+            "altitude": 1800,
+            "heading": 10,
+            "velocity": 110
+          },
+          {
+            "timestamp": 1753999200,
+            "longitude": 10.9,
+            "latitude": 59.975,
+            "altitude": 1650,
+            "heading": 10,
+            "velocity": 110
+          },
+          {
+            "timestamp": 1753999320,
+            "longitude": 10.9,
+            "latitude": 59.99,
+            "altitude": 1500,
+            "heading": 10,
+            "velocity": 110
+          },
+          {
+            "timestamp": 1753999440,
+            "longitude": 10.9,
+            "latitude": 60.005,
+            "altitude": 1350,
+            "heading": 10,
+            "velocity": 110
+          },
+          {
+            "timestamp": 1753999560,
+            "longitude": 10.9,
+            "latitude": 60.02,
+            "altitude": 1200,
+            "heading": 10,
+            "velocity": 110
+          },
+          {
+            "timestamp": 1753999680,
+            "longitude": 10.9,
+            "latitude": 60.035,
+            "altitude": 1050,
+            "heading": 10,
+            "velocity": 110
+          }
+        ]
+      },
+      "at_close": null
+    }
+  },
+  "tools": {
+    "get_trail": {
+      "icao24": "47c1a0",
+      "callsign": "NAX51K",
+      "point_count": 10,
+      "returned": 10,
+      "columns": [
+        "unix_ts",
+        "lon",
+        "lat",
+        "alt_m",
+        "heading",
+        "velocity_ms"
+      ],
+      "points": [
+        [
+          1753998600,
+          10.9,
+          59.9,
+          2400,
+          10,
+          110
+        ],
+        [
+          1753998720,
+          10.9,
+          59.915,
+          2250,
+          10,
+          110
+        ],
+        [
+          1753998840,
+          10.9,
+          59.93,
+          2100,
+          10,
+          110
+        ],
+        [
+          1753998960,
+          10.9,
+          59.945,
+          1950,
+          10,
+          110
+        ],
+        [
+          1753999080,
+          10.9,
+          59.96,
+          1800,
+          10,
+          110
+        ],
+        [
+          1753999200,
+          10.9,
+          59.975,
+          1650,
+          10,
+          110
+        ],
+        [
+          1753999320,
+          10.9,
+          59.99,
+          1500,
+          10,
+          110
+        ],
+        [
+          1753999440,
+          10.9,
+          60.005,
+          1350,
+          10,
+          110
+        ],
+        [
+          1753999560,
+          10.9,
+          60.02,
+          1200,
+          10,
+          110
+        ],
+        [
+          1753999680,
+          10.9,
+          60.035,
+          1050,
+          10,
+          110
+        ]
+      ]
+    },
+    "nearest_airports": [
+      {
+        "icao": "ENGM",
+        "iata": "OSL",
+        "name": "Oslo Gardermoen",
+        "distance_km": 8.6,
+        "bearing_deg": 20
+      },
+      {
+        "icao": "ENKJ",
+        "iata": null,
+        "name": "Kjeller",
+        "distance_km": 24.3,
+        "bearing_deg": 180
+      },
+      {
+        "icao": "ENRY",
+        "iata": "RYG",
+        "name": "Moss Rygge",
+        "distance_km": 82.0,
+        "bearing_deg": 190
+      }
+    ],
+    "get_metar": {
+      "station": "ENGM",
+      "error": "HttpRequestException"
+    },
+    "get_route": {
+      "callsign": "NAX51K",
+      "airline": "Norwegian",
+      "origin": {
+        "icao": "ENBR",
+        "name": "Bergen Flesland",
+        "municipality": "Bergen",
+        "country": "Norway"
+      },
+      "destination": {
+        "icao": "ENGM",
+        "name": "Oslo Gardermoen",
+        "municipality": "Oslo",
+        "country": "Norway"
+      }
+    },
+    "recent_flights": null
+  },
+  "expect": {
+    "status": "completed",
+    "tools_called": [
+      "get_trail",
+      "nearest_airports",
+      "get_metar"
+    ],
+    "must_not_contain": [
+      "alert",
+      "warning",
+      "threat",
+      "incident",
+      "confidence",
+      "cause",
+      "safety",
+      "monitor"
+    ],
+    "grounded": true
+  },
+  "replay": {
+    "steps": [
+      {
+        "tool_calls": [
+          {
+            "name": "get_trail",
+            "arguments": {
+              "icao24": "47c1a0"
+            }
+          },
+          {
+            "name": "nearest_airports",
+            "arguments": {
+              "lat": 60.03,
+              "lon": 10.9,
+              "limit": 3
+            }
+          }
+        ]
+      },
+      {
+        "tool_calls": [
+          {
+            "name": "get_metar",
+            "arguments": {
+              "icao": "ENGM"
+            }
+          },
+          {
+            "name": "get_route",
+            "arguments": {
+              "callsign": "NAX51K"
+            }
+          }
+        ]
+      },
+      {
+        "content": {
+          "summary": "NAX51K squawked 7600 for about 20 minutes while descending from 2400 m toward ENGM, its adsbdb destination, ending 8.6 km from the airport. The ENGM weather report could not be fetched, so conditions at the time are unknown.",
+          "observations": [
+            "10 fixes descending from 2400 m to 1050 m on a heading of 10 toward ENGM.",
+            "adsbdb lists the callsign as ENBR to ENGM.",
+            "The METAR request for ENGM failed; no weather is available."
+          ],
+          "explanations": [
+            {
+              "hypothesis": "A radio problem on approach with the flight continuing to its destination",
+              "evidence": [
+                "7600 set during descent toward ENGM",
+                "route destination is ENGM"
+              ],
+              "plausibility": "medium"
+            }
+          ],
+          "unknowns": [
+            "Weather at ENGM, because the fetch failed.",
+            "Whether the aircraft landed; the trail ends at 1050 m.",
+            "Whether radio contact was really lost."
+          ],
+          "evidence_quality": "fair",
+          "recommended_follow_up": "Avinor or Norwegian would be the sources for the approach and any radio issue."
+        }
+      }
+    ]
+  }
+}
