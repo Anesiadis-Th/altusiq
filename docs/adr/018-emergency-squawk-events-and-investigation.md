@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted. Builds on the seam pattern of [ADR-014](014-backend-test-seams.md) and the global poll of [ADR-011](011-global-live-coverage.md). Nothing in [ADR-010](010-poll-interval-and-dead-reckoning.md) changes: the poll interval, the ingestion rules, the bounding box and the SignalR payload are exactly as they were.
+Accepted, amended 2026-11-22 (see [Amendments](#amendments-2026-11-22)). Builds on the seam pattern of [ADR-014](014-backend-test-seams.md) and the global poll of [ADR-011](011-global-live-coverage.md). Nothing in [ADR-010](010-poll-interval-and-dead-reckoning.md) changes: the poll interval, the ingestion rules, the bounding box and the SignalR payload are exactly as they were.
 
 ## Context
 
@@ -92,3 +92,16 @@ What it cannot measure: whether a brief is *right*. There is no ground truth for
 - `TimeProvider` now reaches `EmergencySquawkDetector`, `LlmCallBudget` and `InvestigationAgent`. `RetentionService` still reads the system clock.
 - 98 backend tests, 47 frontend tests. Three defects were injected and reverted to confirm the suite is load-bearing: the persistence rule reduced to one poll, the groundedness check disabled, and the provider fallback skipped. Each turned the suite red.
 - **Still untested:** `OpenAiCompatibleChatClient` against a real provider, `MetarClient` against aviationweather.gov, `EfAnomalyEventWriter` and `EfAnomalyEventStore` against Postgres, and the Events controller. The first two want a stubbed `HttpMessageHandler`, the last three a real database, as in ADR-014.
+
+## Amendments (2026-11-22)
+
+Changes made before the first deployment. The decision above stands; these items change details it describes.
+
+- **Primary model.** Groq's deprecations page lists `llama-3.3-70b-versatile` with a 2026-08-16 shutdown (its models page still lists it). A decommission error is a non-transient 4xx, so every event would have spent a budget call on Groq before falling through. The primary is now `openai/gpt-oss-120b` (free plan: 30 RPM, 1K RPD, 8K TPM, 200K TPD). The eval CLI reads the provider table from `appsettings.json` instead of keeping its own copy.
+- **Tokens, not calls, may be the binding limit.** The tool loop resends the whole conversation each round. With a full 120-point trail, a four-call investigation is roughly 8K to 12K input tokens inside a minute, at or over Groq's 8K TPM. Not yet measured against a live provider; single-shot mode and the loop are to be compared in the harness.
+- **Trace persisted.** `InvestigationTraceJson` keeps the tool outputs exactly as the model saw them, the tools called, the model's raw reply and the unsupported tokens; `ModelCalls` counts calls across every provider tried. Neither is served by the API. Without them a real event could not be audited or replayed.
+- **Startup sweep.** The detector state and the queue are in memory, so a deploy used to leave events `open` forever and briefs `pending` forever. On startup `InvestigationService` closes events created before the process started at their `LastSeenAt` and re-queues every pending one. Events this process creates are never touched.
+- **Deterministic brief crash.** The tool loop turns a null result into a `nothing returned` object and a tool exception into an `error` object. The data-only brief assumed a route object and a METAR station and threw on both, so an event with no adsbdb route stayed `pending` whenever no model answered. It now checks every shape.
+- **Call spacing.** The budget stamped the call time before computing the wait, so every call waited `MinSecondsBetweenCalls`, the first included. The wait is now measured from the previous call.
+- **Eval harness.** Replay runs in CI as a gate. The nightly workflow is now manual-only, because free quotas are per account and a scheduled live run would spend the deployed investigator's budget. Live runs are capped at 40 calls, 10 per case; a case the cap stops is reported as `budget_exhausted` and excluded from the rates instead of counting as invalid output. Results record the git commit. The fixtures' trail timestamps were a year and ten hours before their events; they are shifted onto the event times, and each fixture's at-confirm snapshot now holds only the fixes up to `confirmed_at`, with the full trail in the at-close snapshot.
+- **Tests.** 108 backend tests. Reverting the deterministic-brief fix turns its regression test red.

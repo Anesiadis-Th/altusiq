@@ -6,13 +6,13 @@ A real-time aviation analytics platform inspired by FlightRadar24. Built as a pr
 
 ![AltusIQ — live global traffic, flight search, and a selected flight's trail and route](docs/images/demo.gif)
 
-<sub>Real capture against the live deployment: 13,000+ aircraft streaming over SignalR, a callsign search, then the selected flight's trail, route and ETA as the camera flies to it.</sub>
+<sub>Real capture against the live deployment: 13,000+ aircraft pushed over SignalR after each poll, a callsign search, then the selected flight's trail, route and ETA as the camera flies to it.</sub>
 
 ---
 
 ## What it does
 
-AltusIQ shows the world's airborne traffic live — roughly 10,000–14,000 aircraft at peak — on a WebGL map, streamed to the browser over SignalR. Scandinavian traffic is additionally segmented into discrete flights and stored in PostGIS for history, playback, and analytics.
+AltusIQ shows the world's airborne traffic live — roughly 10,000–14,000 aircraft at peak — on a WebGL map, pushed to the browser over SignalR after every 120-second poll. Scandinavian traffic is additionally segmented into discrete flights and stored in PostGIS for history, playback, and analytics.
 
 - **Live global map** — every aircraft OpenSky can see, rendered as a GeoJSON symbol layer. New clients receive the latest snapshot on connect, so planes appear in under a second.
 - **Smooth motion from slow data** — OpenSky is polled once every ~120 seconds (see below). Between polls each aircraft is dead-reckoned client-side from its last velocity and heading, then blended smoothly onto the next real fix instead of teleporting.
@@ -187,13 +187,13 @@ Every OpenSky state row carries the transponder code, and three codes have a fix
 
 **Detection.** One poll on a code is a candidate; the same code on the next poll opens an event. The event closes when the code clears or the aircraft is unseen for 360 s. Ids are deterministic from `icao24` and the confirm second, so a retried write hits the same row. The live trail is snapshotted into the event at confirm and at close, thinned to 120 points, with no foreign key to `Flights`, because most of the globe never gets a flight row. 7500 events are stored but hidden from the public API unless `Events:ExposeSensitive` is on, and are never investigated.
 
-**Investigation.** A closed event, or one still open after 30 minutes, is queued on a channel and picked up by a background consumer with concurrency 1, never on the poll path. The agent has five tools, each capped at 8 KB: the trail, nearest airports from a backend copy of the OurAirports set, the latest METAR, the callsign's route from adsbdb, and earlier stored flights for the airframe. It runs at most six tool rounds, must answer in one validated JSON shape with no `cause` and no `confidence` field, and is checked in code for groundedness: every four-letter code and every number of 100 or more in the brief has to appear in what the model was shown. Ungrounded briefs are stored with the flag, not hidden.
+**Investigation.** A closed event, or one still open after 30 minutes, is queued on a channel and picked up by a background consumer with concurrency 1, never on the poll path. The agent has five tools, each capped at 8 KB: the trail, nearest airports from a backend copy of the OurAirports set, the latest METAR, the callsign's route from adsbdb, and earlier stored flights for the airframe. It runs at most six tool rounds, must answer in one validated JSON shape with no `cause` and no `confidence` field, and is checked in code for groundedness: every four-letter code and every number of 100 or more in the brief has to appear in what the model was shown. Ungrounded briefs are stored with the flag, not hidden. Each event also keeps a trace of what the model was shown (tool outputs, tools called, model calls and the tokens the check could not find), so a real event can be audited or replayed later; the API does not serve it. The detector state and the queue live in memory, so on startup the consumer closes events an earlier process left open, at their last fix, and re-queues every brief still pending.
 
 **Zero cost, two providers, a budget.** Groq and OpenRouter free plans, no card on file, tried in order; a 429, 5xx, timeout or invalid output after one retry moves to the next, and a model without tool calling gets single-shot mode. Forty model calls a day across both, counted per UTC day. When the budget is spent, every provider fails, or `Llm:Enabled` is false, code assembles a brief from the tool outputs and stores it as `uninvestigated`. Every event gets a brief; only the model is optional.
 
 **What the data cannot show.** Positions arrive every 120 s and coverage has gaps, so a brief can describe a descent but not a go-around. The reason a crew set a code is almost never visible in ADS-B, and every brief lists it under `unknowns`. The Events rail shows briefs under an **AI-generated, unverified** label with the model name. How many events the feed actually produces is unmeasured; one log line per poll counts them, and that number decides whether anything more is built.
 
-**Eval harness.** `backend/AltusIQ.Evals` runs the production agent over eight recorded cases, a 7700 in fog at Arlanda, a 7600 in cruise, a turn-back, an empty trail, an aircraft far from any airport, a failed METAR fetch, a regression fixture whose recorded response names an airport the evidence never mentioned, and a 7500 that must be skipped. Replay mode, the default, never leaves the process; live mode is capped at 20 calls. A nightly workflow uploads the results and fails only on harness errors. From a replay run of `investigate.v1`:
+**Eval harness.** `backend/AltusIQ.Evals` runs the production agent over eight hand-written cases, a 7700 in fog at Arlanda, a 7600 in cruise, a turn-back, an empty trail, an aircraft far from any airport, a failed METAR fetch, a regression fixture whose recorded response names an airport the evidence never mentioned, and a 7500 that must be skipped. Replay mode, the default, never leaves the process and runs on every CI build, where a failed expectation fails the build. Live mode runs only on manual dispatch, so it never spends the deployed investigator's free quota, and is capped at 40 model calls, 10 per case; a case the cap stops is reported as `budget_exhausted` and left out of the rates. Each result file records the prompt version, model and git commit. From a replay run of `investigate.v1`:
 
 | metric | value |
 | --- | ---: |
@@ -283,10 +283,10 @@ Opens at `http://localhost:3000`.
 
 ```bash
 npm test --prefix frontend        # 47 Vitest tests
-dotnet test backend/AltusIQ.sln   # 98 xUnit tests
+dotnet test backend/AltusIQ.sln   # 108 xUnit tests
 ```
 
-145 tests cover the pure logic on both sides — the parts where a silent regression would be invisible on screen.
+155 tests cover the pure logic on both sides — the parts where a silent regression would be invisible on screen.
 
 **Backend (xUnit)** — the ingestion rules that decide what reaches the database:
 
@@ -295,7 +295,7 @@ dotnet test backend/AltusIQ.sln   # 98 xUnit tests
 - **What gets written** — `OpenedAt` and `ClosedAt` taken from the track rather than the timeout instant, peak altitude versus touchdown altitude, and out-of-region thinning that preserves the fixes either side of the boundary crossing.
 - **OpenSky row tolerance** — short, malformed and identity-less rows skipped individually, so a single bad row cannot discard an entire ~10,000-aircraft poll.
 - **Squawk detection** — one poll is a candidate and two confirm, 1200 and 2000 never flag, the close rule in both its forms, the deterministic id under replay, a failed write retried next poll, and 7500 marked sensitive and hidden by default.
-- **Investigation agent** — a scripted fake model client and recorded tool outputs drive the valid path, the retry-then-`invalid_output` path, 429 fallback to the next provider, the deterministic brief when every provider fails, the six-step cap, the 8 KB tool cap, the groundedness flag on an airport absent from the evidence, the 40-call budget resetting on the UTC day with a fake clock, the 7500 skip, and the consumer running off the poll path.
+- **Investigation agent** — a scripted fake model client and recorded tool outputs drive the valid path, the retry-then-`invalid_output` path, 429 fallback to the next provider, the deterministic brief when every provider fails, the six-step cap, the 8 KB tool cap, the groundedness flag on an airport absent from the evidence, the 40-call budget resetting on the UTC day with a fake clock, the 7500 skip, the consumer running off the poll path, the data-only brief surviving a missing or malformed tool output, the startup sweep closing only events an earlier process created, and the trace keeping the exact tool outputs.
 
 **Frontend (Vitest)** — the client-side logic with no visible failure mode:
 
