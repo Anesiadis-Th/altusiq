@@ -18,11 +18,11 @@
     "last_altitude": 10668,
     "evidence": {
       "at_confirm": {
-        "snapshot_at": "2026-08-01T11:52:00Z",
-        "source_point_count": 25,
+        "snapshot_at": "2026-08-01T11:22:00Z",
+        "source_point_count": 17,
         "track_points": [
           {
-            "timestamp": 1753995600,
+            "timestamp": 1785581400,
             "longitude": -28.0,
             "latitude": 58.5,
             "altitude": 10668,
@@ -30,7 +30,7 @@
             "velocity": 235
           },
           {
-            "timestamp": 1753995720,
+            "timestamp": 1785581520,
             "longitude": -28.12,
             "latitude": 58.5,
             "altitude": 10668,
@@ -38,7 +38,7 @@
             "velocity": 235
           },
           {
-            "timestamp": 1753995840,
+            "timestamp": 1785581640,
             "longitude": -28.24,
             "latitude": 58.5,
             "altitude": 10668,
@@ -46,7 +46,7 @@
             "velocity": 235
           },
           {
-            "timestamp": 1753995960,
+            "timestamp": 1785581760,
             "longitude": -28.36,
             "latitude": 58.5,
             "altitude": 10668,
@@ -54,7 +54,7 @@
             "velocity": 235
           },
           {
-            "timestamp": 1753996080,
+            "timestamp": 1785581880,
             "longitude": -28.48,
             "latitude": 58.5,
             "altitude": 10668,
@@ -62,7 +62,7 @@
             "velocity": 235
           },
           {
-            "timestamp": 1753996200,
+            "timestamp": 1785582000,
             "longitude": -28.6,
             "latitude": 58.5,
             "altitude": 10668,
@@ -70,7 +70,7 @@
             "velocity": 235
           },
           {
-            "timestamp": 1753996320,
+            "timestamp": 1785582120,
             "longitude": -28.72,
             "latitude": 58.5,
             "altitude": 10668,
@@ -78,7 +78,7 @@
             "velocity": 235
           },
           {
-            "timestamp": 1753996440,
+            "timestamp": 1785582240,
             "longitude": -28.84,
             "latitude": 58.5,
             "altitude": 10668,
@@ -86,7 +86,7 @@
             "velocity": 235
           },
           {
-            "timestamp": 1753996560,
+            "timestamp": 1785582360,
             "longitude": -28.96,
             "latitude": 58.5,
             "altitude": 10668,
@@ -94,7 +94,7 @@
             "velocity": 235
           },
           {
-            "timestamp": 1753996680,
+            "timestamp": 1785582480,
             "longitude": -29.08,
             "latitude": 58.5,
             "altitude": 10668,
@@ -102,7 +102,7 @@
             "velocity": 235
           },
           {
-            "timestamp": 1753996800,
+            "timestamp": 1785582600,
             "longitude": -29.2,
             "latitude": 58.5,
             "altitude": 10668,
@@ -110,7 +110,7 @@
             "velocity": 235
           },
           {
-            "timestamp": 1753996920,
+            "timestamp": 1785582720,
             "longitude": -29.32,
             "latitude": 58.5,
             "altitude": 10668,
@@ -118,7 +118,7 @@
             "velocity": 235
           },
           {
-            "timestamp": 1753997040,
+            "timestamp": 1785582840,
             "longitude": -29.44,
             "latitude": 58.5,
             "altitude": 10668,
@@ -126,7 +126,7 @@
             "velocity": 235
           },
           {
-            "timestamp": 1753997160,
+            "timestamp": 1785582960,
             "longitude": -29.56,
             "latitude": 58.5,
             "altitude": 10668,
@@ -134,7 +134,7 @@
             "velocity": 235
           },
           {
-            "timestamp": 1753997280,
+            "timestamp": 1785583080,
             "longitude": -29.68,
             "latitude": 58.5,
             "altitude": 10668,
@@ -142,7 +142,7 @@
             "velocity": 235
           },
           {
-            "timestamp": 1753997400,
+            "timestamp": 1785583200,
             "longitude": -29.8,
             "latitude": 58.5,
             "altitude": 10668,
@@ -150,72 +150,8 @@
             "velocity": 235
           },
           {
-            "timestamp": 1753997520,
+            "timestamp": 1785583320,
             "longitude": -29.92,
-            "latitude": 58.5,
-            "altitude": 10668,
-            "heading": 270,
-            "velocity": 235
-          },
-          {
-            "timestamp": 1753997640,
-            "longitude": -30.04,
-            "latitude": 58.5,
-            "altitude": 10668,
-            "heading": 270,
-            "velocity": 235
-          },
-          {
-            "timestamp": 1753997760,
-            "longitude": -30.16,
-            "latitude": 58.5,
-            "altitude": 10668,
-            "heading": 270,
-            "velocity": 235
-          },
-          {
-            "timestamp": 1753997880,
-            "longitude": -30.28,
-            "latitude": 58.5,
-            "altitude": 10668,
-            "heading": 270,
-            "velocity": 235
-          },
-          {
-            "timestamp": 1753998000,
-            "longitude": -30.4,
-            "latitude": 58.5,
-            "altitude": 10668,
-            "heading": 270,
-            "velocity": 235
-          },
-          {
-            "timestamp": 1753998120,
-            "longitude": -30.52,
-            "latitude": 58.5,
-            "altitude": 10668,
-            "heading": 270,
-            "velocity": 235
-          },
-          {
-            "timestamp": 1753998240,
-            "longitude": -30.64,
-            "latitude": 58.5,
-            "altitude": 10668,
-            "heading": 270,
-            "velocity": 235
-          },
-          {
-            "timestamp": 1753998360,
-            "longitude": -30.76,
-            "latitude": 58.5,
-            "altitude": 10668,
-            "heading": 270,
-            "velocity": 235
-          },
-          {
-            "timestamp": 1753998480,
-            "longitude": -30.88,
             "latitude": 58.5,
             "altitude": 10668,
             "heading": 270,
@@ -223,7 +159,212 @@
           }
         ]
       },
-      "at_close": null
+      "at_close": {
+        "snapshot_at": "2026-08-01T12:14:00Z",
+        "source_point_count": 25,
+        "track_points": [
+          {
+            "timestamp": 1785581400,
+            "longitude": -28.0,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1785581520,
+            "longitude": -28.12,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1785581640,
+            "longitude": -28.24,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1785581760,
+            "longitude": -28.36,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1785581880,
+            "longitude": -28.48,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1785582000,
+            "longitude": -28.6,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1785582120,
+            "longitude": -28.72,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1785582240,
+            "longitude": -28.84,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1785582360,
+            "longitude": -28.96,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1785582480,
+            "longitude": -29.08,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1785582600,
+            "longitude": -29.2,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1785582720,
+            "longitude": -29.32,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1785582840,
+            "longitude": -29.44,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1785582960,
+            "longitude": -29.56,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1785583080,
+            "longitude": -29.68,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1785583200,
+            "longitude": -29.8,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1785583320,
+            "longitude": -29.92,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1785583440,
+            "longitude": -30.04,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1785583560,
+            "longitude": -30.16,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1785583680,
+            "longitude": -30.28,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1785583800,
+            "longitude": -30.4,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1785583920,
+            "longitude": -30.52,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1785584040,
+            "longitude": -30.64,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1785584160,
+            "longitude": -30.76,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          },
+          {
+            "timestamp": 1785584280,
+            "longitude": -30.88,
+            "latitude": 58.5,
+            "altitude": 10668,
+            "heading": 270,
+            "velocity": 235
+          }
+        ]
+      }
     }
   },
   "tools": {
@@ -242,7 +383,7 @@
       ],
       "points": [
         [
-          1753995600,
+          1785581400,
           -28.0,
           58.5,
           10668,
@@ -250,7 +391,7 @@
           235
         ],
         [
-          1753995720,
+          1785581520,
           -28.12,
           58.5,
           10668,
@@ -258,7 +399,7 @@
           235
         ],
         [
-          1753995840,
+          1785581640,
           -28.24,
           58.5,
           10668,
@@ -266,7 +407,7 @@
           235
         ],
         [
-          1753995960,
+          1785581760,
           -28.36,
           58.5,
           10668,
@@ -274,7 +415,7 @@
           235
         ],
         [
-          1753996080,
+          1785581880,
           -28.48,
           58.5,
           10668,
@@ -282,7 +423,7 @@
           235
         ],
         [
-          1753996200,
+          1785582000,
           -28.6,
           58.5,
           10668,
@@ -290,7 +431,7 @@
           235
         ],
         [
-          1753996320,
+          1785582120,
           -28.72,
           58.5,
           10668,
@@ -298,7 +439,7 @@
           235
         ],
         [
-          1753996440,
+          1785582240,
           -28.84,
           58.5,
           10668,
@@ -306,7 +447,7 @@
           235
         ],
         [
-          1753996560,
+          1785582360,
           -28.96,
           58.5,
           10668,
@@ -314,7 +455,7 @@
           235
         ],
         [
-          1753996680,
+          1785582480,
           -29.08,
           58.5,
           10668,
@@ -322,7 +463,7 @@
           235
         ],
         [
-          1753996800,
+          1785582600,
           -29.2,
           58.5,
           10668,
@@ -330,7 +471,7 @@
           235
         ],
         [
-          1753996920,
+          1785582720,
           -29.32,
           58.5,
           10668,
@@ -338,7 +479,7 @@
           235
         ],
         [
-          1753997040,
+          1785582840,
           -29.44,
           58.5,
           10668,
@@ -346,7 +487,7 @@
           235
         ],
         [
-          1753997160,
+          1785582960,
           -29.56,
           58.5,
           10668,
@@ -354,7 +495,7 @@
           235
         ],
         [
-          1753997280,
+          1785583080,
           -29.68,
           58.5,
           10668,
@@ -362,7 +503,7 @@
           235
         ],
         [
-          1753997400,
+          1785583200,
           -29.8,
           58.5,
           10668,
@@ -370,7 +511,7 @@
           235
         ],
         [
-          1753997520,
+          1785583320,
           -29.92,
           58.5,
           10668,
@@ -378,7 +519,7 @@
           235
         ],
         [
-          1753997640,
+          1785583440,
           -30.04,
           58.5,
           10668,
@@ -386,7 +527,7 @@
           235
         ],
         [
-          1753997760,
+          1785583560,
           -30.16,
           58.5,
           10668,
@@ -394,7 +535,7 @@
           235
         ],
         [
-          1753997880,
+          1785583680,
           -30.28,
           58.5,
           10668,
@@ -402,7 +543,7 @@
           235
         ],
         [
-          1753998000,
+          1785583800,
           -30.4,
           58.5,
           10668,
@@ -410,7 +551,7 @@
           235
         ],
         [
-          1753998120,
+          1785583920,
           -30.52,
           58.5,
           10668,
@@ -418,7 +559,7 @@
           235
         ],
         [
-          1753998240,
+          1785584040,
           -30.64,
           58.5,
           10668,
@@ -426,7 +567,7 @@
           235
         ],
         [
-          1753998360,
+          1785584160,
           -30.76,
           58.5,
           10668,
@@ -434,7 +575,7 @@
           235
         ],
         [
-          1753998480,
+          1785584280,
           -30.88,
           58.5,
           10668,

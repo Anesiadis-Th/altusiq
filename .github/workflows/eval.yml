@@ -1,19 +1,20 @@
 name: Investigation eval
 
-# Replays the recorded cases through the production agent every night and on
-# demand. Fails only when the harness itself breaks or a replay expectation
-# (a deterministic code check) regresses; live model quality never fails it.
-# Live mode runs only if LLM_API_KEY and LLM_PROVIDER are configured, and is
-# capped at 20 calls so it stays inside the free tiers (ADR-018).
+# Runs the recorded cases through the production agent. Replay mode also runs
+# in CI (ci.yml); this workflow is for live runs against a real provider.
+#
+# Live mode needs LLM_API_KEY and LLM_PROVIDER, and is capped at 40 model calls,
+# 10 per case. The workflow is manual-only because free quotas are per account:
+# a scheduled live run on the production account would use requests the deployed
+# investigation service needs (OpenRouter's free tier allows 50 a day). Local
+# runs against Ollama (LLM_BASE_URL, LLM_MODEL) use neither quota.
 
 on:
-  schedule:
-    - cron: "17 3 * * *"
   workflow_dispatch:
 
 jobs:
   eval:
-    name: Replay and score
+    name: Run and score
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

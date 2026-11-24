@@ -18,11 +18,11 @@
     "last_altitude": 1050,
     "evidence": {
       "at_confirm": {
-        "snapshot_at": "2026-08-01T11:52:00Z",
-        "source_point_count": 10,
+        "snapshot_at": "2026-08-01T11:46:00Z",
+        "source_point_count": 4,
         "track_points": [
           {
-            "timestamp": 1753998600,
+            "timestamp": 1785584400,
             "longitude": 10.9,
             "latitude": 59.9,
             "altitude": 2400,
@@ -30,7 +30,7 @@
             "velocity": 110
           },
           {
-            "timestamp": 1753998720,
+            "timestamp": 1785584520,
             "longitude": 10.9,
             "latitude": 59.915,
             "altitude": 2250,
@@ -38,7 +38,7 @@
             "velocity": 110
           },
           {
-            "timestamp": 1753998840,
+            "timestamp": 1785584640,
             "longitude": 10.9,
             "latitude": 59.93,
             "altitude": 2100,
@@ -46,7 +46,45 @@
             "velocity": 110
           },
           {
-            "timestamp": 1753998960,
+            "timestamp": 1785584760,
+            "longitude": 10.9,
+            "latitude": 59.945,
+            "altitude": 1950,
+            "heading": 10,
+            "velocity": 110
+          }
+        ]
+      },
+      "at_close": {
+        "snapshot_at": "2026-08-01T12:06:00Z",
+        "source_point_count": 10,
+        "track_points": [
+          {
+            "timestamp": 1785584400,
+            "longitude": 10.9,
+            "latitude": 59.9,
+            "altitude": 2400,
+            "heading": 10,
+            "velocity": 110
+          },
+          {
+            "timestamp": 1785584520,
+            "longitude": 10.9,
+            "latitude": 59.915,
+            "altitude": 2250,
+            "heading": 10,
+            "velocity": 110
+          },
+          {
+            "timestamp": 1785584640,
+            "longitude": 10.9,
+            "latitude": 59.93,
+            "altitude": 2100,
+            "heading": 10,
+            "velocity": 110
+          },
+          {
+            "timestamp": 1785584760,
             "longitude": 10.9,
             "latitude": 59.945,
             "altitude": 1950,
@@ -54,7 +92,7 @@
             "velocity": 110
           },
           {
-            "timestamp": 1753999080,
+            "timestamp": 1785584880,
             "longitude": 10.9,
             "latitude": 59.96,
             "altitude": 1800,
@@ -62,7 +100,7 @@
             "velocity": 110
           },
           {
-            "timestamp": 1753999200,
+            "timestamp": 1785585000,
             "longitude": 10.9,
             "latitude": 59.975,
             "altitude": 1650,
@@ -70,7 +108,7 @@
             "velocity": 110
           },
           {
-            "timestamp": 1753999320,
+            "timestamp": 1785585120,
             "longitude": 10.9,
             "latitude": 59.99,
             "altitude": 1500,
@@ -78,7 +116,7 @@
             "velocity": 110
           },
           {
-            "timestamp": 1753999440,
+            "timestamp": 1785585240,
             "longitude": 10.9,
             "latitude": 60.005,
             "altitude": 1350,
@@ -86,7 +124,7 @@
             "velocity": 110
           },
           {
-            "timestamp": 1753999560,
+            "timestamp": 1785585360,
             "longitude": 10.9,
             "latitude": 60.02,
             "altitude": 1200,
@@ -94,7 +132,7 @@
             "velocity": 110
           },
           {
-            "timestamp": 1753999680,
+            "timestamp": 1785585480,
             "longitude": 10.9,
             "latitude": 60.035,
             "altitude": 1050,
@@ -102,8 +140,7 @@
             "velocity": 110
           }
         ]
-      },
-      "at_close": null
+      }
     }
   },
   "tools": {
@@ -122,7 +159,7 @@
       ],
       "points": [
         [
-          1753998600,
+          1785584400,
           10.9,
           59.9,
           2400,
@@ -130,7 +167,7 @@
           110
         ],
         [
-          1753998720,
+          1785584520,
           10.9,
           59.915,
           2250,
@@ -138,7 +175,7 @@
           110
         ],
         [
-          1753998840,
+          1785584640,
           10.9,
           59.93,
           2100,
@@ -146,7 +183,7 @@
           110
         ],
         [
-          1753998960,
+          1785584760,
           10.9,
           59.945,
           1950,
@@ -154,7 +191,7 @@
           110
         ],
         [
-          1753999080,
+          1785584880,
           10.9,
           59.96,
           1800,
@@ -162,7 +199,7 @@
           110
         ],
         [
-          1753999200,
+          1785585000,
           10.9,
           59.975,
           1650,
@@ -170,7 +207,7 @@
           110
         ],
         [
-          1753999320,
+          1785585120,
           10.9,
           59.99,
           1500,
@@ -178,7 +215,7 @@
           110
         ],
         [
-          1753999440,
+          1785585240,
           10.9,
           60.005,
           1350,
@@ -186,7 +223,7 @@
           110
         ],
         [
-          1753999560,
+          1785585360,
           10.9,
           60.02,
           1200,
@@ -194,7 +231,7 @@
           110
         ],
         [
-          1753999680,
+          1785585480,
           10.9,
           60.035,
           1050,

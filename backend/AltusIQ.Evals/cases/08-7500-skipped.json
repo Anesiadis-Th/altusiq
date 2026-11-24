@@ -17,12 +17,13 @@
     "last_latitude": 52.2,
     "last_altitude": 10972,
     "evidence": {
-      "at_confirm": {
-        "snapshot_at": "2026-08-01T11:52:00Z",
+      "at_confirm": null,
+      "at_close": {
+        "snapshot_at": "2026-08-01T12:10:00Z",
         "source_point_count": 6,
         "track_points": [
           {
-            "timestamp": 1753999800,
+            "timestamp": 1785585600,
             "longitude": 5.5,
             "latitude": 52.2,
             "altitude": 10972,
@@ -30,7 +31,7 @@
             "velocity": 230
           },
           {
-            "timestamp": 1753999920,
+            "timestamp": 1785585720,
             "longitude": 5.55,
             "latitude": 52.2,
             "altitude": 10972,
@@ -38,7 +39,7 @@
             "velocity": 230
           },
           {
-            "timestamp": 1754000040,
+            "timestamp": 1785585840,
             "longitude": 5.6,
             "latitude": 52.2,
             "altitude": 10972,
@@ -46,7 +47,7 @@
             "velocity": 230
           },
           {
-            "timestamp": 1754000160,
+            "timestamp": 1785585960,
             "longitude": 5.65,
             "latitude": 52.2,
             "altitude": 10972,
@@ -54,7 +55,7 @@
             "velocity": 230
           },
           {
-            "timestamp": 1754000280,
+            "timestamp": 1785586080,
             "longitude": 5.7,
             "latitude": 52.2,
             "altitude": 10972,
@@ -62,7 +63,7 @@
             "velocity": 230
           },
           {
-            "timestamp": 1754000400,
+            "timestamp": 1785586200,
             "longitude": 5.75,
             "latitude": 52.2,
             "altitude": 10972,
@@ -70,8 +71,7 @@
             "velocity": 230
           }
         ]
-      },
-      "at_close": null
+      }
     }
   },
   "tools": {
@@ -90,7 +90,7 @@
       ],
       "points": [
         [
-          1753999800,
+          1785585600,
           5.5,
           52.2,
           10972,
@@ -98,7 +98,7 @@
           230
         ],
         [
-          1753999920,
+          1785585720,
           5.55,
           52.2,
           10972,
@@ -106,7 +106,7 @@
           230
         ],
         [
-          1754000040,
+          1785585840,
           5.6,
           52.2,
           10972,
@@ -114,7 +114,7 @@
           230
         ],
         [
-          1754000160,
+          1785585960,
           5.65,
           52.2,
           10972,
@@ -122,7 +122,7 @@
           230
         ],
         [
-          1754000280,
+          1785586080,
           5.7,
           52.2,
           10972,
@@ -130,7 +130,7 @@
           230
         ],
         [
-          1754000400,
+          1785586200,
           5.75,
           52.2,
           10972,

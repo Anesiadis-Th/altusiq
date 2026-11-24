@@ -32,6 +32,12 @@ jobs:
         run: dotnet test AltusIQ.sln --configuration Release --no-build
         working-directory: backend
 
+      # Replay mode only: no model key exists in this job, so nothing leaves the
+      # runner. A failed replay expectation is a code regression and fails CI.
+      - name: Replay eval
+        run: dotnet run --project AltusIQ.Evals --configuration Release --no-build -- --results results
+        working-directory: backend
+
   frontend:
     name: Frontend lint and build
     runs-on: ubuntu-latest

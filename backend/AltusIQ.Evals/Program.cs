@@ -29,7 +29,7 @@ try
     var runner = new EvalRunner(live);
 
     Console.WriteLine($"AltusIQ eval: {cases.Count} case(s), mode {runner.Mode}" +
-        (live is null ? "" : $", {live.Name}/{live.Model}, capped at {EvalRunner.LiveCallCap} calls"));
+        (live is null ? "" : $", {live.Name}/{live.Model}, capped at {EvalRunner.RunCallCap} calls ({EvalRunner.PerCaseCallCap} per case)"));
     Console.WriteLine();
 
     var report = await runner.RunAsync(cases, CancellationToken.None);
@@ -69,21 +69,39 @@ static LlmProviderSettings? LiveProvider()
     if (string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(provider))
         return null;
 
-    // Same table as backend/appsettings.json Llm:Providers.
-    var (baseUrl, model) = provider.ToLowerInvariant() switch
-    {
-        "groq" => ("https://api.groq.com/openai/v1", "llama-3.3-70b-versatile"),
-        "openrouter" => ("https://openrouter.ai/api/v1", "google/gemma-4-31b-it:free"),
-        _ => (Environment.GetEnvironmentVariable("LLM_BASE_URL") ?? throw new InvalidOperationException($"Unknown LLM_PROVIDER {provider}; set LLM_BASE_URL"), "")
-    };
+    // Known providers come from the API's appsettings.json, so the eval runs the
+    // same model as production. Any other provider, for example a local Ollama
+    // server, needs LLM_BASE_URL and LLM_MODEL.
+    var known = ProductionProviders()
+        .FirstOrDefault(p => string.Equals(p.Name, provider, StringComparison.OrdinalIgnoreCase));
+
+    var baseUrl = Environment.GetEnvironmentVariable("LLM_BASE_URL") ?? known?.BaseUrl
+        ?? throw new InvalidOperationException($"Unknown LLM_PROVIDER {provider}; set LLM_BASE_URL and LLM_MODEL");
+    var model = Environment.GetEnvironmentVariable("LLM_MODEL") ?? known?.Model
+        ?? throw new InvalidOperationException("Set LLM_MODEL");
 
     return new LlmProviderSettings
     {
         Name = provider,
-        BaseUrl = Environment.GetEnvironmentVariable("LLM_BASE_URL") ?? baseUrl,
-        Model = Environment.GetEnvironmentVariable("LLM_MODEL") ?? (model.Length > 0 ? model : throw new InvalidOperationException("Set LLM_MODEL")),
+        BaseUrl = baseUrl,
+        Model = model,
         ApiKeyEnv = "LLM_API_KEY"
     };
+}
+
+// Reads Llm:Providers from appsettings.json, which the project reference to the
+// API copies into this executable's output directory.
+static IReadOnlyList<LlmProviderSettings> ProductionProviders()
+{
+    var path = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
+    if (!File.Exists(path))
+        return [];
+
+    using var doc = JsonDocument.Parse(File.ReadAllText(path), new JsonDocumentOptions { CommentHandling = JsonCommentHandling.Skip });
+    if (!doc.RootElement.TryGetProperty("Llm", out var llm) || !llm.TryGetProperty("Providers", out var providers))
+        return [];
+
+    return providers.Deserialize<List<LlmProviderSettings>>(new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? [];
 }
 
 static void PrintTable(RunReport report)
@@ -105,7 +123,8 @@ static void PrintTable(RunReport report)
     Console.WriteLine();
     Console.WriteLine($"| metric ({report.Mode}, {report.PromptVersion}) | value |");
     Console.WriteLine("| --- | ---: |");
-    Console.WriteLine(string.Format(inv, "| cases | {0} ({1} investigated, {2} skipped) |", s.Cases, s.Investigated, s.Skipped));
+    Console.WriteLine(string.Format(inv, "| cases | {0} ({1} investigated, {2} skipped, {3} budget exhausted) |", s.Cases, s.Investigated, s.Skipped, s.BudgetExhausted));
+    Console.WriteLine($"| git commit | {report.GitCommit ?? "unknown"} |");
     Console.WriteLine(string.Format(inv, "| schema-valid rate | {0:P0} |", s.SchemaValidRate));
     Console.WriteLine(string.Format(inv, "| grounded rate | {0:P0} |", s.GroundedRate));
     Console.WriteLine(string.Format(inv, "| tool-selection accuracy | {0:P0} |", s.ToolSelectionAccuracy));
