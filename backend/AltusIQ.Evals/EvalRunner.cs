@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 using AltusIQ.Api.Investigation;
 using AltusIQ.Api.Llm;
 using AltusIQ.Api.Models;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 
@@ -76,9 +77,16 @@ public sealed class EvalRunner
 
     public async Task<RunReport> RunAsync(IReadOnlyList<EvalCase> cases, CancellationToken ct)
     {
+        // A live case that falls back says only "no provider produced a brief";
+        // the provider's error is in the agent's log lines, so live mode prints
+        // them. Replay stays quiet. Disposing the factory flushes the console.
+        using var logs = _live is null
+            ? NullLoggerFactory.Instance
+            : LoggerFactory.Create(b => b.AddSimpleConsole(o => o.SingleLine = true).SetMinimumLevel(LogLevel.Information));
+
         ILlmClient? liveClient = _live is null
             ? null
-            : new OpenAiCompatibleChatClient(new HttpClient { Timeout = TimeSpan.FromSeconds(60) }, NullLogger<OpenAiCompatibleChatClient>.Instance);
+            : new OpenAiCompatibleChatClient(new HttpClient { Timeout = TimeSpan.FromSeconds(60) }, logs.CreateLogger<OpenAiCompatibleChatClient>());
 
         var remaining = _live is null ? int.MaxValue : RunCallCap;
         var results = new List<CaseResult>();
@@ -94,7 +102,7 @@ public sealed class EvalRunner
             var llm = liveClient ?? new ReplayLlmClient(c.ReplayScript);
             var agent = new InvestigationAgent(
                 llm, Options.Create(settings), _prompts, budget, TimeProvider.System,
-                NullLogger<InvestigationAgent>.Instance);
+                logs.CreateLogger<InvestigationAgent>());
             var tools = new RecordedToolSource(c.Tools);
 
             var sw = Stopwatch.StartNew();

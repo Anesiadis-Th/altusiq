@@ -30,7 +30,7 @@ public static partial class GroundednessChecker
                 corpus.Add(token);
         }
 
-        var unsupported = Tokens(briefText)
+        var unsupported = Tokens(briefText, brief: true)
             .Where(t => !corpus.Contains(t))
             .Distinct()
             .OrderBy(t => t, StringComparer.Ordinal)
@@ -39,8 +39,16 @@ public static partial class GroundednessChecker
         return new Result(unsupported.Count == 0, unsupported);
     }
 
-    internal static IEnumerable<string> Tokens(string text)
+    internal static IEnumerable<string> Tokens(string text, bool brief = false)
     {
+        text = Normalize(text);
+
+        // Only the brief is prose, where "11,277 m" is one figure. In evidence a
+        // comma separates JSON values, and joining "40,240" in a trail row would
+        // hide the 240 it contains.
+        if (brief)
+            text = CommaGroupSeparator().Replace(text, "");
+
         foreach (Match m in IcaoCode().Matches(text))
         {
             if (!Allowlist.Contains(m.Value))
@@ -49,11 +57,38 @@ public static partial class GroundednessChecker
 
         foreach (Match m in Integer().Matches(text))
         {
-            // "000" from "10,000" parses to 0 and is never claimed as a figure.
+            // Outside the brief, "000" from "10,000" parses to 0 and is never
+            // claimed as a figure.
             if (long.TryParse(m.Value, out var n) && n >= 100)
                 yield return n.ToString();
         }
     }
+
+    /// <summary>
+    /// The brief arrives as JSON, and System.Text.Json escapes every space
+    /// separator except U+0020, even under relaxed escaping. gpt-oss writes
+    /// "11 277 m" with a narrow no-break space, so the text here read
+    /// "11 277 m": the figures 202 and 277, neither of which the model
+    /// wrote. Escapes are decoded first, then digit groups are joined across the
+    /// typographic spaces that only separate thousands. A plain space is left
+    /// alone, because "FL350 300 km" is two figures.
+    /// </summary>
+    private static string Normalize(string text)
+    {
+        var decoded = UnicodeEscape().Replace(text, m => ((char)Convert.ToUInt16(m.Groups[1].Value, 16)).ToString());
+        return GroupSeparator().Replace(decoded, "");
+    }
+
+    [GeneratedRegex(@"\\u([0-9A-Fa-f]{4})")]
+    private static partial Regex UnicodeEscape();
+
+    // No-break space, thin space or narrow no-break space between a digit and a
+    // group of exactly three digits.
+    [GeneratedRegex(@"(?<=\d)[   ](?=\d{3}(?!\d))")]
+    private static partial Regex GroupSeparator();
+
+    [GeneratedRegex(@"(?<=\d),(?=\d{3}(?!\d))")]
+    private static partial Regex CommaGroupSeparator();
 
     [GeneratedRegex(@"\b[A-Z]{4}\b")]
     private static partial Regex IcaoCode();

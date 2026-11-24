@@ -77,7 +77,7 @@ public class InvestigationAgentTests
         var result = await h.Run();
 
         Assert.Equal(InvestigationStatus.Completed, result.Status);
-        Assert.Equal("investigate.v1", result.PromptVersion);
+        Assert.Equal("investigate.v2", result.PromptVersion);
         Assert.Equal("groq", result.Provider);
         Assert.Equal("groq-model", result.Model);
         Assert.Equal(50 + 120, result.InputTokens);
@@ -156,6 +156,59 @@ public class InvestigationAgentTests
         Assert.Equal(["groq", "groq", "openrouter"], h.Llm.Requests.Select(r => r.Provider.Name));
         // ModelCalls counts every call across providers, failed ones included.
         Assert.Equal(3, result.ModelCalls);
+    }
+
+    [Fact]
+    public async Task A_429_that_names_its_wait_is_retried_on_the_same_provider_after_that_wait()
+    {
+        // Groq's per-minute token limit on the live 7600 case: "try again in
+        // 9.225s". Retrying after the 3 s call spacing hit the limit again.
+        var h = new Harness();
+        h.Llm.ThenRateLimited(TimeSpan.FromSeconds(9)).ThenBrief(FakeLlmClient.ValidBrief);
+
+        var run = h.Run();
+
+        h.Clock.Advance(TimeSpan.FromSeconds(8.9));
+        Assert.False(run.IsCompleted);
+        Assert.Single(h.Llm.Requests);
+
+        h.Clock.Advance(TimeSpan.FromSeconds(0.1));
+        var result = await run;
+
+        Assert.Equal(InvestigationStatus.Completed, result.Status);
+        Assert.Equal(["groq", "groq"], h.Llm.Requests.Select(r => r.Provider.Name));
+    }
+
+    [Fact]
+    public async Task A_429_asking_for_longer_than_the_cap_moves_straight_to_the_next_provider()
+    {
+        // A daily limit asks for minutes or hours; waiting would stall the queue.
+        var h = new Harness();
+        h.Llm.ThenRateLimited(TimeSpan.FromMinutes(7)).ThenBrief(FakeLlmClient.ValidBrief);
+
+        var result = await h.Run();
+
+        Assert.Equal("openrouter", result.Provider);
+        Assert.Equal(["groq", "openrouter"], h.Llm.Requests.Select(r => r.Provider.Name));
+    }
+
+    [Fact]
+    public async Task The_retry_allowance_is_per_call_so_a_later_429_is_retried_too()
+    {
+        // The conversation grows each tool round, so a token limit can be hit
+        // again after an earlier retry got through.
+        var h = new Harness();
+        h.Llm.ThenToolCall(ToolNames.GetTrail, """{"icao24":"abc123"}""")
+             .ThenThrow(LlmFailureKind.RateLimited, 429)
+             .ThenToolCall(ToolNames.NearestAirports, """{"lat":59.6,"lon":17.9}""")
+             .ThenThrow(LlmFailureKind.RateLimited, 429)
+             .ThenBrief(FakeLlmClient.ValidBrief);
+
+        var result = await h.Run();
+
+        Assert.Equal(InvestigationStatus.Completed, result.Status);
+        Assert.Equal("groq", result.Provider);
+        Assert.Equal(5, result.ModelCalls);
     }
 
     [Theory]
@@ -405,6 +458,6 @@ public class InvestigationAgentTests
         Assert.Empty(h.Tools.Calls);
         Assert.Null(result.Brief);
         Assert.Null(result.ToStoredJson());
-        Assert.Equal("investigate.v1", result.PromptVersion);
+        Assert.Equal("investigate.v2", result.PromptVersion);
     }
 }

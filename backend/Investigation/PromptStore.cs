@@ -7,7 +7,7 @@ namespace AltusIQ.Api.Investigation;
 /// </summary>
 public sealed class PromptStore
 {
-    public const string CurrentVersion = "investigate.v1";
+    public const string CurrentVersion = "investigate.v2";
 
     private readonly Lazy<string> _text;
 

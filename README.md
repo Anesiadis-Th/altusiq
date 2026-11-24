@@ -189,11 +189,11 @@ Every OpenSky state row carries the transponder code, and three codes have a fix
 
 **Investigation.** A closed event, or one still open after 30 minutes, is queued on a channel and picked up by a background consumer with concurrency 1, never on the poll path. The agent has five tools, each capped at 8 KB: the trail, nearest airports from a backend copy of the OurAirports set, the latest METAR, the callsign's route from adsbdb, and earlier stored flights for the airframe. It runs at most six tool rounds, must answer in one validated JSON shape with no `cause` and no `confidence` field, and is checked in code for groundedness: every four-letter code and every number of 100 or more in the brief has to appear in what the model was shown. Ungrounded briefs are stored with the flag, not hidden. Each event also keeps a trace of what the model was shown (tool outputs, tools called, model calls and the tokens the check could not find), so a real event can be audited or replayed later; the API does not serve it. The detector state and the queue live in memory, so on startup the consumer closes events an earlier process left open, at their last fix, and re-queues every brief still pending.
 
-**Zero cost, two providers, a budget.** Groq and OpenRouter free plans, no card on file, tried in order; a 429, 5xx, timeout or invalid output after one retry moves to the next, and a model without tool calling gets single-shot mode. Forty model calls a day across both, counted per UTC day. When the budget is spent, every provider fails, or `Llm:Enabled` is false, code assembles a brief from the tool outputs and stores it as `uninvestigated`. Every event gets a brief; only the model is optional.
+**Zero cost, two providers, a budget.** Groq and OpenRouter free plans, no card on file, tried in order; a 429, 5xx, timeout or invalid output after one retry of the same call moves to the next, a 429 that names its wait (Groq's per-minute token limit does) is retried after that wait, up to 30 s, and a model without tool calling gets single-shot mode. Forty model calls a day across both, counted per UTC day. When the budget is spent, every provider fails, or `Llm:Enabled` is false, code assembles a brief from the tool outputs and stores it as `uninvestigated`. Every event gets a brief; only the model is optional.
 
 **What the data cannot show.** Positions arrive every 120 s and coverage has gaps, so a brief can describe a descent but not a go-around. The reason a crew set a code is almost never visible in ADS-B, and every brief lists it under `unknowns`. The Events rail shows briefs under an **AI-generated, unverified** label with the model name. How many events the feed actually produces is unmeasured; one log line per poll counts them, and that number decides whether anything more is built.
 
-**Eval harness.** `backend/AltusIQ.Evals` runs the production agent over eight hand-written cases, a 7700 in fog at Arlanda, a 7600 in cruise, a turn-back, an empty trail, an aircraft far from any airport, a failed METAR fetch, a regression fixture whose recorded response names an airport the evidence never mentioned, and a 7500 that must be skipped. Replay mode, the default, never leaves the process and runs on every CI build, where a failed expectation fails the build. Live mode runs only on manual dispatch, so it never spends the deployed investigator's free quota, and is capped at 40 model calls, 10 per case; a case the cap stops is reported as `budget_exhausted` and left out of the rates. Each result file records the prompt version, model and git commit. From a replay run of `investigate.v1`:
+**Eval harness.** `backend/AltusIQ.Evals` runs the production agent over eight hand-written cases, a 7700 in fog at Arlanda, a 7600 in cruise, a turn-back, an empty trail, an aircraft far from any airport, a failed METAR fetch, a regression fixture whose recorded response names an airport the evidence never mentioned, and a 7500 that must be skipped. Replay mode, the default, never leaves the process and runs on every CI build, where a failed expectation fails the build. Live mode runs only on manual dispatch, so it never spends the deployed investigator's free quota, and is capped at 40 model calls, 10 per case; a case the cap stops is reported as `budget_exhausted` and left out of the rates. Each result file records the prompt version, model and git commit. From a replay run of `investigate.v2`:
 
 | metric | value |
 | --- | ---: |
@@ -283,10 +283,10 @@ Opens at `http://localhost:3000`.
 
 ```bash
 npm test --prefix frontend        # 47 Vitest tests
-dotnet test backend/AltusIQ.sln   # 108 xUnit tests
+dotnet test backend/AltusIQ.sln   # 122 xUnit tests
 ```
 
-155 tests cover the pure logic on both sides — the parts where a silent regression would be invisible on screen.
+169 tests cover the pure logic on both sides — the parts where a silent regression would be invisible on screen.
 
 **Backend (xUnit)** — the ingestion rules that decide what reaches the database:
 

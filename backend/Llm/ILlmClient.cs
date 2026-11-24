@@ -47,11 +47,15 @@ public enum LlmFailureKind
     Other
 }
 
-public sealed class LlmException(LlmFailureKind kind, string message, int? statusCode = null, Exception? inner = null)
+public sealed class LlmException(
+    LlmFailureKind kind, string message, int? statusCode = null, Exception? inner = null, TimeSpan? retryAfter = null)
     : Exception(message, inner)
 {
     public LlmFailureKind Kind { get; } = kind;
     public int? StatusCode { get; } = statusCode;
+
+    /// <summary>How long the provider asked the caller to wait, when a 429 said so.</summary>
+    public TimeSpan? RetryAfter { get; } = retryAfter;
 
     /// <summary>The kinds that mean "try the next provider" rather than "give up".</summary>
     public bool IsTransient => Kind is LlmFailureKind.RateLimited or LlmFailureKind.ServerError or LlmFailureKind.Timeout;

@@ -105,7 +105,7 @@ public class InvestigationServiceTests
         Assert.Equal(p.Writer.Single().Id, id);
         Assert.Equal(InvestigationStatus.Completed, result.Status);
         Assert.Equal(InvestigationStatus.Completed, p.Store.Rows[id].InvestigationStatus);
-        Assert.Equal("investigate.v1", p.Store.Rows[id].PromptVersion);
+        Assert.Equal("investigate.v2", p.Store.Rows[id].PromptVersion);
         Assert.NotNull(p.Store.Rows[id].InvestigationJson);
     }
 

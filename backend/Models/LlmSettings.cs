@@ -14,7 +14,14 @@ public class LlmSettings
     /// <summary>Tool-call rounds per investigation before the model is asked to conclude.</summary>
     public int MaxToolSteps { get; set; } = 6;
 
-    /// <summary>Tried in order; a 429, 5xx, timeout or invalid output after one retry moves to the next.</summary>
+    /// <summary>
+    /// Longest wait a 429's retry hint may ask for before the retry. Groq's
+    /// per-minute token limit asks for seconds; a daily limit asks for minutes
+    /// or hours, and that provider is skipped instead.
+    /// </summary>
+    public int MaxRetryWaitSeconds { get; set; } = 30;
+
+    /// <summary>Tried in order; a 429, 5xx, timeout or invalid output after one retry of the same call moves to the next.</summary>
     public List<LlmProviderSettings> Providers { get; set; } = [];
 }
 

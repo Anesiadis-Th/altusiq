@@ -34,6 +34,8 @@ internal sealed class FakeLlmClient : ILlmClient
     public FakeLlmClient ThenText(string text) => Then(_ => new LlmResponse(text, [], 10, 5));
     public FakeLlmClient ThenThrow(LlmFailureKind kind, int? status = null) =>
         Then(_ => throw new LlmException(kind, $"scripted {kind}", status));
+    public FakeLlmClient ThenRateLimited(TimeSpan retryAfter) =>
+        Then(_ => throw new LlmException(LlmFailureKind.RateLimited, "scripted 429", 429, retryAfter: retryAfter));
     public FakeLlmClient ThenToolCall(string name, string argumentsJson = "{}") =>
         Then(_ => ToolCalls((name, argumentsJson)));
 

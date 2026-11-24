@@ -1,8 +1,10 @@
+using System.Globalization;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 using AltusIQ.Api.Models;
 
 namespace AltusIQ.Api.Llm;
@@ -12,7 +14,7 @@ namespace AltusIQ.Api.Llm;
 /// both speak, with the tools parameter. Keys come from the environment
 /// variable each provider names; nothing here knows a provider by name.
 /// </summary>
-public sealed class OpenAiCompatibleChatClient : ILlmClient
+public sealed partial class OpenAiCompatibleChatClient : ILlmClient
 {
     private readonly HttpClient _http;
     private readonly ILogger<OpenAiCompatibleChatClient> _logger;
@@ -58,19 +60,21 @@ public sealed class OpenAiCompatibleChatClient : ILlmClient
             var text = await response.Content.ReadAsStringAsync(ct);
 
             if (!response.IsSuccessStatusCode)
-                throw Classify(request.Provider.Name, response.StatusCode, text, request.Tools is not null);
+                throw Classify(request.Provider.Name, response.StatusCode, text, request.Tools is not null, response.Headers.RetryAfter);
 
             return ParseResponse(text);
         }
     }
 
-    private static LlmException Classify(string provider, HttpStatusCode status, string body, bool sentTools)
+    private static LlmException Classify(
+        string provider, HttpStatusCode status, string body, bool sentTools, RetryConditionHeaderValue? retryAfter)
     {
         var code = (int)status;
         var snippet = body.Length > 300 ? body[..300] : body;
 
         if (code == 429)
-            return new LlmException(LlmFailureKind.RateLimited, $"{provider} rate limited: {snippet}", code);
+            return new LlmException(LlmFailureKind.RateLimited, $"{provider} rate limited: {snippet}", code,
+                retryAfter: RetryHint(retryAfter, body, DateTimeOffset.UtcNow));
 
         if (code >= 500)
             return new LlmException(LlmFailureKind.ServerError, $"{provider} returned {code}: {snippet}", code);
@@ -83,6 +87,49 @@ public sealed class OpenAiCompatibleChatClient : ILlmClient
 
         return new LlmException(LlmFailureKind.Other, $"{provider} returned {code}: {snippet}", code);
     }
+
+    /// <summary>
+    /// The wait a 429 asks for: the Retry-After header, or the "try again in
+    /// 9.225s" that Groq writes in the error body, whichever is longer. The body
+    /// uses Go durations ("2m59.5s", "530ms"), while a header may round to whole
+    /// seconds, so taking the longer of the two never retries early. Null when
+    /// neither says.
+    /// </summary>
+    internal static TimeSpan? RetryHint(RetryConditionHeaderValue? header, string body, DateTimeOffset now)
+    {
+        var fromHeader = header?.Delta ?? (header?.Date is { } date ? date - now : null);
+
+        TimeSpan? fromBody = null;
+        var match = TryAgainIn().Match(body);
+        if (match.Success)
+        {
+            var total = TimeSpan.Zero;
+            foreach (Match part in DurationPart().Matches(match.Groups[1].Value))
+            {
+                var n = double.Parse(part.Groups[1].Value, CultureInfo.InvariantCulture);
+                total += part.Groups[2].Value.ToLowerInvariant() switch
+                {
+                    "h" => TimeSpan.FromHours(n),
+                    "m" => TimeSpan.FromMinutes(n),
+                    "s" => TimeSpan.FromSeconds(n),
+                    _ => TimeSpan.FromMilliseconds(n)
+                };
+            }
+            fromBody = total;
+        }
+
+        var longer = fromHeader is null ? fromBody
+            : fromBody is null ? fromHeader
+            : fromHeader > fromBody ? fromHeader : fromBody;
+
+        return longer > TimeSpan.Zero ? longer : null;
+    }
+
+    [GeneratedRegex(@"try again in ((?:\d+(?:\.\d+)?(?:h|ms|m|s))+)", RegexOptions.IgnoreCase)]
+    private static partial Regex TryAgainIn();
+
+    [GeneratedRegex(@"(\d+(?:\.\d+)?)(h|ms|m|s)", RegexOptions.IgnoreCase)]
+    private static partial Regex DurationPart();
 
     internal static JsonObject BuildBody(LlmRequest request)
     {

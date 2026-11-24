@@ -156,10 +156,23 @@ public sealed class InvestigationAgent
                 ];
                 continue;
             }
-            catch (LlmException ex) when (ex.IsTransient && transportRetries < 1)
+            catch (LlmException ex) when (ex.IsTransient && transportRetries < 1 && WithinRetryCap(ex))
             {
                 transportRetries++;
-                _logger.LogWarning(ex, "{Provider} failed ({Kind}), retrying once", provider.Name, ex.Kind);
+
+                // A per-minute token limit names its own wait. Retrying after
+                // only the call spacing hits the same limit and drops the provider.
+                if (ex.RetryAfter is { } retryAfter)
+                {
+                    _logger.LogWarning(ex, "{Provider} failed ({Kind}), retrying once in {Seconds:0.#} s as asked",
+                        provider.Name, ex.Kind, retryAfter.TotalSeconds);
+                    await Task.Delay(retryAfter, _clock, ct);
+                }
+                else
+                {
+                    _logger.LogWarning(ex, "{Provider} failed ({Kind}), retrying once", provider.Name, ex.Kind);
+                }
+
                 continue;
             }
             catch (LlmException ex)
@@ -167,6 +180,11 @@ public sealed class InvestigationAgent
                 _logger.LogWarning(ex, "{Provider} failed ({Kind}), moving to the next provider", provider.Name, ex.Kind);
                 return new ProviderOutcome(null, false);
             }
+
+            // The retry allowance is per call. The conversation grows every tool
+            // round, so a token limit can be hit again later in a run that the
+            // earlier retry already got past.
+            transportRetries = 0;
 
             inputTokens += response.InputTokens;
             outputTokens += response.OutputTokens;
@@ -214,6 +232,9 @@ public sealed class InvestigationAgent
                 error, response.Content), false);
         }
     }
+
+    private bool WithinRetryCap(LlmException ex) =>
+        ex.RetryAfter is not { } wait || wait <= TimeSpan.FromSeconds(_settings.MaxRetryWaitSeconds);
 
     private static string UserPrompt(string record, ToolRun run) =>
         $"Event record:\n{record}\n\nGather what you need with the tools, then reply with only the JSON brief.";
@@ -416,7 +437,7 @@ public static class ToolDefinitions
             "Recent track points for the aircraft: rows of [unix_ts, lon, lat, alt_m, heading, velocity_ms].",
             """{"type":"object","properties":{"icao24":{"type":"string","description":"ICAO 24-bit hex address"}},"required":["icao24"]}"""),
         new(ToolNames.NearestAirports,
-            "Airports nearest a position, with distance in km and bearing.",
+            "Airports nearest a position, with distance_km and bearing_deg, the true bearing from the position to the airport.",
             """{"type":"object","properties":{"lat":{"type":"number"},"lon":{"type":"number"},"limit":{"type":"integer","minimum":1,"maximum":10}},"required":["lat","lon"]}"""),
         new(ToolNames.GetMetar,
             "Latest METAR weather report for a four-letter ICAO airport code.",
