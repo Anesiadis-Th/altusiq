@@ -154,6 +154,8 @@ public class InvestigationAgentTests
         Assert.Equal(InvestigationStatus.Completed, result.Status);
         Assert.Equal("openrouter", result.Provider);
         Assert.Equal(["groq", "groq", "openrouter"], h.Llm.Requests.Select(r => r.Provider.Name));
+        // ModelCalls counts every call across providers, failed ones included.
+        Assert.Equal(3, result.ModelCalls);
     }
 
     [Theory]
@@ -179,6 +181,9 @@ public class InvestigationAgentTests
 
         Assert.Equal(InvestigationStatus.Uninvestigated, result.Status);
         Assert.Null(result.Provider);
+        Assert.Equal("no provider produced a brief", result.Error);
+        // Each provider was tried twice (one retry), and all four calls are counted.
+        Assert.Equal(4, result.ModelCalls);
         Assert.NotNull(result.Brief);
         Assert.Contains("no model was consulted", result.Brief!.Summary);
         Assert.Empty(result.Brief.Explanations);
@@ -189,6 +194,27 @@ public class InvestigationAgentTests
         Assert.Contains(ToolNames.GetTrail, result.ToolsCalled);
         Assert.Contains(ToolNames.GetMetar, result.ToolsCalled);
         Assert.Contains(ToolNames.GetRoute, result.ToolsCalled);
+    }
+
+    [Theory]
+    [InlineData(null)]                                                    // adsbdb has no route
+    [InlineData("""{"error":"get_route failed: HttpRequestException"}""")] // the route tool threw
+    [InlineData("""[1,2,3]""")]                                           // not an object
+    public async Task The_deterministic_brief_survives_a_missing_or_malformed_route(string? routeOutput)
+    {
+        var h = new Harness();
+        h.Llm.Default = _ => throw new LlmException(LlmFailureKind.ServerError, "down", 503);
+        h.Tools.Outputs[ToolNames.GetRoute] = routeOutput;
+        // The error object the tool loop writes when a tool throws; it has no station field.
+        h.Tools.Outputs[ToolNames.GetMetar] = """{"error":"get_metar failed: TaskCanceledException"}""";
+
+        var result = await h.Run();
+
+        Assert.Equal(InvestigationStatus.Uninvestigated, result.Status);
+        Assert.NotNull(result.Brief);
+        Assert.Contains(result.Brief!.Unknowns, u => u.StartsWith("Planned route"));
+        Assert.Contains(result.Brief.Unknowns, u => u.Contains("METAR fetch failed"));
+        Assert.DoesNotContain(result.Brief.Observations, o => o.Contains("adsbdb"));
     }
 
     [Fact]
@@ -341,6 +367,7 @@ public class InvestigationAgentTests
 
         var spent = await h.Run();
         Assert.Equal(InvestigationStatus.Uninvestigated, spent.Status);
+        Assert.Equal(InvestigationAgent.BudgetSpentReason, spent.Error);
         Assert.Equal(40, h.Llm.Requests.Count);
         Assert.NotNull(spent.Brief);
 

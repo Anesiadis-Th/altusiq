@@ -46,7 +46,7 @@ public class InvestigationServiceTests
                 NullLogger<InvestigationAgent>.Instance);
 
             Consumer = new InvestigationService(
-                Queue, Store, agent, Tools, NullLogger<InvestigationService>.Instance);
+                Queue, Store, agent, Tools, Clock, NullLogger<InvestigationService>.Instance);
         }
 
         public async Task PollAfter(int seconds, params Aircraft[] aircraft)
@@ -107,6 +107,120 @@ public class InvestigationServiceTests
         Assert.Equal(InvestigationStatus.Completed, p.Store.Rows[id].InvestigationStatus);
         Assert.Equal("investigate.v1", p.Store.Rows[id].PromptVersion);
         Assert.NotNull(p.Store.Rows[id].InvestigationJson);
+    }
+
+    [Fact]
+    public async Task The_trace_keeps_what_the_model_saw_so_the_event_can_be_replayed()
+    {
+        var p = new Pipeline();
+        p.Llm.ThenToolCall(ToolNames.GetMetar, """{"icao":"ESSA"}""")
+             .ThenBrief(FakeLlmClient.ValidBrief);
+
+        await p.PollAfter(0, Plane("7700"));
+        await p.PollAfter(120, Plane("7700"));
+        await p.PollAfter(120, Plane("1200"));
+        await p.DrainAsync();
+
+        var row = p.Store.Rows.Values.Single();
+        Assert.Equal(2, row.ModelCalls);
+
+        using var trace = System.Text.Json.JsonDocument.Parse(row.InvestigationTraceJson!);
+        var root = trace.RootElement;
+        Assert.Equal(2, root.GetProperty("model_calls").GetInt32());
+        Assert.Contains(ToolNames.GetMetar, root.GetProperty("tools_called").EnumerateArray().Select(t => t.GetString()));
+        // The stored output is the exact string passed to the model.
+        Assert.Contains("FG", root.GetProperty("tool_outputs").GetProperty(ToolNames.GetMetar).GetString());
+        Assert.Contains("ESSA", root.GetProperty("raw_output").GetString());
+    }
+
+    [Fact]
+    public async Task A_skipped_event_stores_no_trace()
+    {
+        var p = new Pipeline();
+        await p.PollAfter(0, Plane("7500"));
+        await p.PollAfter(120, Plane("7500"));
+        await p.PollAfter(120, Plane("1200"));
+        await p.DrainAsync();
+
+        var row = p.Store.Rows.Values.Single();
+        Assert.Null(row.InvestigationTraceJson);
+        Assert.Null(row.ModelCalls);
+    }
+
+    // ---- startup sweep ----
+
+    private static AnomalyEvent Leftover(string status, string investigation, DateTime createdAt) => new()
+    {
+        Id = Guid.NewGuid(),
+        Icao24 = "def456",
+        Squawk = "7700",
+        Kind = "general_emergency",
+        FirstSeenAt = createdAt.AddMinutes(-2),
+        ConfirmedAt = createdAt,
+        LastSeenAt = createdAt.AddMinutes(8),
+        Status = status,
+        InvestigationStatus = investigation,
+        CreatedAt = createdAt
+    };
+
+    [Fact]
+    public async Task The_sweep_closes_events_a_previous_process_left_open_at_their_last_fix()
+    {
+        var p = new Pipeline();
+        var earlier = p.Clock.GetUtcNow().UtcDateTime.AddHours(-1);
+        var orphan = Leftover(AnomalyEventStatus.Open, InvestigationStatus.Completed, earlier);
+        p.Store.Rows[orphan.Id] = orphan;
+
+        var queued = await p.Consumer.RecoverAsync(CancellationToken.None);
+
+        Assert.Equal(0, queued);
+        Assert.Equal(AnomalyEventStatus.Closed, orphan.Status);
+        // ClosedAt is the last fix on the code, not the time of the sweep.
+        Assert.Equal(orphan.LastSeenAt, orphan.ClosedAt);
+    }
+
+    [Fact]
+    public async Task The_sweep_requeues_each_pending_event_once_and_leaves_finished_ones_alone()
+    {
+        var p = new Pipeline();
+        var earlier = p.Clock.GetUtcNow().UtcDateTime.AddHours(-1);
+        var pendingClosed = Leftover(AnomalyEventStatus.Closed, InvestigationStatus.Pending, earlier);
+        var pendingOpen = Leftover(AnomalyEventStatus.Open, InvestigationStatus.Pending, earlier.AddMinutes(5));
+        var done = Leftover(AnomalyEventStatus.Closed, InvestigationStatus.Completed, earlier);
+        foreach (var e in new[] { pendingClosed, pendingOpen, done })
+            p.Store.Rows[e.Id] = e;
+
+        Assert.Equal(2, await p.Consumer.RecoverAsync(CancellationToken.None));
+        Assert.Equal(AnomalyEventStatus.Closed, pendingOpen.Status);
+
+        var queued = new List<Guid>();
+        while (p.Queue.Reader.TryRead(out var id))
+            queued.Add(id);
+        Assert.Equal([pendingClosed.Id, pendingOpen.Id], queued);
+        Assert.Single(p.Store.Closed);
+    }
+
+    [Fact]
+    public async Task The_sweep_never_touches_an_event_this_process_created()
+    {
+        var p = new Pipeline();
+
+        // An event confirmed after startup and still open.
+        await p.PollAfter(0, Plane("7700"));
+        await p.PollAfter(120, Plane("7700"));
+
+        Assert.Equal(0, await p.Consumer.RecoverAsync(CancellationToken.None));
+        Assert.Equal(AnomalyEventStatus.Open, p.Store.Rows.Values.Single().Status);
+        Assert.Empty(p.Store.Closed);
+    }
+
+    [Fact]
+    public async Task A_database_that_is_down_at_startup_does_not_stop_the_consumer()
+    {
+        var p = new Pipeline();
+        p.Store.FailReads = true;
+
+        Assert.Equal(0, await p.Consumer.RecoverAsync(CancellationToken.None));
     }
 
     [Fact]

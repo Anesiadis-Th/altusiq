@@ -79,6 +79,9 @@ namespace AltusIQ.Api.Migrations
                         .HasMaxLength(24)
                         .HasColumnType("character varying(24)");
 
+                    b.Property<string>("InvestigationTraceJson")
+                        .HasColumnType("jsonb");
+
                     b.Property<string>("Kind")
                         .IsRequired()
                         .HasMaxLength(32)
@@ -102,6 +105,9 @@ namespace AltusIQ.Api.Migrations
                     b.Property<string>("Model")
                         .HasMaxLength(96)
                         .HasColumnType("character varying(96)");
+
+                    b.Property<int?>("ModelCalls")
+                        .HasColumnType("integer");
 
                     b.Property<string>("OriginCountry")
                         .HasMaxLength(64)

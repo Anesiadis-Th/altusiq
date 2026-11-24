@@ -59,6 +59,7 @@ public sealed class InvestigationAgent
         var record = EventRecordJson(evt);
 
         InvestigationResult? invalid = null;
+        var budgetSpent = false;
 
         if (_settings.Enabled)
         {
@@ -74,6 +75,7 @@ public sealed class InvestigationAgent
 
                 if (outcome.BudgetExhausted)
                 {
+                    budgetSpent = true;
                     _logger.LogWarning("Daily model budget spent ({Calls}); event {EventId} gets the deterministic brief",
                         _budget.CallsToday, evt.Id);
                     break;
@@ -90,9 +92,17 @@ public sealed class InvestigationAgent
 
         return new InvestigationResult(
             InvestigationStatus.Uninvestigated, brief, grounded.Grounded, grounded.Unsupported,
-            _prompts.Version, null, null, 0, 0, 0, 0, run.Calls, run.Outputs,
-            _settings.Enabled ? "no provider produced a brief" : "Llm:Enabled is false", null);
+            _prompts.Version, null, null, 0, 0, 0, run.ModelCalls, run.Calls, run.Outputs,
+            FallbackReason(budgetSpent), null);
     }
+
+    /// <summary>Error text on a deterministic brief written because the call budget ran out. The eval harness matches on it.</summary>
+    public const string BudgetSpentReason = "model call budget spent";
+
+    private string FallbackReason(bool budgetSpent) =>
+        !_settings.Enabled ? "Llm:Enabled is false"
+        : budgetSpent ? BudgetSpentReason
+        : "no provider produced a brief";
 
     private sealed record ProviderOutcome(InvestigationResult? Result, bool BudgetExhausted);
 
@@ -111,7 +121,6 @@ public sealed class InvestigationAgent
         var validationRetries = 0;
         var inputTokens = 0;
         var outputTokens = 0;
-        var calls = 0;
         var stopwatch = Stopwatch.StartNew();
 
         while (true)
@@ -121,17 +130,16 @@ public sealed class InvestigationAgent
             if (toolsSupported && toolSteps >= _settings.MaxToolSteps && messages[^1].Role == "tool")
                 messages.Add(ChatMessage.User("You have used all six tool rounds. Reply now with only the JSON brief."));
 
-            if (!_budget.TryReserve())
+            if (!_budget.TryReserve(out var wait))
                 return new ProviderOutcome(null, BudgetExhausted: true);
 
-            var wait = _budget.TimeUntilNextAllowed();
             if (wait > TimeSpan.Zero)
                 await Task.Delay(wait, _clock, ct);
 
             LlmResponse response;
             try
             {
-                calls++;
+                run.ModelCalls++;
                 response = await _llm.CompleteAsync(
                     new LlmRequest(provider, messages, offerTools ? ToolDefinitions.All : null), ct);
             }
@@ -187,7 +195,7 @@ public sealed class InvestigationAgent
                 return new ProviderOutcome(new InvestigationResult(
                     InvestigationStatus.Completed, brief, grounded.Grounded, grounded.Unsupported,
                     _prompts.Version, provider.Name, provider.Model, inputTokens, outputTokens,
-                    (int)stopwatch.ElapsedMilliseconds, calls, run.Calls, run.Outputs, null, response.Content), false);
+                    (int)stopwatch.ElapsedMilliseconds, run.ModelCalls, run.Calls, run.Outputs, null, response.Content), false);
             }
 
             if (validationRetries < 1)
@@ -202,7 +210,7 @@ public sealed class InvestigationAgent
             _logger.LogWarning("{Provider} produced invalid output twice for {EventId}: {Error}", provider.Name, evt.Id, error);
             return new ProviderOutcome(new InvestigationResult(
                 InvestigationStatus.InvalidOutput, null, false, [], _prompts.Version, provider.Name, provider.Model,
-                inputTokens, outputTokens, (int)stopwatch.ElapsedMilliseconds, calls, run.Calls, run.Outputs,
+                inputTokens, outputTokens, (int)stopwatch.ElapsedMilliseconds, run.ModelCalls, run.Calls, run.Outputs,
                 error, response.Content), false);
         }
     }
@@ -284,6 +292,9 @@ public sealed class InvestigationAgent
         }
 
         public IReadOnlyList<string> Calls => _calls;
+
+        /// <summary>Model calls across every provider tried, retries included.</summary>
+        public int ModelCalls { get; set; }
         public IReadOnlyDictionary<string, string?> Outputs => _outputs;
 
         public async Task<string> ExecuteAsync(string name, string argumentsJson, CancellationToken ct)

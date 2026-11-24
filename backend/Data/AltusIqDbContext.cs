@@ -84,6 +84,7 @@ public class AltusIqDbContext(DbContextOptions<AltusIqDbContext> options) : DbCo
 
             builder.Property(e => e.EvidenceJson).HasColumnType("jsonb");
             builder.Property(e => e.InvestigationJson).HasColumnType("jsonb");
+            builder.Property(e => e.InvestigationTraceJson).HasColumnType("jsonb");
 
             builder.Property(e => e.InvestigationStatus).HasMaxLength(24).IsRequired();
             builder.Property(e => e.PromptVersion).HasMaxLength(32);

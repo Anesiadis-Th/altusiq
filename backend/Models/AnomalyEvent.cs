@@ -39,6 +39,14 @@ public class AnomalyEvent
     public int? InputTokens { get; set; }
     public int? OutputTokens { get; set; }
     public int? LatencyMs { get; set; }
+    public int? ModelCalls { get; set; }
+
+    /// <summary>
+    /// The investigation's inputs and outputs: tool outputs, tools called, the model's
+    /// raw reply and the tokens the groundedness check could not find. Used to audit
+    /// a brief or replay the event as an eval case. Not returned by the API.
+    /// </summary>
+    public string? InvestigationTraceJson { get; set; }
 
     public DateTime CreatedAt { get; set; }
 }

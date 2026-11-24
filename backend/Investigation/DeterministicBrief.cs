@@ -35,9 +35,9 @@ public static class DeterministicBrief
         }
 
         var trailPoints = 0;
-        if (TryParse(toolOutputs, ToolNames.GetTrail, out var trail) && trail.TryGetProperty("point_count", out var pc))
+        if (TryParse(toolOutputs, ToolNames.GetTrail, out var trail) && Num(trail, "point_count") is { } pc)
         {
-            trailPoints = pc.GetInt32();
+            trailPoints = (int)pc;
             observations.Add(string.Format(inv, "{0} trail points were available for the aircraft.", trailPoints));
         }
         else
@@ -47,39 +47,44 @@ public static class DeterministicBrief
         }
 
         string? nearestIcao = null;
-        if (TryParse(toolOutputs, ToolNames.NearestAirports, out var airports) && airports.ValueKind == JsonValueKind.Array && airports.GetArrayLength() > 0)
+        if (TryParse(toolOutputs, ToolNames.NearestAirports, out var airports)
+            && airports.ValueKind == JsonValueKind.Array
+            && airports.GetArrayLength() > 0
+            && Str(airports[0], "icao") is { } icao)
         {
             var first = airports[0];
-            nearestIcao = first.GetProperty("icao").GetString();
+            nearestIcao = icao;
+            var distance = Num(first, "distance_km");
             observations.Add(string.Format(inv,
-                "Nearest airport to the last fix: {0} {1}, {2} km away.",
-                nearestIcao, first.TryGetProperty("name", out var n) ? n.GetString() : "", first.GetProperty("distance_km").GetDouble()));
+                "Nearest airport to the last fix: {0} {1}{2}.",
+                nearestIcao, Str(first, "name") ?? "",
+                distance is null ? "" : string.Format(inv, ", {0} km away", distance)));
         }
 
         var hasMetar = false;
-        if (TryParse(toolOutputs, ToolNames.GetMetar, out var metar))
+        var metarParsed = TryParse(toolOutputs, ToolNames.GetMetar, out var metar);
+        var station = metarParsed ? Str(metar, "station") : null;
+        if (metarParsed && Str(metar, "raw") is { } raw)
         {
-            if (metar.TryGetProperty("raw", out var raw) && raw.ValueKind == JsonValueKind.String)
-            {
-                hasMetar = true;
-                observations.Add($"METAR {metar.GetProperty("station").GetString()}: {raw.GetString()}");
-            }
-            else if (metar.TryGetProperty("error", out var err))
-            {
-                unknowns.Add($"Weather at {metar.GetProperty("station").GetString()}: METAR fetch failed ({err.GetString()}).");
-            }
+            hasMetar = true;
+            observations.Add(station is null ? $"METAR: {raw}" : $"METAR {station}: {raw}");
+        }
+        else if (metarParsed && Str(metar, "error") is { } err)
+        {
+            unknowns.Add($"Weather at {station ?? "the nearest station"}: METAR fetch failed ({err}).");
         }
         else
         {
             unknowns.Add("Weather near the last fix: no METAR was fetched.");
         }
 
-        if (TryParse(toolOutputs, ToolNames.GetRoute, out var route))
+        // When the route tool returns nothing or throws, the tool loop stores an
+        // object without origin and destination, so both are checked before use.
+        if (TryParse(toolOutputs, ToolNames.GetRoute, out var route)
+            && Nested(route, "origin", "icao") is { } origin
+            && Nested(route, "destination", "icao") is { } destination)
         {
-            observations.Add(string.Format(inv,
-                "Callsign route from adsbdb: {0} to {1}.",
-                route.GetProperty("origin").GetProperty("icao").GetString(),
-                route.GetProperty("destination").GetProperty("icao").GetString()));
+            observations.Add(string.Format(inv, "Callsign route from adsbdb: {0} to {1}.", origin, destination));
         }
         else
         {
@@ -106,6 +111,25 @@ public static class DeterministicBrief
             quality,
             "Nothing here is verifiable from ADS-B alone; an operator or authority statement is the only source for why the code was set.");
     }
+
+    private static string? Str(JsonElement element, string name) =>
+        element.ValueKind == JsonValueKind.Object
+        && element.TryGetProperty(name, out var value)
+        && value.ValueKind == JsonValueKind.String
+            ? value.GetString()
+            : null;
+
+    private static double? Num(JsonElement element, string name) =>
+        element.ValueKind == JsonValueKind.Object
+        && element.TryGetProperty(name, out var value)
+        && value.ValueKind == JsonValueKind.Number
+            ? value.GetDouble()
+            : null;
+
+    private static string? Nested(JsonElement element, string parent, string name) =>
+        element.ValueKind == JsonValueKind.Object && element.TryGetProperty(parent, out var child)
+            ? Str(child, name)
+            : null;
 
     private static bool TryParse(IReadOnlyDictionary<string, string?> outputs, string tool, out JsonElement element)
     {

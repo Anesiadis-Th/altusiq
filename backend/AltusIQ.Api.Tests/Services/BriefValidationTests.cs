@@ -75,4 +75,30 @@ public class BriefValidationTests
         Assert.True(budget.TryReserve());
         Assert.Equal(1, budget.CallsToday);
     }
+
+    [Fact]
+    public void Budget_spacing_is_measured_from_the_previous_call_not_the_current_one()
+    {
+        var clock = new Microsoft.Extensions.Time.Testing.FakeTimeProvider(new DateTimeOffset(2026, 8, 1, 12, 0, 0, TimeSpan.Zero));
+        var budget = new LlmCallBudget(
+            Microsoft.Extensions.Options.Options.Create(new Models.LlmSettings { MaxCallsPerDay = 10, MinSecondsBetweenCalls = 3 }),
+            clock);
+
+        // No previous call, so no wait.
+        Assert.True(budget.TryReserve(out var first));
+        Assert.Equal(TimeSpan.Zero, first);
+
+        // Immediately after the first call: the full spacing.
+        Assert.True(budget.TryReserve(out var second));
+        Assert.Equal(TimeSpan.FromSeconds(3), second);
+
+        // Spaced from the second call's scheduled time, which is 3 s from now.
+        Assert.True(budget.TryReserve(out var third));
+        Assert.Equal(TimeSpan.FromSeconds(6), third);
+
+        // The spacing has long passed: no wait.
+        clock.Advance(TimeSpan.FromSeconds(60));
+        Assert.True(budget.TryReserve(out var later));
+        Assert.Equal(TimeSpan.Zero, later);
+    }
 }
